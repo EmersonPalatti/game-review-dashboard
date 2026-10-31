@@ -2,6 +2,7 @@ import * as echarts from 'echarts';
 import type { ECharts, EChartsOption } from 'echarts';
 import type { Charts } from '../lib/api';
 import { formatInteger, formatPercent } from '../lib/format';
+import type { PlaytimeBucket } from '../stores/filters';
 
 const CHART_IDS = ['chart-month', 'chart-playtime'] as const;
 
@@ -9,6 +10,8 @@ const MONTHS = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', '
 
 const charts = new Map<string, ECharts>();
 let lastData: Charts | null = null;
+let lastActivePlaytime: PlaytimeBucket = 'all';
+let onSelectPlaytime: ((bucket: PlaytimeBucket) => void) | null = null;
 
 function token(name: string): string {
   return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
@@ -22,6 +25,7 @@ function palette() {
     line: token('--line'),
     surface: token('--surface'),
     accent: token('--accent'),
+    negative: token('--negative'),
     shadow: token('--shadow') || 'none',
   };
 }
@@ -63,7 +67,8 @@ function resizeCharts(): void {
 
 let chartObserver: ResizeObserver | null = null;
 
-export function initCharts(): void {
+export function initCharts(onPlaytimeSelect?: (bucket: PlaytimeBucket) => void): void {
+  if (onPlaytimeSelect) onSelectPlaytime = onPlaytimeSelect;
   window.removeEventListener('resize', resizeCharts);
   chartObserver?.disconnect();
   chartObserver = new ResizeObserver(() => resizeCharts());
@@ -77,6 +82,14 @@ export function initCharts(): void {
     charts.set(id, echarts.init(element));
     chartObserver.observe(element);
   }
+  const playtimeChart = chart('chart-playtime');
+  playtimeChart.off('click');
+  playtimeChart.on('click', (params: { dataIndex?: number }) => {
+    if (typeof params.dataIndex !== 'number' || !lastData) return;
+    const point = lastData.playtime[params.dataIndex];
+    if (!point || !onSelectPlaytime) return;
+    onSelectPlaytime(point.key as PlaytimeBucket);
+  });
   window.addEventListener('resize', resizeCharts);
 }
 
@@ -93,8 +106,9 @@ function setChartVisible(id: string, emptyId: string, visible: boolean): void {
   if (empty) empty.hidden = visible;
 }
 
-export function renderCharts(data: Charts): void {
+export function renderCharts(data: Charts, activePlaytime: PlaytimeBucket = lastActivePlaytime): void {
   lastData = data;
+  lastActivePlaytime = activePlaytime;
   paint(data);
 }
 
@@ -119,6 +133,18 @@ function paintMonth(data: Charts, colors: ReturnType<typeof palette>): void {
     const current = data.months[index];
     const best = data.months[peakIndex];
     if (current && best && current.review_count > best.review_count) peakIndex = index;
+  }
+  const best = data.months[peakIndex];
+
+  const monthElement = document.getElementById('chart-month');
+  if (monthElement) {
+    monthElement.setAttribute('role', 'img');
+    if (best) {
+      monthElement.setAttribute(
+        'aria-label',
+        `Avaliações por mês: ${data.months.length} meses no recorte, pico em ${formatMonth(best.month)} com ${formatInteger(best.review_count)} avaliações.`,
+      );
+    }
   }
 
   chart('chart-month').setOption(
@@ -192,6 +218,19 @@ function paintPlaytime(data: Charts, colors: ReturnType<typeof palette>): void {
   setChartVisible('chart-playtime', 'chart-playtime-empty', visible);
   if (!visible) return;
 
+  const playtimeElement = document.getElementById('chart-playtime');
+  if (playtimeElement) {
+    playtimeElement.setAttribute('role', 'img');
+    const totalReviews = data.playtime.reduce((sum, point) => sum + point.review_count, 0);
+    const refundReviews = data.playtime
+      .filter((point) => point.key === 'lt1' || point.key === 'h1_2')
+      .reduce((sum, point) => sum + point.review_count, 0);
+    playtimeElement.setAttribute(
+      'aria-label',
+      `Distribuição por tempo de jogo: ${formatInteger(totalReviews)} avaliações no total, sendo ${formatInteger(refundReviews)} na janela de reembolso Steam (< 2 h).`,
+    );
+  }
+
   chart('chart-playtime').setOption(
     {
       animation: false,
@@ -204,10 +243,16 @@ function paintPlaytime(data: Charts, colors: ReturnType<typeof palette>): void {
           const row = Array.isArray(params) ? params[0] : params;
           const index = (row as { dataIndex: number }).dataIndex;
           const point = data.playtime[index];
-          if (!point || point.recommendation_rate === null) {
-            return `${point?.label ?? ''}<br/>sem avaliações`;
+          if (!point) return '';
+          const refund =
+            point.key === 'lt1' || point.key === 'h1_2'
+              ? '<br/>Janela de reembolso Steam (&lt; 2 h)'
+              : '';
+          const action = '<br/>Clique para filtrar a faixa';
+          if (point.recommendation_rate === null) {
+            return `${point.label}<br/>sem avaliações${refund}${action}`;
           }
-          return `${point.label}<br/>${formatPercent(point.recommendation_rate)} · ${formatInteger(point.review_count)} avaliações`;
+          return `${point.label}<br/>${formatPercent(point.recommendation_rate)} · ${formatInteger(point.review_count)} avaliações${refund}${action}`;
         },
       },
       xAxis: {
@@ -238,14 +283,52 @@ function paintPlaytime(data: Charts, colors: ReturnType<typeof palette>): void {
       series: [
         {
           type: 'bar',
-          data: data.playtime.map((point) =>
-            point.recommendation_rate === null ? null : point.recommendation_rate * 100,
-          ),
+          data: data.playtime.map((point) => {
+            let color = colors.ink;
+            let opacity: number | undefined;
+
+            if (lastActivePlaytime !== 'all') {
+              if (point.key === lastActivePlaytime) {
+                color = colors.accent;
+              } else {
+                color = colors.muted;
+                opacity = 0.45;
+              }
+            } else {
+              if (point.key === 'lt1' || point.key === 'h1_2') {
+                color = colors.negative;
+              } else {
+                color = colors.ink;
+              }
+            }
+
+            return {
+              value: point.recommendation_rate === null ? null : point.recommendation_rate * 100,
+              itemStyle: {
+                color,
+                ...(opacity !== undefined ? { opacity } : {}),
+                borderRadius: 0,
+              },
+            };
+          }),
           barMaxWidth: 28,
-          cursor: 'default',
-          itemStyle: { color: colors.ink, borderRadius: 0 },
+          cursor: 'pointer',
           emphasis: {
             itemStyle: { color: colors.accent, shadowBlur: 0 },
+          },
+          markLine: {
+            silent: true,
+            symbol: ['none', 'none'],
+            lineStyle: { color: colors.accent, type: 'dashed', width: 1 },
+            label: {
+              show: true,
+              position: 'insideEndTop',
+              formatter: 'Base 83,0%',
+              color: colors.accent,
+              fontFamily: '"IBM Plex Mono", monospace',
+              fontSize: 11,
+            },
+            data: [{ yAxis: 82.97 }],
           },
         },
       ],

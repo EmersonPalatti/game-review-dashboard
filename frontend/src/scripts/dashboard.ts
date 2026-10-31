@@ -9,11 +9,14 @@ import {
   type ReviewItem,
   type ReviewsPage,
 } from '../lib/api';
-import { formatHours, formatInteger, formatPercent, languageLabel } from '../lib/format';
+import { formatDate, formatHours, formatInteger, formatPercent, languageLabel } from '../lib/format';
 import {
+  PLAYTIME_LABELS,
   filters,
   page,
+  readFiltersFromSearch,
   resetFilters,
+  writeFiltersToSearch,
   type Filters,
   type PlaytimeBucket,
   type Tri,
@@ -24,7 +27,7 @@ const PLACEHOLDER = '—';
 const THEME_KEY = 'steam-reviews-theme';
 const THEME_REVEAL_MS = 400;
 
-type ComboOption = { value: string; label: string };
+type ComboOption = { value: string; label: string; count?: number };
 
 function requireElement<T extends Element>(id: string, ctor: new () => T): T {
   const element = document.getElementById(id);
@@ -253,7 +256,18 @@ class SearchCombo {
       option.setAttribute('role', 'option');
       option.setAttribute('aria-selected', item.value === this.committed ? 'true' : 'false');
       option.title = item.label;
-      option.textContent = item.label;
+
+      const labelSpan = document.createElement('span');
+      labelSpan.className = 'combo-option-label';
+      labelSpan.textContent = item.label;
+      option.append(labelSpan);
+      if (typeof item.count === 'number') {
+        const countSpan = document.createElement('span');
+        countSpan.className = 'combo-option-count';
+        countSpan.textContent = formatInteger(item.count);
+        option.append(countSpan);
+      }
+
       this.menu.append(option);
     });
 
@@ -340,12 +354,18 @@ const sidebarQuery = window.matchMedia('(max-width: 767px)');
 function syncMobileSidebar(): void {
   const open = sidebarPanel.classList.contains('is-open');
   sidebarPanel.inert = sidebarQuery.matches && !open;
+  main.inert = sidebarQuery.matches && open;
   sidebarOpenButton.setAttribute('aria-expanded', open ? 'true' : 'false');
 }
 
 function setMobileSidebar(open: boolean): void {
+  const wasOpen = sidebarPanel.classList.contains('is-open');
   sidebarPanel.classList.toggle('is-open', open);
   syncMobileSidebar();
+  if (sidebarQuery.matches) {
+    if (open && !wasOpen) sidebarCloseButton.focus();
+    else if (!open && wasOpen) sidebarOpenButton.focus();
+  }
 }
 
 sidebarOpenButton.addEventListener('click', () => {
@@ -364,8 +384,12 @@ document.addEventListener('keydown', (event) => {
   setMobileSidebar(false);
 });
 syncMobileSidebar();
+
 const filterSummary = requireElement('filter-summary', HTMLElement);
+const activeChips = requireElement('active-chips', HTMLElement);
+const contextSubtitle = requireElement('context-subtitle', HTMLElement);
 const errorBanner = requireElement('load-error', HTMLElement);
+const loadErrorDetail = requireElement('load-error-detail', HTMLElement);
 const retryButton = requireElement('retry', HTMLButtonElement);
 const metricReviews = requireElement('metric-reviews', HTMLElement);
 const metricRecommendation = requireElement('metric-recommendation', HTMLElement);
@@ -443,6 +467,9 @@ const playtimeCombo = choiceCombo(
 let requestId = 0;
 let gamesSignature = '';
 let languagesSignature = '';
+const appIdByName = new Map<string, number>();
+const gameNameById = new Map<number, string>();
+let syncingFromPopState = false;
 
 type Figure = {
   element: HTMLElement;
@@ -505,8 +532,137 @@ function activeFilterLabel(count: number): string {
   return `${count} filtros ativos`;
 }
 
-function renderFilterCount(current: Filters): void {
+type FilterChip = {
+  label: string;
+  value: string;
+  clear: () => void;
+};
+
+function renderFilterState(current: Filters): void {
   filterSummary.textContent = activeFilterLabel(activeFilterCount(current));
+
+  const activeKeys: Record<string, boolean> = {
+    app: current.appId !== null,
+    language: current.language !== null,
+    recommended: current.recommended !== 'all',
+    steamPurchase: current.steamPurchase !== 'all',
+    receivedForFree: current.receivedForFree !== 'all',
+    earlyAccess: current.earlyAccess !== 'all',
+    playtime: current.playtime !== 'all',
+  };
+
+  for (const row of form.querySelectorAll<HTMLElement>('[data-filter-row]')) {
+    const key = row.dataset.filterRow;
+    if (key && key in activeKeys) {
+      row.classList.toggle('is-filtered', activeKeys[key]);
+    }
+  }
+
+  const chips: FilterChip[] = [];
+
+  if (current.appId !== null) {
+    chips.push({
+      label: 'Jogo',
+      value: gameNameById.get(current.appId) ?? `#${current.appId}`,
+      clear: () => patchFilters({ appId: null }),
+    });
+  }
+
+  if (current.language !== null) {
+    chips.push({
+      label: 'Idioma',
+      value: languageLabel(current.language),
+      clear: () => patchFilters({ language: null }),
+    });
+  }
+
+  if (current.recommended !== 'all') {
+    chips.push({
+      label: 'Recomendação',
+      value: current.recommended === 'yes' ? 'Recomenda' : 'Não recomenda',
+      clear: () => patchFilters({ recommended: 'all' }),
+    });
+  }
+
+  if (current.steamPurchase !== 'all') {
+    chips.push({
+      label: 'Compra na Steam',
+      value: current.steamPurchase === 'yes' ? 'Sim' : 'Não',
+      clear: () => patchFilters({ steamPurchase: 'all' }),
+    });
+  }
+
+  if (current.receivedForFree !== 'all') {
+    chips.push({
+      label: 'Recebido de graça',
+      value: current.receivedForFree === 'yes' ? 'Sim' : 'Não',
+      clear: () => patchFilters({ receivedForFree: 'all' }),
+    });
+  }
+
+  if (current.earlyAccess !== 'all') {
+    chips.push({
+      label: 'Acesso antecipado',
+      value: current.earlyAccess === 'yes' ? 'Sim' : 'Não',
+      clear: () => patchFilters({ earlyAccess: 'all' }),
+    });
+  }
+
+  if (current.playtime !== 'all') {
+    chips.push({
+      label: 'Tempo',
+      value: PLAYTIME_LABELS[current.playtime],
+      clear: () => patchFilters({ playtime: 'all' }),
+    });
+  }
+
+  activeChips.replaceChildren();
+
+  if (chips.length === 0) {
+    const empty = document.createElement('span');
+    empty.className = 'meta';
+    empty.textContent = 'Base completa · nenhum filtro ativo';
+    activeChips.append(empty);
+    return;
+  }
+
+  for (const chip of chips) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'filter-chip';
+    btn.setAttribute('aria-label', `Remover filtro ${chip.label}: ${chip.value}`);
+
+    const labelSpan = document.createElement('span');
+    labelSpan.className = 'filter-chip-label';
+    labelSpan.textContent = `${chip.label}:`;
+
+    const valueSpan = document.createElement('span');
+    valueSpan.className = 'filter-chip-value';
+    valueSpan.textContent = chip.value;
+
+    const removeSpan = document.createElement('span');
+    removeSpan.className = 'filter-chip-remove';
+    removeSpan.setAttribute('aria-hidden', 'true');
+    removeSpan.textContent = '×';
+
+    btn.append(labelSpan, valueSpan, removeSpan);
+    btn.addEventListener('click', () => {
+      chip.clear();
+    });
+
+    activeChips.append(btn);
+  }
+
+  if (chips.length >= 2) {
+    const resetBtn = document.createElement('button');
+    resetBtn.type = 'button';
+    resetBtn.className = 'filter-chip is-reset';
+    resetBtn.textContent = 'Limpar todos';
+    resetBtn.addEventListener('click', () => {
+      resetFilters();
+    });
+    activeChips.append(resetBtn);
+  }
 }
 
 function syncControls(current: Filters): void {
@@ -520,13 +676,19 @@ function syncControls(current: Filters): void {
 }
 
 function catalogSignature(options: ComboOption[]): string {
-  return options.map((item) => `${item.value}\u0000${item.label}`).join('\u0001');
+  return options.map((item) => `${item.value}\u0000${item.label}\u0000${item.count ?? ''}`).join('\u0001');
 }
 
 function renderCatalog(metrics: Metrics): void {
+  for (const game of metrics.games) {
+    appIdByName.set(game.app_name, game.app_id);
+    gameNameById.set(game.app_id, game.app_name);
+  }
+
   const gameOptions = metrics.games.map((game) => ({
     value: String(game.app_id),
     label: game.app_name,
+    count: game.review_count,
   }));
   const gameKey = catalogSignature(gameOptions);
   if (gameKey !== gamesSignature) {
@@ -537,12 +699,15 @@ function renderCatalog(metrics: Metrics): void {
   const languageOptions = metrics.languages.map((entry) => ({
     value: entry.language,
     label: languageLabel(entry.language),
+    count: entry.review_count,
   }));
   const languageKey = catalogSignature(languageOptions);
   if (languageKey !== languagesSignature) {
     languagesSignature = languageKey;
     languageCombo.setOptions(languageOptions);
   }
+
+  renderFilterState(filters.get());
 }
 
 function paintFigure(key: string, next: number): void {
@@ -571,12 +736,32 @@ function renderMetrics(metrics: Metrics): void {
   paintFigure('recommendation', metrics.recommendation_rate);
   paintFigure('games', metrics.game_count);
   paintFigure('authors', metrics.author_count);
+  contextSubtitle.textContent = `${formatInteger(metrics.total_reviews)} avaliações · ${formatInteger(metrics.game_count)} jogos · mar/2013 a jan/2021`;
 }
 
-function rankRow(name: string, value: string, width: number, title: string): HTMLLIElement {
+function rankRow(
+  name: string,
+  value: string,
+  width: number,
+  options: { title: string; selected: boolean; ariaLabel: string; onSelect: () => void },
+): HTMLLIElement {
   const row = document.createElement('li');
-  row.className = 'rank-row';
-  row.title = title;
+  row.className = options.selected ? 'rank-row is-selected' : 'rank-row';
+  row.title = options.title;
+  row.tabIndex = 0;
+  row.setAttribute('role', 'button');
+  row.setAttribute('aria-pressed', options.selected ? 'true' : 'false');
+  row.setAttribute('aria-label', options.ariaLabel);
+
+  row.addEventListener('click', () => {
+    options.onSelect();
+  });
+  row.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      options.onSelect();
+    }
+  });
 
   const line = document.createElement('div');
   line.className = 'rank-line';
@@ -613,13 +798,25 @@ function renderGameRanks(games: GameBar[]): void {
     return;
   }
   const max = Math.max(...games.map((game) => game.review_count), 1);
+  const currentAppId = filters.get().appId;
   for (const game of games) {
+    const appId = appIdByName.get(game.app_name) ?? null;
+    const selected = appId !== null && currentAppId === appId;
     rankGames.append(
       rankRow(
         game.app_name,
         formatInteger(game.review_count),
         (game.review_count / max) * 100,
-        game.app_name,
+        {
+          title: game.app_name,
+          selected,
+          ariaLabel: `${game.app_name}: ${formatInteger(game.review_count)} avaliações`,
+          onSelect: () => {
+            if (appId !== null) {
+              patchFilters({ appId: selected ? null : appId });
+            }
+          },
+        },
       ),
     );
   }
@@ -634,14 +831,25 @@ function renderLanguageRanks(languages: LanguageBar[]): void {
     rankLanguages.append(empty);
     return;
   }
+  const currentLanguage = filters.get().language;
   for (const item of languages) {
+    const selected = currentLanguage === item.language;
     const rate = item.recommendation_rate;
+    const valueText = rate === null ? PLACEHOLDER : `${formatPercent(rate)} · ${formatInteger(item.review_count)}`;
+    const name = languageLabel(item.language);
     rankLanguages.append(
       rankRow(
-        languageLabel(item.language),
-        rate === null ? PLACEHOLDER : formatPercent(rate),
+        name,
+        valueText,
         rate === null ? 0 : rate * 100,
-        `${formatInteger(item.review_count)} avaliações`,
+        {
+          title: `${name}: ${formatInteger(item.review_count)} avaliações`,
+          selected,
+          ariaLabel: `${name}: ${valueText}`,
+          onSelect: () => {
+            patchFilters({ language: selected ? null : item.language });
+          },
+        },
       ),
     );
   }
@@ -680,16 +888,88 @@ function recommendationCell(recommended: boolean): HTMLTableCellElement {
 
 function renderReviewRow(item: ReviewItem): HTMLTableRowElement {
   const row = document.createElement('tr');
+  row.className = 'review-row';
+  row.tabIndex = 0;
+  row.setAttribute('aria-expanded', 'false');
+
+  const toggleRow = (): void => {
+    const expanded = row.classList.toggle('is-expanded');
+    row.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+  };
+  row.addEventListener('click', toggleRow);
+  row.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      toggleRow();
+    }
+  });
+
   const hours = item.playtime_at_review_hours;
   const hoursText = hours === null || !Number.isFinite(hours) ? PLACEHOLDER : formatHours(hours);
   const language = languageLabel(item.language);
+
+  const excerptTd = document.createElement('td');
+  const excerptCell = document.createElement('div');
+  excerptCell.className = 'excerpt-cell';
+
+  const excerptText = document.createElement('div');
+  excerptText.className = 'excerpt-text';
+  excerptText.textContent = item.excerpt || 'Sem texto na avaliação.';
+  excerptCell.append(excerptText);
+
+  const badges = document.createElement('div');
+  badges.className = 'review-badges';
+
+  const dateBadge = document.createElement('span');
+  dateBadge.className = 'review-badge';
+  dateBadge.textContent = formatDate(item.created_at);
+  badges.append(dateBadge);
+
+  if (item.early_access) {
+    const badge = document.createElement('span');
+    badge.className = 'review-badge is-accent';
+    badge.textContent = 'Acesso antecipado';
+    badges.append(badge);
+  }
+
+  if (item.received_for_free) {
+    const badge = document.createElement('span');
+    badge.className = 'review-badge';
+    badge.textContent = 'Recebido de graça';
+    badges.append(badge);
+  }
+
+  if (!item.steam_purchase) {
+    const badge = document.createElement('span');
+    badge.className = 'review-badge';
+    badge.textContent = 'Chave externa';
+    badges.append(badge);
+  }
+
+  if (item.votes_funny > 0) {
+    const badge = document.createElement('span');
+    badge.className = 'review-badge';
+    badge.textContent = `${formatInteger(item.votes_funny)} engraçados`;
+    badges.append(badge);
+  }
+
+  if (item.comment_count > 0) {
+    const badge = document.createElement('span');
+    badge.className = 'review-badge';
+    badge.textContent = `${formatInteger(item.comment_count)} coment.`;
+    badges.append(badge);
+  }
+
+  excerptCell.append(badges);
+  excerptTd.append(excerptCell);
+
   row.append(
     textCell(item.app_name, item.app_name),
     textCell(language, language),
     recommendationCell(item.recommended),
     textCell(hoursText),
     textCell(formatInteger(item.votes_helpful)),
-    textCell(item.excerpt, item.excerpt),
+    excerptTd,
   );
   return row;
 }
@@ -863,13 +1143,24 @@ async function load(): Promise<void> {
     renderReviews(reviews);
     const series = await chartsPromise;
     if (id !== requestId) return;
-    renderCharts(series);
+    renderCharts(series, currentFilters.playtime);
     renderRanks(series);
-  } catch {
+  } catch (error) {
     if (id !== requestId) return;
+    const detail = error instanceof Error ? `${error.message}. ` : '';
+    loadErrorDetail.textContent = `${detail}Verifique se a API local está ativa em http://127.0.0.1:8000.`;
     errorBanner.hidden = false;
   } finally {
     if (id === requestId) main.setAttribute('aria-busy', 'false');
+  }
+}
+
+function syncUrl(): void {
+  const search = writeFiltersToSearch(filters.get(), page.get());
+  const nextUrl = `${window.location.pathname}${search}${window.location.hash}`;
+  const currentUrl = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+  if (nextUrl !== currentUrl) {
+    window.history.replaceState(null, '', nextUrl);
   }
 }
 
@@ -901,15 +1192,23 @@ function bindControls(): void {
 }
 
 function init(): void {
-  initCharts();
+  initCharts((bucket) => {
+    const current = filters.get().playtime;
+    patchFilters({ playtime: current === bucket ? 'all' : bucket });
+  });
   themeButton.setAttribute('aria-pressed', currentTheme() === 'dark' ? 'true' : 'false');
   bindControls();
+
+  const initial = readFiltersFromSearch(window.location.search);
+  filters.set(initial.filters);
+  page.set(initial.page);
 
   filters.listen(() => {
     const current = filters.get();
     syncControls(current);
-    renderFilterCount(current);
-    if (page.get() !== 0) {
+    renderFilterState(current);
+    syncUrl();
+    if (!syncingFromPopState && page.get() !== 0) {
       page.set(0);
       return;
     }
@@ -917,11 +1216,23 @@ function init(): void {
   });
 
   page.listen(() => {
+    syncUrl();
     void load();
   });
 
+  window.addEventListener('popstate', () => {
+    syncingFromPopState = true;
+    try {
+      const next = readFiltersFromSearch(window.location.search);
+      page.set(next.page);
+      filters.set(next.filters);
+    } finally {
+      syncingFromPopState = false;
+    }
+  });
+
   syncControls(filters.get());
-  renderFilterCount(filters.get());
+  renderFilterState(filters.get());
   void load();
 }
 

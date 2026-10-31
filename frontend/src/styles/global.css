@@ -109,12 +109,20 @@ html.dark {
   top: 0;
   z-index: 20;
   display: flex;
-  height: 40px;
+  height: 48px;
   width: 100%;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: space-between;
   padding: 0 16px;
   background: var(--sidebar);
+  border-bottom: 1px solid var(--line);
+}
+
+.mobile-wordmark {
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 500;
+  color: var(--ink);
 }
 
 .sidebar-burger,
@@ -177,6 +185,14 @@ html.dark {
 
 .sidebar-row.is-field .sidebar-icon {
   margin-top: 2px;
+}
+
+.sidebar-row.is-field.is-filtered .sidebar-icon {
+  color: var(--accent);
+}
+
+.sidebar-row.is-field.is-filtered .field-control {
+  border-color: var(--accent);
 }
 
 .logo-mark {
@@ -399,12 +415,84 @@ html.dark {
 }
 
 .stamp-rule {
-  position: absolute;
-  top: calc(100% + 4px);
-  left: 0;
+  display: block;
   width: 24px;
   height: 2px;
+  margin-top: 8px;
   background: var(--accent);
+}
+
+.context-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--line);
+}
+
+.context-heading {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.active-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 4px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 12px;
+  line-height: 16px;
+  cursor: pointer;
+  transition:
+    background-color var(--fast) var(--ease),
+    border-color var(--fast) var(--ease);
+}
+
+.filter-chip:hover {
+  background: var(--raised);
+  border-color: var(--secondary);
+}
+
+.filter-chip-label {
+  color: var(--muted);
+}
+
+.filter-chip-value {
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.filter-chip-remove {
+  color: var(--muted);
+  font-family: var(--font-mono);
+}
+
+.filter-chip.is-reset {
+  border-color: transparent;
+  background: transparent;
+  color: var(--secondary);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.filter-chip.is-reset:hover {
+  background: var(--raised);
+  color: var(--ink);
 }
 
 .card {
@@ -417,8 +505,13 @@ html.dark {
     border-color var(--fast) var(--ease);
 }
 
-#dashboard-main[aria-busy='true'] .figure {
+#dashboard-main[aria-busy='true'] .figure,
+#dashboard-main[aria-busy='true'] #chart-month,
+#dashboard-main[aria-busy='true'] #chart-playtime,
+#dashboard-main[aria-busy='true'] .rank-list,
+#dashboard-main[aria-busy='true'] #reviews-body {
   opacity: 0.5;
+  transition: opacity var(--fast) var(--ease);
 }
 
 .field {
@@ -615,17 +708,25 @@ html.dark .when-dark {
 .combo-empty {
   min-height: 36px;
   padding: 8px;
-  overflow: hidden;
   border-radius: 4px;
   font-size: 14px;
   line-height: 20px;
   letter-spacing: 0;
   color: var(--ink);
+}
+
+.combo-empty {
+  overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
+  color: var(--muted);
 }
 
 .combo-option {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
   cursor: pointer;
 }
 
@@ -634,7 +735,20 @@ html.dark .when-dark {
   background: var(--raised);
 }
 
-.combo-empty {
+.combo-option-label {
+  min-width: 0;
+  flex: 1 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.combo-option-count {
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 16px;
+  font-variant-numeric: tabular-nums;
   color: var(--muted);
 }
 
@@ -649,13 +763,27 @@ html.dark .when-dark {
 
 .rank-row {
   min-height: 36px;
-  padding: 4px 8px;
+  padding: 6px 8px;
   border-radius: 8px;
-  transition: background-color var(--fast) var(--ease);
+  border: 1px solid transparent;
+  cursor: pointer;
+  user-select: none;
+  transition:
+    background-color var(--fast) var(--ease),
+    border-color var(--fast) var(--ease);
 }
 
 .rank-row:hover {
   background: var(--raised);
+}
+
+.rank-row.is-selected {
+  background: var(--raised);
+  border-color: var(--accent);
+}
+
+.rank-row.is-selected .rank-fill {
+  background: var(--accent);
 }
 
 .rank-line {
@@ -693,6 +821,7 @@ html.dark .when-dark {
 
 .sheet {
   overflow-x: auto;
+  padding: 4px 12px;
   border: 1px solid var(--line);
   border-radius: 12px;
   background: var(--surface);
@@ -760,6 +889,72 @@ html.dark .when-dark {
   color: var(--secondary);
 }
 
+.sheet tbody tr.review-row {
+  cursor: pointer;
+}
+
+.sheet tbody tr.review-row.is-expanded td {
+  white-space: normal;
+  vertical-align: top;
+  background: var(--raised);
+}
+
+.excerpt-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.excerpt-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.excerpt-text {
+  min-width: 0;
+  flex: 1 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--ink);
+}
+
+.sheet tbody tr.review-row.is-expanded .excerpt-text {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+}
+
+.review-badges {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.review-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid var(--line);
+  background: var(--paper);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 14px;
+  font-variant-numeric: tabular-nums;
+  color: var(--secondary);
+  white-space: nowrap;
+}
+
+.review-badge.is-accent {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
 .sim,
 .nao {
   font-weight: 400;
@@ -811,6 +1006,7 @@ html[data-theme-reveal='active']::view-transition-new(root) {
   .theme-toggle,
   .clear-row,
   .field-control,
+  .filter-chip,
   .card,
   .sheet,
   .sheet td,

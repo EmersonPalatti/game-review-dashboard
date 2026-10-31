@@ -13,6 +13,13 @@ const hoursFormat = new Intl.NumberFormat('pt-BR', {
   maximumFractionDigits: 2,
 });
 
+const dateFormat = new Intl.DateTimeFormat('pt-BR', {
+  day: '2-digit',
+  month: '2-digit',
+  year: 'numeric',
+  timeZone: 'UTC',
+});
+
 const languageLabels: Record<string, string> = {
   english: 'Inglês',
   schinese: 'Chinês simplificado',
@@ -55,6 +62,14 @@ export function formatPercent(value: number): string {
 
 export function formatHours(value: number): string {
   return hoursFormat.format(value);
+}
+
+export function formatDate(iso: string): string {
+  const timestamp = Date.parse(iso);
+  if (Number.isNaN(timestamp)) {
+    return iso.slice(0, 10);
+  }
+  return dateFormat.format(new Date(timestamp));
 }
 
 export function languageLabel(code: string): string {

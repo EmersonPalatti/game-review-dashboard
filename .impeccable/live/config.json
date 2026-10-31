@@ -1,0 +1,8 @@
+{
+  "files": ["frontend/src/layouts/Base.astro"],
+  "exclude": ["frontend/dist/**"],
+  "insertBefore": "</body>",
+  "commentSyntax": "html",
+  "cspChecked": true
+}
+
