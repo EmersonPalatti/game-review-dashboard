@@ -5,6 +5,7 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
+    "fastapi>=0.162.0",
     "ipykernel>=7.4.0",
     "jupyter>=1.1.1",
     "jupyter-collaboration>=5.0.4",
@@ -14,4 +15,12 @@ dependencies = [
     "pandas>=3.1.0",
     "pycrdt>=0.14.10",
     "seaborn>=0.13.2",
+    "sqlalchemy>=2.1.6",
+    "uvicorn>=0.54.0",
+]
+
+[dependency-groups]
+dev = [
+    "httpx>=0.28.1",
+    "pytest>=9.2.0",
 ]

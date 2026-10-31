@@ -1,0 +1,126 @@
+import { PAGE_SIZE, type Filters, type Tri } from '../stores/filters';
+
+export type GameMetric = {
+  app_id: number;
+  app_name: string;
+  review_count: number;
+};
+
+export type LanguageMetric = {
+  language: string;
+  review_count: number;
+};
+
+export type Metrics = {
+  total_reviews: number;
+  recommendation_rate: number;
+  game_count: number;
+  author_count: number;
+  games: GameMetric[];
+  languages: LanguageMetric[];
+};
+
+export type ReviewItem = {
+  review_id: number;
+  app_id: number;
+  app_name: string;
+  language: string;
+  recommended: boolean;
+  votes_helpful: number;
+  votes_funny: number;
+  comment_count: number;
+  playtime_at_review_hours: number | null;
+  steam_purchase: boolean;
+  received_for_free: boolean;
+  early_access: boolean;
+  created_at: string;
+  excerpt: string;
+};
+
+export type ReviewsPage = {
+  total: number;
+  limit: number;
+  offset: number;
+  items: ReviewItem[];
+};
+
+export type PlaytimePoint = {
+  key: string;
+  label: string;
+  review_count: number;
+  recommendation_rate: number | null;
+};
+
+export type GameBar = {
+  app_name: string;
+  review_count: number;
+};
+
+export type LanguageBar = {
+  language: string;
+  review_count: number;
+  recommendation_rate: number | null;
+};
+
+export type MonthPoint = {
+  month: string;
+  review_count: number;
+};
+
+export type Charts = {
+  playtime: PlaytimePoint[];
+  games: GameBar[];
+  languages: LanguageBar[];
+  months: MonthPoint[];
+};
+
+function setTri(params: URLSearchParams, key: string, value: Tri): void {
+  if (value === 'yes') params.set(key, 'true');
+  if (value === 'no') params.set(key, 'false');
+}
+
+function appendFilters(params: URLSearchParams, current: Readonly<Filters>): void {
+  if (current.appId !== null && Number.isFinite(current.appId)) {
+    params.set('app_id', String(current.appId));
+  }
+  if (current.language) {
+    params.set('language', current.language);
+  }
+  setTri(params, 'recommended', current.recommended);
+  setTri(params, 'steam_purchase', current.steamPurchase);
+  setTri(params, 'received_for_free', current.receivedForFree);
+  setTri(params, 'early_access', current.earlyAccess);
+  if (current.playtime !== 'all') {
+    params.set('playtime_bucket', current.playtime);
+  }
+}
+
+async function requestJson<T>(url: string): Promise<T> {
+  const response = await fetch(url, { cache: 'no-store' });
+  if (!response.ok) {
+    throw new Error(`Resposta ${response.status} para ${url}`);
+  }
+  return (await response.json()) as T;
+}
+
+export function fetchMetrics(current: Readonly<Filters>): Promise<Metrics> {
+  const params = new URLSearchParams();
+  appendFilters(params, current);
+  const query = params.toString();
+  return requestJson<Metrics>(query ? `/api/summary?${query}` : '/api/summary');
+}
+
+export function fetchCharts(current: Readonly<Filters>): Promise<Charts> {
+  const params = new URLSearchParams();
+  appendFilters(params, current);
+  const query = params.toString();
+  return requestJson<Charts>(query ? `/api/charts?${query}` : '/api/charts');
+}
+
+export function fetchReviews(current: Readonly<Filters>, pageIndex: number): Promise<ReviewsPage> {
+  const params = new URLSearchParams();
+  appendFilters(params, current);
+  params.set('limit', String(PAGE_SIZE));
+  params.set('offset', String(pageIndex * PAGE_SIZE));
+  return requestJson<ReviewsPage>(`/api/reviews?${params.toString()}`);
+}

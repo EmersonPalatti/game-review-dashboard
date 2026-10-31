@@ -1,0 +1,279 @@
+from datetime import datetime, timezone
+
+from sqlalchemy import and_, case, func, select
+from sqlalchemy.orm import Session
+
+from backend.app.models import Review
+from backend.app.schemas import (
+    ChartsResponse,
+    GameBar,
+    GameFacet,
+    LanguageBar,
+    LanguageFacet,
+    MetricsResponse,
+    MonthPoint,
+    PlaytimePoint,
+    ReviewFilters,
+    ReviewItem,
+    ReviewListResponse,
+)
+from backend.app.transform import PLAYTIME_BUCKETS, PLAYTIME_LABELS
+
+
+def apply_filters(stmt, filters: ReviewFilters):
+    if filters.app_id is not None:
+        stmt = stmt.where(Review.app_id == filters.app_id)
+    if filters.language is not None:
+        stmt = stmt.where(Review.language == filters.language)
+    if filters.recommended is not None:
+        stmt = stmt.where(Review.recommended == filters.recommended)
+    if filters.steam_purchase is not None:
+        stmt = stmt.where(Review.steam_purchase == filters.steam_purchase)
+    if filters.received_for_free is not None:
+        stmt = stmt.where(Review.received_for_free == filters.received_for_free)
+    if filters.early_access is not None:
+        stmt = stmt.where(Review.early_access == filters.early_access)
+    if filters.playtime_bucket is not None:
+        low, high = PLAYTIME_BUCKETS[filters.playtime_bucket]
+        stmt = stmt.where(Review.playtime_at_review.is_not(None))
+        if low is not None:
+            stmt = stmt.where(Review.playtime_at_review >= low)
+        if high is not None:
+            stmt = stmt.where(Review.playtime_at_review < high)
+    return stmt
+
+
+_facets: tuple[list[GameFacet], list[LanguageFacet]] | None = None
+
+
+def _global_facets(session: Session) -> tuple[list[GameFacet], list[LanguageFacet]]:
+    # Catálogo estável depois do seed. A primeira leitura paga o GROUP BY.
+    global _facets
+    if _facets is not None:
+        return _facets
+    game_count = func.count().label("review_count")
+    game_rows = session.execute(
+        select(Review.app_id, Review.app_name, game_count)
+        .group_by(Review.app_id, Review.app_name)
+        .order_by(game_count.desc(), Review.app_id.asc())
+    ).all()
+    language_count = func.count().label("review_count")
+    language_rows = session.execute(
+        select(Review.language, language_count)
+        .group_by(Review.language)
+        .order_by(language_count.desc(), Review.language.asc())
+    ).all()
+    _facets = (
+        [
+            GameFacet(
+                app_id=row.app_id,
+                app_name=row.app_name,
+                review_count=int(row.review_count),
+            )
+            for row in game_rows
+        ],
+        [
+            LanguageFacet(language=row.language, review_count=int(row.review_count))
+            for row in language_rows
+        ],
+    )
+    return _facets
+
+
+def _hours(minutes: float | None) -> float | None:
+    if minutes is None:
+        return None
+    return round(float(minutes) / 60, 2)
+
+
+def _created_at(timestamp: int) -> str:
+    moment = datetime.fromtimestamp(int(timestamp), tz=timezone.utc)
+    return moment.strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def _to_item(row: Review) -> ReviewItem:
+    return ReviewItem(
+        review_id=row.review_id,
+        app_id=row.app_id,
+        app_name=row.app_name,
+        language=row.language,
+        recommended=bool(row.recommended),
+        votes_helpful=row.votes_helpful,
+        votes_funny=row.votes_funny,
+        comment_count=row.comment_count,
+        playtime_at_review_hours=_hours(row.playtime_at_review),
+        steam_purchase=bool(row.steam_purchase),
+        received_for_free=bool(row.received_for_free),
+        early_access=bool(row.early_access),
+        created_at=_created_at(row.timestamp_created),
+        excerpt=row.excerpt or "",
+    )
+
+
+def metrics(session: Session, filters: ReviewFilters) -> MetricsResponse:
+    # Autor fica numa query separada: no mesmo SELECT o SQLite varre a tabela
+    # inteira e o COUNT DISTINCT de 1 milhão de contas leva cerca de 4 s.
+    recommended_count = func.coalesce(
+        func.sum(case((Review.recommended.is_(True), 1), else_=0)),
+        0,
+    )
+    totals = session.execute(
+        apply_filters(
+            select(
+                func.count().label("total_reviews"),
+                recommended_count.label("recommended_reviews"),
+                func.count(func.distinct(Review.app_id)).label("game_count"),
+            ),
+            filters,
+        )
+    ).one()
+    author_count = session.scalar(
+        apply_filters(
+            select(func.count(func.distinct(Review.author_steamid))),
+            filters,
+        )
+    )
+    total = int(totals.total_reviews or 0)
+    recommended = int(totals.recommended_reviews or 0)
+    rate = recommended / total if total else 0.0
+    games, languages = _global_facets(session)
+    return MetricsResponse(
+        total_reviews=total,
+        recommendation_rate=rate,
+        game_count=int(totals.game_count or 0),
+        author_count=int(author_count or 0),
+        games=games,
+        languages=languages,
+    )
+
+
+def list_reviews(
+    session: Session,
+    filters: ReviewFilters,
+    limit: int,
+    offset: int,
+) -> ReviewListResponse:
+    filtered = apply_filters(select(Review), filters)
+    total = session.scalar(
+        apply_filters(select(func.count()).select_from(Review), filters)
+    )
+    rows = session.scalars(
+        filtered.order_by(Review.timestamp_created.desc(), Review.review_id.desc())
+        .limit(limit)
+        .offset(offset)
+    ).all()
+    return ReviewListResponse(
+        total=int(total or 0),
+        limit=limit,
+        offset=offset,
+        items=[_to_item(row) for row in rows],
+    )
+
+
+def _rate(positive: int, total: int) -> float | None:
+    if total == 0:
+        return None
+    return positive / total
+
+
+def _playtime_condition(low: int | None, high: int | None):
+    parts = [Review.playtime_at_review.is_not(None)]
+    if low is not None:
+        parts.append(Review.playtime_at_review >= low)
+    if high is not None:
+        parts.append(Review.playtime_at_review < high)
+    return and_(*parts)
+
+
+def charts(session: Session, filters: ReviewFilters) -> ChartsResponse:
+    columns = []
+    for key, bounds in PLAYTIME_BUCKETS.items():
+        condition = _playtime_condition(*bounds)
+        columns.append(
+            func.coalesce(func.sum(case((condition, 1), else_=0)), 0).label(f"{key}_n")
+        )
+        columns.append(
+            func.coalesce(
+                func.sum(case((and_(condition, Review.recommended.is_(True)), 1), else_=0)),
+                0,
+            ).label(f"{key}_pos")
+        )
+    bucket_row = session.execute(apply_filters(select(*columns), filters)).one()
+    playtime = []
+    for key in PLAYTIME_BUCKETS:
+        count = int(getattr(bucket_row, f"{key}_n") or 0)
+        positive = int(getattr(bucket_row, f"{key}_pos") or 0)
+        playtime.append(
+            PlaytimePoint(
+                key=key,
+                label=PLAYTIME_LABELS[key],
+                review_count=count,
+                recommendation_rate=_rate(positive, count),
+            )
+        )
+
+    game_count = func.count().label("review_count")
+    game_rows = session.execute(
+        apply_filters(
+            select(Review.app_name, game_count)
+            .group_by(Review.app_id, Review.app_name)
+            .order_by(game_count.desc(), Review.app_name.asc())
+            .limit(8),
+            filters,
+        )
+    ).all()
+
+    language_count = func.count().label("review_count")
+    language_positive = func.coalesce(
+        func.sum(case((Review.recommended.is_(True), 1), else_=0)),
+        0,
+    ).label("positive")
+    language_rows = session.execute(
+        apply_filters(
+            select(Review.language, language_count, language_positive)
+            .group_by(Review.language)
+            .order_by(language_count.desc(), Review.language.asc())
+            .limit(8),
+            filters,
+        )
+    ).all()
+    languages = [
+        LanguageBar(
+            language=row.language,
+            review_count=int(row.review_count),
+            recommendation_rate=_rate(int(row.positive or 0), int(row.review_count)),
+        )
+        for row in language_rows
+    ]
+    languages.sort(
+        key=lambda item: (
+            -1 if item.recommendation_rate is None else -item.recommendation_rate,
+            item.language,
+        )
+    )
+
+    month_key = func.strftime("%Y-%m", Review.timestamp_created, "unixepoch").label("month")
+    month_count = func.count().label("review_count")
+    month_rows = session.execute(
+        apply_filters(
+            select(month_key, month_count)
+            .where(Review.timestamp_created.is_not(None))
+            .group_by(month_key)
+            .order_by(month_key.asc()),
+            filters,
+        )
+    ).all()
+
+    return ChartsResponse(
+        playtime=playtime,
+        games=[
+            GameBar(app_name=row.app_name, review_count=int(row.review_count))
+            for row in game_rows
+        ],
+        languages=languages,
+        months=[
+            MonthPoint(month=row.month, review_count=int(row.review_count))
+            for row in month_rows
+            if row.month
+        ],
+    )

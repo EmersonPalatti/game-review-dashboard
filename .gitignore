@@ -15,3 +15,10 @@ data/
 
 # Jupyter checkpoints
 .ipynb_checkpoints/
+
+# Dashboard
+node_modules/
+frontend/.astro/
+backend/data/*.db
+.pytest_cache/
+.env
