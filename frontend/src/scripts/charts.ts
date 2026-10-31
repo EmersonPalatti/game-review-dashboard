@@ -13,6 +13,21 @@ let lastData: Charts | null = null;
 let lastActivePlaytime: PlaytimeBucket = 'all';
 let onSelectPlaytime: ((bucket: PlaytimeBucket) => void) | null = null;
 
+function prefersReducedMotion(): boolean {
+  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+
+function motionConfig(animate: boolean) {
+  const active = animate && !prefersReducedMotion();
+  return {
+    animation: active,
+    animationDuration: active ? 360 : 0,
+    animationDurationUpdate: active ? 320 : 0,
+    animationEasing: 'cubicOut' as const,
+    animationEasingUpdate: 'cubicOut' as const,
+  };
+}
+
 function token(name: string): string {
   return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 }
@@ -109,21 +124,21 @@ function setChartVisible(id: string, emptyId: string, visible: boolean): void {
 export function renderCharts(data: Charts, activePlaytime: PlaytimeBucket = lastActivePlaytime): void {
   lastData = data;
   lastActivePlaytime = activePlaytime;
-  paint(data);
+  paint(data, true);
 }
 
 export function repaintCharts(): void {
-  if (lastData) paint(lastData);
+  if (lastData) paint(lastData, false);
 }
 
-function paint(data: Charts): void {
+function paint(data: Charts, animate = true): void {
   const colors = palette();
-  paintMonth(data, colors);
-  paintPlaytime(data, colors);
+  paintMonth(data, colors, animate);
+  paintPlaytime(data, colors, animate);
   window.requestAnimationFrame(resizeCharts);
 }
 
-function paintMonth(data: Charts, colors: ReturnType<typeof palette>): void {
+function paintMonth(data: Charts, colors: ReturnType<typeof palette>, animate: boolean): void {
   const visible = data.months.length > 0;
   setChartVisible('chart-month', 'chart-month-empty', visible);
   if (!visible) return;
@@ -149,7 +164,7 @@ function paintMonth(data: Charts, colors: ReturnType<typeof palette>): void {
 
   chart('chart-month').setOption(
     {
-      animation: false,
+      ...motionConfig(animate),
       backgroundColor: 'transparent',
       grid: { left: 8, right: 16, top: 16, bottom: 8, containLabel: true },
       tooltip: {
@@ -190,6 +205,7 @@ function paintMonth(data: Charts, colors: ReturnType<typeof palette>): void {
       },
       series: [
         {
+          id: 'month-line',
           type: 'line',
           data: data.months.map((point) => point.review_count),
           showSymbol: false,
@@ -199,6 +215,7 @@ function paintMonth(data: Charts, colors: ReturnType<typeof palette>): void {
           emphasis: { disabled: true },
         },
         {
+          id: 'month-peak',
           type: 'scatter',
           data: data.months.map((point, index) => (index === peakIndex ? point.review_count : null)),
           symbolSize: 8,
@@ -209,11 +226,11 @@ function paintMonth(data: Charts, colors: ReturnType<typeof palette>): void {
         },
       ],
     } satisfies EChartsOption,
-    true,
+    { notMerge: false, lazyUpdate: false },
   );
 }
 
-function paintPlaytime(data: Charts, colors: ReturnType<typeof palette>): void {
+function paintPlaytime(data: Charts, colors: ReturnType<typeof palette>, animate: boolean): void {
   const visible = data.playtime.some((point) => point.review_count > 0);
   setChartVisible('chart-playtime', 'chart-playtime-empty', visible);
   if (!visible) return;
@@ -233,7 +250,7 @@ function paintPlaytime(data: Charts, colors: ReturnType<typeof palette>): void {
 
   chart('chart-playtime').setOption(
     {
-      animation: false,
+      ...motionConfig(animate),
       backgroundColor: 'transparent',
       grid: { left: 8, right: 12, top: 16, bottom: 4, containLabel: true },
       tooltip: {
@@ -282,6 +299,7 @@ function paintPlaytime(data: Charts, colors: ReturnType<typeof palette>): void {
       },
       series: [
         {
+          id: 'playtime-bars',
           type: 'bar',
           data: data.playtime.map((point) => {
             let color = colors.ink;
@@ -306,7 +324,7 @@ function paintPlaytime(data: Charts, colors: ReturnType<typeof palette>): void {
               value: point.recommendation_rate === null ? null : point.recommendation_rate * 100,
               itemStyle: {
                 color,
-                ...(opacity !== undefined ? { opacity } : {}),
+                opacity: opacity ?? 1,
                 borderRadius: 0,
               },
             };
@@ -333,6 +351,6 @@ function paintPlaytime(data: Charts, colors: ReturnType<typeof palette>): void {
         },
       ],
     } satisfies EChartsOption,
-    true,
+    { notMerge: false, lazyUpdate: false },
   );
 }

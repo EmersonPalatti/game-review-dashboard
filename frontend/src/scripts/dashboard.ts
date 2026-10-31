@@ -392,9 +392,13 @@ const errorBanner = requireElement('load-error', HTMLElement);
 const loadErrorDetail = requireElement('load-error-detail', HTMLElement);
 const retryButton = requireElement('retry', HTMLButtonElement);
 const metricReviews = requireElement('metric-reviews', HTMLElement);
+const metricReviewsSub = requireElement('metric-reviews-sub', HTMLElement);
 const metricRecommendation = requireElement('metric-recommendation', HTMLElement);
+const metricRecommendationSub = requireElement('metric-recommendation-sub', HTMLElement);
 const metricGames = requireElement('metric-games', HTMLElement);
+const metricGamesSub = requireElement('metric-games-sub', HTMLElement);
 const metricAuthors = requireElement('metric-authors', HTMLElement);
+const metricAuthorsSub = requireElement('metric-authors-sub', HTMLElement);
 const rankGames = requireElement('rank-games', HTMLOListElement);
 const rankLanguages = requireElement('rank-languages', HTMLOListElement);
 const reviewsBody = requireElement('reviews-body', HTMLTableSectionElement);
@@ -410,11 +414,6 @@ const appCombo = new SearchCombo(appInput, appMenu, (value) => {
 const languageCombo = new SearchCombo(languageInput, languageMenu, (value) => {
   patchFilters({ language: value === '' ? null : value });
 });
-
-const yesNo = (yes: string, no: string): ComboOption[] => [
-  { value: 'yes', label: yes },
-  { value: 'no', label: no },
-];
 
 function choiceCombo(
   id: string,
@@ -432,19 +431,6 @@ function choiceCombo(
   return combo;
 }
 
-const todas: ComboOption = { value: 'all', label: 'Todas' };
-const recommendedCombo = choiceCombo('filter-recommended', todas, yesNo('Recomenda', 'Não recomenda'), (value) => {
-  patchFilters({ recommended: readTri(value) });
-});
-const steamPurchaseCombo = choiceCombo('filter-steam-purchase', todas, yesNo('Sim', 'Não'), (value) => {
-  patchFilters({ steamPurchase: readTri(value) });
-});
-const receivedForFreeCombo = choiceCombo('filter-received-for-free', todas, yesNo('Sim', 'Não'), (value) => {
-  patchFilters({ receivedForFree: readTri(value) });
-});
-const earlyAccessCombo = choiceCombo('filter-early-access', todas, yesNo('Sim', 'Não'), (value) => {
-  patchFilters({ earlyAccess: readTri(value) });
-});
 const playtimeCombo = choiceCombo(
   'filter-playtime',
   { value: 'all', label: 'Todos' },
@@ -470,6 +456,68 @@ let languagesSignature = '';
 const appIdByName = new Map<string, number>();
 const gameNameById = new Map<number, string>();
 let syncingFromPopState = false;
+
+const BASELINE_REVIEWS = 1_000_000;
+const BASELINE_RATE = 0.8297;
+const BASELINE_GAMES = 59;
+const BASELINE_AUTHORS = 912_553;
+
+let baselineReviews = BASELINE_REVIEWS;
+let baselineRate = BASELINE_RATE;
+let baselineGames = BASELINE_GAMES;
+let baselineAuthors = BASELINE_AUTHORS;
+
+const ppFormat = new Intl.NumberFormat('pt-BR', {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+  signDisplay: 'exceptZero',
+});
+
+type PresetKey = 'refund' | 'early' | 'dissatisfaction';
+
+const PRESETS: Record<PresetKey, Filters> = {
+  refund: {
+    appId: null,
+    language: null,
+    recommended: 'all',
+    steamPurchase: 'all',
+    receivedForFree: 'all',
+    earlyAccess: 'all',
+    playtime: 'lt1',
+  },
+  early: {
+    appId: null,
+    language: null,
+    recommended: 'all',
+    steamPurchase: 'all',
+    receivedForFree: 'all',
+    earlyAccess: 'yes',
+    playtime: 'all',
+  },
+  dissatisfaction: {
+    appId: null,
+    language: null,
+    recommended: 'no',
+    steamPurchase: 'all',
+    receivedForFree: 'all',
+    earlyAccess: 'all',
+    playtime: 'all',
+  },
+};
+
+function isPresetActive(current: Filters, preset: string): boolean {
+  if (preset !== 'refund' && preset !== 'early' && preset !== 'dissatisfaction') return false;
+  const target = PRESETS[preset];
+  return (
+    current.appId === target.appId &&
+    current.language === target.language &&
+    current.recommended === target.recommended &&
+    current.steamPurchase === target.steamPurchase &&
+    current.receivedForFree === target.receivedForFree &&
+    current.earlyAccess === target.earlyAccess &&
+    current.playtime === target.playtime
+  );
+}
 
 type Figure = {
   element: HTMLElement;
@@ -663,16 +711,31 @@ function renderFilterState(current: Filters): void {
     });
     activeChips.append(resetBtn);
   }
+
+  for (const btn of document.querySelectorAll<HTMLButtonElement>('[data-preset]')) {
+    const preset = btn.dataset.preset;
+    if (!preset) continue;
+    btn.setAttribute('aria-pressed', isPresetActive(current, preset) ? 'true' : 'false');
+  }
 }
 
 function syncControls(current: Filters): void {
   appCombo.setCommitted(current.appId === null ? '' : String(current.appId));
   languageCombo.setCommitted(current.language ?? '');
-  recommendedCombo.setCommitted(current.recommended);
-  steamPurchaseCombo.setCommitted(current.steamPurchase);
-  receivedForFreeCombo.setCommitted(current.receivedForFree);
-  earlyAccessCombo.setCommitted(current.earlyAccess);
   playtimeCombo.setCommitted(current.playtime);
+
+  for (const btn of form.querySelectorAll<HTMLButtonElement>('[data-tri-filter]')) {
+    const key = btn.dataset.triFilter as 'recommended' | 'steamPurchase' | 'receivedForFree' | 'earlyAccess' | undefined;
+    const val = btn.dataset.triValue;
+    if (!key || !val) continue;
+    btn.setAttribute('aria-pressed', current[key] === val ? 'true' : 'false');
+  }
+
+  for (const btn of document.querySelectorAll<HTMLButtonElement>('[data-preset]')) {
+    const preset = btn.dataset.preset;
+    if (!preset) continue;
+    btn.setAttribute('aria-pressed', isPresetActive(current, preset) ? 'true' : 'false');
+  }
 }
 
 function catalogSignature(options: ComboOption[]): string {
@@ -732,17 +795,49 @@ function paintFigure(key: string, next: number): void {
 }
 
 function renderMetrics(metrics: Metrics): void {
+  if (activeFilterCount(filters.get()) === 0) {
+    baselineReviews = metrics.total_reviews;
+    baselineRate = metrics.recommendation_rate;
+    baselineGames = metrics.game_count;
+    baselineAuthors = metrics.author_count;
+  }
+
   paintFigure('reviews', metrics.total_reviews);
   paintFigure('recommendation', metrics.recommendation_rate);
   paintFigure('games', metrics.game_count);
   paintFigure('authors', metrics.author_count);
-  contextSubtitle.textContent = `${formatInteger(metrics.total_reviews)} avaliações · ${formatInteger(metrics.game_count)} jogos · mar/2013 a jan/2021`;
+  contextSubtitle.textContent = `${formatInteger(metrics.total_reviews)} avaliações · ${formatInteger(metrics.game_count)} jogos · mar/2013 a\u00a0jan/2021`;
+
+  const filtered = activeFilterCount(filters.get()) > 0;
+
+  metricReviewsSub.textContent = !filtered
+    ? '100% da base\u00a0auditada'
+    : `${formatPercent(baselineReviews > 0 ? metrics.total_reviews / baselineReviews : 0)} de\u00a0${formatInteger(baselineReviews)}`;
+
+  if (!filtered) {
+    metricRecommendationSub.textContent = 'média global da\u00a0base';
+  } else {
+    const diffPp = (metrics.recommendation_rate - baselineRate) * 100;
+    metricRecommendationSub.textContent = `${ppFormat.format(diffPp)} p.p. vs. base\u00a0(${formatPercent(baselineRate)})`;
+  }
+
+  metricGamesSub.textContent = !filtered
+    ? 'no catálogo\u00a0analisado'
+    : `de ${formatInteger(baselineGames)} no\u00a0catálogo`;
+
+  metricAuthorsSub.textContent = !filtered
+    ? 'contas distintas na\u00a0base'
+    : `${formatPercent(baselineAuthors > 0 ? metrics.author_count / baselineAuthors : 0)} de ${formatInteger(baselineAuthors)}\u00a0contas`;
 }
 
+const previousRankScales = new Map<string, number>();
+
 function rankRow(
+  key: string,
+  index: number,
   name: string,
   value: string,
-  width: number,
+  widthPercent: number,
   options: { title: string; selected: boolean; ariaLabel: string; onSelect: () => void },
 ): HTMLLIElement {
   const row = document.createElement('li');
@@ -780,7 +875,23 @@ function rankRow(
 
   const fill = document.createElement('div');
   fill.className = 'rank-fill';
-  fill.style.width = `${Math.max(0, Math.min(100, width))}%`;
+
+  const targetScale = Math.max(0, Math.min(1, widthPercent / 100));
+  const fromScale = previousRankScales.get(key) ?? 0;
+  previousRankScales.set(key, targetScale);
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  if (reduced || Math.abs(fromScale - targetScale) < 1e-4) {
+    fill.style.transform = `scaleX(${targetScale})`;
+  } else {
+    fill.style.transform = `scaleX(${fromScale})`;
+    fill.style.transitionDelay = `${Math.min(index * 20, 140)}ms`;
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        fill.style.transform = `scaleX(${targetScale})`;
+      });
+    });
+  }
 
   line.append(label, number);
   track.append(fill);
@@ -799,11 +910,13 @@ function renderGameRanks(games: GameBar[]): void {
   }
   const max = Math.max(...games.map((game) => game.review_count), 1);
   const currentAppId = filters.get().appId;
-  for (const game of games) {
+  games.forEach((game, index) => {
     const appId = appIdByName.get(game.app_name) ?? null;
     const selected = appId !== null && currentAppId === appId;
     rankGames.append(
       rankRow(
+        `game:${game.app_name}`,
+        index,
         game.app_name,
         formatInteger(game.review_count),
         (game.review_count / max) * 100,
@@ -819,7 +932,7 @@ function renderGameRanks(games: GameBar[]): void {
         },
       ),
     );
-  }
+  });
 }
 
 function renderLanguageRanks(languages: LanguageBar[]): void {
@@ -831,14 +944,19 @@ function renderLanguageRanks(languages: LanguageBar[]): void {
     rankLanguages.append(empty);
     return;
   }
+  const sorted = [...languages].sort(
+    (a, b) => (b.recommendation_rate ?? -1) - (a.recommendation_rate ?? -1) || b.review_count - a.review_count,
+  );
   const currentLanguage = filters.get().language;
-  for (const item of languages) {
+  sorted.forEach((item, index) => {
     const selected = currentLanguage === item.language;
     const rate = item.recommendation_rate;
     const valueText = rate === null ? PLACEHOLDER : `${formatPercent(rate)} · ${formatInteger(item.review_count)}`;
     const name = languageLabel(item.language);
     rankLanguages.append(
       rankRow(
+        `lang:${item.language}`,
+        index,
         name,
         valueText,
         rate === null ? 0 : rate * 100,
@@ -852,7 +970,7 @@ function renderLanguageRanks(languages: LanguageBar[]): void {
         },
       ),
     );
-  }
+  });
 }
 
 function renderRanks(series: Charts): void {
@@ -1041,24 +1159,6 @@ function circleClip(
   return [`circle(0% at ${point})`, `circle(${end}% at ${point})`];
 }
 
-function freezeRail(): boolean {
-  if (!window.matchMedia('(min-width: 768px) and (hover: hover)').matches) return false;
-  const width = sidebarPanel.getBoundingClientRect().width;
-  if (width > 290) return false;
-  sidebarPanel.style.width = `${width}px`;
-  sidebarPanel.style.minWidth = `${width}px`;
-  sidebarPanel.style.maxWidth = `${width}px`;
-  if (width < 80) sidebarPanel.classList.add('is-theme-hold');
-  return true;
-}
-
-function releaseRail(): void {
-  sidebarPanel.style.removeProperty('width');
-  sidebarPanel.style.removeProperty('min-width');
-  sidebarPanel.style.removeProperty('max-width');
-  sidebarPanel.classList.remove('is-theme-hold');
-}
-
 function revealTheme(next: 'dark' | 'light'): void {
   const root = document.documentElement;
   if (root.dataset.themeReveal === 'active') return;
@@ -1077,7 +1177,6 @@ function revealTheme(next: 'dark' | 'light'): void {
     Math.max(origin.y, height - origin.y),
   );
   const clipPath = circleClip(origin.x, origin.y, radius, width, height);
-  const held = freezeRail();
 
   root.dataset.themeReveal = 'active';
   root.style.setProperty('--theme-reveal-duration', `${THEME_REVEAL_MS}ms`);
@@ -1087,7 +1186,6 @@ function revealTheme(next: 'dark' | 'light'): void {
     delete root.dataset.themeReveal;
     root.style.removeProperty('--theme-reveal-duration');
     root.style.removeProperty('--theme-reveal-clip');
-    if (held) releaseRail();
     themeReveal?.cancel();
     themeReveal = null;
   };
@@ -1131,18 +1229,16 @@ async function load(): Promise<void> {
   setLoading();
 
   try {
-    const chartsPromise = fetchCharts(currentFilters);
-    const [metrics, reviews] = await Promise.all([
+    const [metrics, reviews, series] = await Promise.all([
       fetchMetrics(currentFilters),
       fetchReviews(currentFilters, currentPage),
+      fetchCharts(currentFilters),
     ]);
     if (id !== requestId) return;
     renderMetrics(metrics);
     renderCatalog(metrics);
     syncControls(filters.get());
     renderReviews(reviews);
-    const series = await chartsPromise;
-    if (id !== requestId) return;
     renderCharts(series, currentFilters.playtime);
     renderRanks(series);
   } catch (error) {
@@ -1155,12 +1251,17 @@ async function load(): Promise<void> {
   }
 }
 
-function syncUrl(): void {
+function syncUrl(replace = false): void {
+  if (syncingFromPopState) return;
   const search = writeFiltersToSearch(filters.get(), page.get());
   const nextUrl = `${window.location.pathname}${search}${window.location.hash}`;
   const currentUrl = `${window.location.pathname}${window.location.search}${window.location.hash}`;
   if (nextUrl !== currentUrl) {
-    window.history.replaceState(null, '', nextUrl);
+    if (replace) {
+      window.history.replaceState(null, '', nextUrl);
+    } else {
+      window.history.pushState(null, '', nextUrl);
+    }
   }
 }
 
@@ -1168,6 +1269,32 @@ function bindControls(): void {
   form.addEventListener('submit', (event) => {
     event.preventDefault();
   });
+
+  for (const btn of form.querySelectorAll<HTMLButtonElement>('[data-tri-filter]')) {
+    btn.addEventListener('click', () => {
+      const key = btn.dataset.triFilter as
+        | 'recommended'
+        | 'steamPurchase'
+        | 'receivedForFree'
+        | 'earlyAccess'
+        | undefined;
+      if (!key) return;
+      const value = readTri(btn.dataset.triValue ?? 'all');
+      patchFilters({ [key]: value });
+    });
+  }
+
+  for (const btn of document.querySelectorAll<HTMLButtonElement>('[data-preset]')) {
+    btn.addEventListener('click', () => {
+      const preset = btn.dataset.preset;
+      if (!preset || !(preset in PRESETS)) return;
+      if (isPresetActive(filters.get(), preset)) {
+        resetFilters();
+      } else {
+        filters.set({ ...PRESETS[preset as PresetKey] });
+      }
+    });
+  }
 
   clearButton.addEventListener('click', () => {
     resetFilters();
@@ -1207,11 +1334,11 @@ function init(): void {
     const current = filters.get();
     syncControls(current);
     renderFilterState(current);
-    syncUrl();
     if (!syncingFromPopState && page.get() !== 0) {
       page.set(0);
       return;
     }
+    syncUrl();
     void load();
   });
 
@@ -1233,6 +1360,7 @@ function init(): void {
 
   syncControls(filters.get());
   renderFilterState(filters.get());
+  syncUrl(true);
   void load();
 }
 

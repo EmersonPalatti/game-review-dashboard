@@ -128,8 +128,8 @@ html.dark {
 .sidebar-burger,
 .sidebar-close {
   display: grid;
-  width: 32px;
-  height: 32px;
+  width: 44px;
+  height: 44px;
   place-items: center;
   padding: 0;
   border: 0;
@@ -224,8 +224,8 @@ html.dark {
   border: 1px solid var(--line);
   border-radius: 8px;
   background: var(--surface);
-  padding-right: 0;
-  padding-left: 0;
+  padding-right: 10px;
+  padding-left: 10px;
   font: inherit;
   text-align: left;
   cursor: pointer;
@@ -286,100 +286,23 @@ html.dark {
     align-self: flex-start;
     display: flex;
     height: 100vh;
-    width: 300px;
-    min-width: 300px;
-    max-width: 300px;
+    width: 288px;
+    min-width: 288px;
+    max-width: 288px;
     flex: none;
     flex-direction: column;
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: auto;
     padding: 20px;
     border-right: 1px solid var(--line);
   }
 }
 
-@media (min-width: 768px) and (hover: hover) {
-  .sidebar-panel {
-    width: 60px;
-    min-width: 60px;
-    max-width: 60px;
-    transition:
-      width 0.3s cubic-bezier(0.25, 0.1, 0.35, 1),
-      min-width 0.3s cubic-bezier(0.25, 0.1, 0.35, 1),
-      max-width 0.3s cubic-bezier(0.25, 0.1, 0.35, 1);
-  }
-
-  .sidebar-panel:hover,
-  .sidebar-panel:focus-within {
-    width: 300px;
-    min-width: 300px;
-    max-width: 300px;
-    overflow-x: hidden;
-    overflow-y: auto;
-  }
-
-  .sidebar-reveal,
-  .sidebar-summary {
-    grid-template-rows: 0fr;
-    margin-left: 0;
-    opacity: 0;
-    transition:
-      grid-template-rows 0.3s cubic-bezier(0.25, 0.1, 0.35, 1),
-      opacity 0.3s cubic-bezier(0.25, 0.1, 0.35, 1),
-      margin-left 0.3s cubic-bezier(0.25, 0.1, 0.35, 1),
-      max-height 0.3s cubic-bezier(0.25, 0.1, 0.35, 1);
-  }
-
-  .sidebar-summary {
-    max-height: 0;
-    overflow: hidden;
-  }
-
-  .sidebar-panel:hover .sidebar-reveal,
-  .sidebar-panel:focus-within .sidebar-reveal {
-    grid-template-rows: 1fr;
-    margin-left: 8px;
-    opacity: 1;
-  }
-
-  .sidebar-panel:hover .sidebar-summary,
-  .sidebar-panel:focus-within .sidebar-summary {
-    max-height: 48px;
-    opacity: 1;
-  }
-
-  .sidebar-panel.is-theme-hold,
-  .sidebar-panel.is-theme-hold:hover,
-  .sidebar-panel.is-theme-hold:focus-within {
-    transition: none;
-  }
-
-  .sidebar-panel.is-theme-hold .sidebar-reveal,
-  .sidebar-panel.is-theme-hold:hover .sidebar-reveal,
-  .sidebar-panel.is-theme-hold:focus-within .sidebar-reveal,
-  .sidebar-panel.is-theme-hold .sidebar-summary,
-  .sidebar-panel.is-theme-hold:hover .sidebar-summary,
-  .sidebar-panel.is-theme-hold:focus-within .sidebar-summary {
-    grid-template-rows: 0fr;
-    max-height: 0;
-    margin-left: 0;
-    opacity: 0;
-    transition: none;
-  }
-
-  .sidebar-panel:not(:hover):not(:focus-within) .theme-toggle,
-  .sidebar-panel:not(:hover):not(:focus-within) .clear-row {
-    border-color: transparent;
-    background-color: transparent;
-    padding-right: 0;
-    padding-left: 0;
-  }
-}
-
 .wordmark {
-  font-size: 18px;
-  line-height: 24px;
+  font-size: 20px;
+  line-height: 26px;
   font-weight: 500;
-  letter-spacing: 0;
+  letter-spacing: -0.01em;
   color: var(--ink);
 }
 
@@ -397,6 +320,7 @@ html.dark {
   font-weight: 400;
   letter-spacing: 0.01em;
   color: var(--muted);
+  text-wrap: pretty;
 }
 
 .figure {
@@ -424,12 +348,58 @@ html.dark {
 
 .context-bar {
   display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--line);
+}
+
+.context-top {
+  display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid var(--line);
+}
+
+.preset-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.preset-btn {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 2px 10px;
+  border: 1px solid var(--line);
+  border-radius: 9999px;
+  background: var(--surface);
+  color: var(--secondary);
+  font-family: inherit;
+  font-size: 12px;
+  line-height: 16px;
+  cursor: pointer;
+  transition:
+    background-color var(--fast) var(--ease),
+    color var(--fast) var(--ease),
+    border-color var(--fast) var(--ease);
+}
+
+.preset-btn:hover {
+  background: var(--raised);
+  color: var(--ink);
+  border-color: var(--secondary);
+}
+
+.preset-btn[aria-pressed='true'] {
+  background: var(--raised);
+  color: var(--accent);
+  border-color: var(--accent);
+  font-weight: 500;
 }
 
 .context-heading {
@@ -496,6 +466,8 @@ html.dark {
 }
 
 .card {
+  position: relative;
+  overflow: hidden;
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: 12px;
@@ -505,13 +477,109 @@ html.dark {
     border-color var(--fast) var(--ease);
 }
 
+section[aria-label='Gráficos'] > .card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 40%;
+  height: 2px;
+  background: var(--accent);
+  opacity: 0;
+  transform: translateX(-100%);
+  pointer-events: none;
+  transition: opacity var(--fast) var(--ease);
+}
+
+#dashboard-main[aria-busy='true'] section[aria-label='Gráficos'] > .card::before {
+  opacity: 1;
+  animation: chart-progress 900ms var(--ease) infinite;
+}
+
+@keyframes chart-progress {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(250%);
+  }
+}
+
+#chart-month,
+#chart-playtime,
+.rank-list,
+#reviews-body {
+  transition: opacity var(--fast) var(--ease);
+}
+
 #dashboard-main[aria-busy='true'] .figure,
 #dashboard-main[aria-busy='true'] #chart-month,
 #dashboard-main[aria-busy='true'] #chart-playtime,
 #dashboard-main[aria-busy='true'] .rank-list,
 #dashboard-main[aria-busy='true'] #reviews-body {
-  opacity: 0.5;
+  opacity: 0.78;
   transition: opacity var(--fast) var(--ease);
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.filter-group + .filter-group {
+  margin-top: 6px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.seg-control {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--paper);
+}
+
+.sidebar-row.is-field.is-filtered .seg-control {
+  border-color: var(--accent);
+}
+
+.seg-btn {
+  min-height: 32px;
+  padding: 0 6px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--secondary);
+  font-family: inherit;
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 400;
+  cursor: pointer;
+  transition:
+    background-color var(--fast) var(--ease),
+    color var(--fast) var(--ease),
+    border-color var(--fast) var(--ease);
+}
+
+.seg-btn:hover:not([aria-pressed='true']) {
+  color: var(--ink);
+  background: var(--raised);
+}
+
+.seg-btn[aria-pressed='true'] {
+  background: var(--surface);
+  color: var(--ink);
+  font-weight: 500;
+  border-color: var(--line);
+}
+
+.sidebar-row.is-field.is-filtered .seg-btn[aria-pressed='true'] {
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
 .field {
@@ -798,13 +866,20 @@ html.dark .when-dark {
   margin-top: 4px;
   border-radius: 2px;
   background: var(--line);
+  overflow: hidden;
 }
 
 .rank-fill {
   display: block;
+  width: 100%;
   height: 100%;
   border-radius: 2px;
   background: var(--ink);
+  transform-origin: left center;
+  transform: scaleX(0);
+  transition:
+    transform 340ms var(--ease),
+    background-color var(--fast) var(--ease);
 }
 
 .rank-value {
@@ -891,6 +966,15 @@ html.dark .when-dark {
 
 .sheet tbody tr.review-row {
   cursor: pointer;
+}
+
+.sheet tbody tr.review-row:focus-visible {
+  outline: none;
+}
+
+.sheet tbody tr.review-row:focus-visible td {
+  background: var(--raised);
+  box-shadow: inset 0 2px 0 var(--accent), inset 0 -2px 0 var(--accent);
 }
 
 .sheet tbody tr.review-row.is-expanded td {
@@ -1003,6 +1087,8 @@ html[data-theme-reveal='active']::view-transition-new(root) {
   }
 
   .btn,
+  .seg-btn,
+  .preset-btn,
   .theme-toggle,
   .clear-row,
   .field-control,
@@ -1011,17 +1097,20 @@ html[data-theme-reveal='active']::view-transition-new(root) {
   .sheet,
   .sheet td,
   .rank-row,
+  .rank-fill,
   .combo-menu,
   .combo-toggle-icon,
   .figure,
   .sidebar-panel,
-  .sidebar-panel:hover .sidebar-reveal,
-  .sidebar-panel:focus-within .sidebar-reveal,
-  .sidebar-panel:hover .sidebar-summary,
-  .sidebar-panel:focus-within .sidebar-summary,
   .sidebar-reveal,
   .sidebar-summary,
   body {
     transition: none;
+  }
+
+  #dashboard-main[aria-busy='true'] section[aria-label='Gráficos'] > .card::before {
+    animation: none;
+    width: 100%;
+    transform: none;
   }
 }

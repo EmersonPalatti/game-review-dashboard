@@ -61,7 +61,7 @@ export function formatPercent(value: number): string {
 }
 
 export function formatHours(value: number): string {
-  return hoursFormat.format(value);
+  return `${hoursFormat.format(value)} h`;
 }
 
 export function formatDate(iso: string): string {
