@@ -137,6 +137,7 @@ class SearchCombo {
   setOptions(options: ComboOption[]): void {
     this.options = options;
     if (this.open) this.paint(false);
+    else if (document.activeElement !== this.input) this.showCommitted();
   }
 
   setCommitted(value: string): void {
@@ -505,6 +506,12 @@ const PRESETS: Record<PresetKey, Filters> = {
   },
 };
 
+const PRESET_NOTES: Record<PresetKey, string> = {
+  refund: 'tese: aprovação cai para 49,6% na 1ª hora\u00a0de\u00a0jogo',
+  early: 'tese: 69,8% em acesso antecipado vs. 83,8%\u00a0fora\u00a0dele',
+  dissatisfaction: 'tese: avaliações negativas recebem 2,8× mais\u00a0votos\u00a0úteis',
+};
+
 function isPresetActive(current: Filters, preset: string): boolean {
   if (preset !== 'refund' && preset !== 'early' && preset !== 'dissatisfaction') return false;
   const target = PRESETS[preset];
@@ -517,6 +524,14 @@ function isPresetActive(current: Filters, preset: string): boolean {
     current.earlyAccess === target.earlyAccess &&
     current.playtime === target.playtime
   );
+}
+
+function activePresetNote(current: Filters): string | null {
+  const keys: PresetKey[] = ['refund', 'early', 'dissatisfaction'];
+  for (const key of keys) {
+    if (isPresetActive(current, key)) return PRESET_NOTES[key];
+  }
+  return null;
 }
 
 type Figure = {
@@ -806,7 +821,10 @@ function renderMetrics(metrics: Metrics): void {
   paintFigure('recommendation', metrics.recommendation_rate);
   paintFigure('games', metrics.game_count);
   paintFigure('authors', metrics.author_count);
-  contextSubtitle.textContent = `${formatInteger(metrics.total_reviews)} avaliações · ${formatInteger(metrics.game_count)} jogos · mar/2013 a\u00a0jan/2021`;
+  const presetNote = activePresetNote(filters.get());
+  contextSubtitle.textContent = presetNote
+    ? `${formatInteger(metrics.total_reviews)} avaliações · ${formatInteger(metrics.game_count)} jogos · ${presetNote}`
+    : `${formatInteger(metrics.total_reviews)} avaliações · ${formatInteger(metrics.game_count)} jogos · mar/2013 a\u00a0jan/2021`;
 
   const filtered = activeFilterCount(filters.get()) > 0;
 
@@ -1030,10 +1048,28 @@ function renderReviewRow(item: ReviewItem): HTMLTableRowElement {
   const excerptCell = document.createElement('div');
   excerptCell.className = 'excerpt-cell';
 
+  const excerptLine = document.createElement('div');
+  excerptLine.className = 'excerpt-line';
+
+  const chevron = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  chevron.setAttribute('viewBox', '0 0 24 24');
+  chevron.setAttribute('fill', 'none');
+  chevron.setAttribute('stroke', 'currentColor');
+  chevron.setAttribute('stroke-width', '2');
+  chevron.setAttribute('stroke-linecap', 'round');
+  chevron.setAttribute('stroke-linejoin', 'round');
+  chevron.setAttribute('aria-hidden', 'true');
+  chevron.classList.add('excerpt-chevron');
+  const chevronPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  chevronPath.setAttribute('d', 'm9 18 6-6-6-6');
+  chevron.append(chevronPath);
+
   const excerptText = document.createElement('div');
   excerptText.className = 'excerpt-text';
   excerptText.textContent = item.excerpt || 'Sem texto na avaliação.';
-  excerptCell.append(excerptText);
+
+  excerptLine.append(chevron, excerptText);
+  excerptCell.append(excerptLine);
 
   const badges = document.createElement('div');
   badges.className = 'review-badges';
@@ -1219,6 +1255,7 @@ function revealTheme(next: 'dark' | 'light'): void {
 
 function setLoading(): void {
   main.setAttribute('aria-busy', 'true');
+  delete main.dataset.error;
   errorBanner.hidden = true;
 }
 
@@ -1235,6 +1272,7 @@ async function load(): Promise<void> {
       fetchCharts(currentFilters),
     ]);
     if (id !== requestId) return;
+    delete main.dataset.error;
     renderMetrics(metrics);
     renderCatalog(metrics);
     syncControls(filters.get());
@@ -1243,6 +1281,7 @@ async function load(): Promise<void> {
     renderRanks(series);
   } catch (error) {
     if (id !== requestId) return;
+    main.dataset.error = 'true';
     const detail = error instanceof Error ? `${error.message}. ` : '';
     loadErrorDetail.textContent = `${detail}Verifique se a API local está ativa em http://127.0.0.1:8000.`;
     errorBanner.hidden = false;
@@ -1315,6 +1354,21 @@ function bindControls(): void {
 
   retryButton.addEventListener('click', () => {
     void load();
+  });
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key !== '/' || event.ctrlKey || event.metaKey || event.altKey) return;
+    if (
+      event.target instanceof HTMLElement &&
+      (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA' || event.target.isContentEditable)
+    ) {
+      return;
+    }
+    event.preventDefault();
+    if (sidebarQuery.matches && !sidebarPanel.classList.contains('is-open')) {
+      setMobileSidebar(true);
+    }
+    appInput.focus();
   });
 }
 

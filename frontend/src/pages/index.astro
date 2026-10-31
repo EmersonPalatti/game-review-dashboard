@@ -42,7 +42,7 @@ import RailIcon from '../components/RailIcon.astro';
           </div>
 
           <div class="mt-8 flex flex-col">
-            <button id="theme-toggle" type="button" class="sidebar-row theme-toggle" aria-pressed="false" title="Alternar tema">
+            <button id="theme-toggle" type="button" class="sidebar-row theme-toggle" aria-pressed="false" aria-label="Alternar tema claro e escuro" title="Alternar tema">
               <span class="when-light">
                 <RailIcon>
                   <circle cx="12" cy="12" r="4"></circle>
@@ -73,7 +73,7 @@ import RailIcon from '../components/RailIcon.astro';
 
             <form id="filters-form" class="mt-4 flex flex-col gap-2" autocomplete="off">
               <div class="filter-group">
-                <label class="sidebar-row is-field" data-filter-row="app" title="Jogo">
+                <div class="sidebar-row is-field" data-filter-row="app" title="Jogo">
                   <RailIcon>
                     <line x1="6" x2="10" y1="11" y2="11"></line>
                     <line x1="8" x2="8" y1="9" y2="13"></line>
@@ -85,7 +85,7 @@ import RailIcon from '../components/RailIcon.astro';
                   </RailIcon>
                   <span class="sidebar-reveal">
                     <span class="sidebar-reveal-inner field">
-                      <span class="field-label">Jogo</span>
+                      <label for="filter-app" class="field-label">Jogo</label>
                       <div class="combo">
                         <input
                           id="filter-app"
@@ -95,6 +95,7 @@ import RailIcon from '../components/RailIcon.astro';
                           aria-autocomplete="list"
                           aria-expanded="false"
                           aria-controls="filter-app-list"
+                          aria-keyshortcuts="/"
                           autocomplete="off"
                           spellcheck="false"
                           placeholder="Todos"
@@ -104,9 +105,9 @@ import RailIcon from '../components/RailIcon.astro';
                       </div>
                     </span>
                   </span>
-                </label>
+                </div>
 
-                <label class="sidebar-row is-field" data-filter-row="language" title="Idioma">
+                <div class="sidebar-row is-field" data-filter-row="language" title="Idioma">
                   <RailIcon>
                     <path d="m5 8 6 6"></path>
                     <path d="m4 14 6-6 2-3"></path>
@@ -117,7 +118,7 @@ import RailIcon from '../components/RailIcon.astro';
                   </RailIcon>
                   <span class="sidebar-reveal">
                     <span class="sidebar-reveal-inner field">
-                      <span class="field-label">Idioma</span>
+                      <label for="filter-language" class="field-label">Idioma</label>
                       <div class="combo">
                         <input
                           id="filter-language"
@@ -136,9 +137,9 @@ import RailIcon from '../components/RailIcon.astro';
                       </div>
                     </span>
                   </span>
-                </label>
+                </div>
 
-                <label class="sidebar-row is-field" data-filter-row="playtime" title="Tempo na avaliação">
+                <div class="sidebar-row is-field" data-filter-row="playtime" title="Tempo na avaliação">
                   <RailIcon>
                     <line x1="10" x2="14" y1="2" y2="2"></line>
                     <line x1="12" x2="15" y1="14" y2="11"></line>
@@ -146,7 +147,7 @@ import RailIcon from '../components/RailIcon.astro';
                   </RailIcon>
                   <span class="sidebar-reveal">
                     <span class="sidebar-reveal-inner field">
-                      <span class="field-label">Tempo na avaliação</span>
+                      <label for="filter-playtime" class="field-label">Tempo na avaliação</label>
                       <div class="combo">
                         <input
                           id="filter-playtime"
@@ -165,7 +166,7 @@ import RailIcon from '../components/RailIcon.astro';
                       </div>
                     </span>
                   </span>
-                </label>
+                </div>
               </div>
 
               <div class="filter-group">
@@ -264,7 +265,7 @@ import RailIcon from '../components/RailIcon.astro';
               <span class="sidebar-reveal-inner">Limpar filtros</span>
             </span>
           </button>
-          <p id="filter-summary" class="sidebar-summary meta mt-2" aria-live="polite">Nenhum filtro ativo</p>
+          <p id="filter-summary" class="sidebar-summary meta mt-2">Nenhum filtro ativo</p>
         </div>
       </div>
     </aside>
@@ -355,7 +356,7 @@ import RailIcon from '../components/RailIcon.astro';
             <h2 id="reviews-heading" class="title">Avaliações</h2>
             <p class="meta">Clique ou pressione Enter em uma linha para expandir&#160;detalhes</p>
           </div>
-          <div class="sheet">
+          <div class="sheet" tabindex="0" role="region" aria-label="Tabela de avaliações">
             <table>
               <caption class="sr-only">Avaliações da seleção atual</caption>
               <thead>
