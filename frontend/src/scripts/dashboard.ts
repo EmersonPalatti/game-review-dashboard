@@ -11,14 +11,18 @@ import {
 } from '../lib/api';
 import { formatDate, formatHours, formatInteger, formatPercent, languageLabel } from '../lib/format';
 import {
+  DEFAULT_SORT,
   PLAYTIME_LABELS,
   filters,
   page,
   readFiltersFromSearch,
   resetFilters,
+  reviewSort,
   writeFiltersToSearch,
   type Filters,
   type PlaytimeBucket,
+  type ReviewSort,
+  type ReviewSortBy,
   type Tri,
 } from '../stores/filters';
 import { initCharts, renderCharts, repaintCharts } from './charts';
@@ -61,6 +65,7 @@ class SearchCombo {
   private active = 0;
   private open = false;
   private blurTimer = 0;
+  private navigated = false;
   private readonly root: HTMLElement;
   private readonly toggle: HTMLButtonElement;
   private readonly icon: SVGSVGElement;
@@ -91,11 +96,13 @@ class SearchCombo {
     this.committed = emptyOption.value;
     input.placeholder = emptyOption.label;
     input.addEventListener('focus', () => {
+      this.navigated = false;
       this.query = '';
       this.input.select();
       this.openMenu(true);
     });
     input.addEventListener('input', () => {
+      this.navigated = true;
       this.query = this.input.value;
       this.openMenu(true);
     });
@@ -225,6 +232,7 @@ class SearchCombo {
       this.input.blur();
       return;
     }
+    this.navigated = false;
     this.query = '';
     const alreadyFocused = document.activeElement === this.input;
     this.input.focus();
@@ -298,6 +306,14 @@ class SearchCombo {
       this.showCommitted();
       return;
     }
+    if (this.open && this.navigated) {
+      const items = this.filtered();
+      const picked = items[this.active];
+      if (picked) {
+        this.commit(picked.value);
+        return;
+      }
+    }
     const typed = this.input.value.trim();
     if (typed === '' || fold(typed) === fold(this.emptyOption.label)) {
       this.commit(this.emptyOption.value);
@@ -317,10 +333,25 @@ class SearchCombo {
       if (!this.open) this.openMenu(true);
       const count = this.filtered().length;
       if (count === 0) return;
+      this.navigated = true;
       this.active += event.key === 'ArrowDown' ? 1 : -1;
       if (this.active < 0) this.active = count - 1;
       if (this.active >= count) this.active = 0;
       this.paint(false);
+      return;
+    }
+    if (event.key === 'Tab' && this.open) {
+      window.clearTimeout(this.blurTimer);
+      if (this.navigated) {
+        const items = this.filtered();
+        const picked = items[this.active];
+        if (picked) {
+          this.commit(picked.value);
+          return;
+        }
+      }
+      this.showCommitted();
+      this.close();
       return;
     }
     if (event.key === 'Enter') {
@@ -1142,7 +1173,23 @@ function renderReviews(reviews: ReviewsPage): void {
     const empty = document.createElement('td');
     empty.colSpan = 6;
     empty.className = 'empty-cell';
-    empty.textContent = 'Nenhuma avaliação com esses filtros.';
+
+    const wrap = document.createElement('div');
+    wrap.className = 'empty-state';
+
+    const msg = document.createElement('p');
+    msg.textContent = 'Nenhuma avaliação com esses filtros.';
+
+    const clearBtn = document.createElement('button');
+    clearBtn.type = 'button';
+    clearBtn.className = 'btn btn-secondary btn-small';
+    clearBtn.textContent = 'Limpar filtros';
+    clearBtn.addEventListener('click', () => {
+      resetFilters();
+    });
+
+    wrap.append(msg, clearBtn);
+    empty.append(wrap);
     row.append(empty);
     reviewsBody.append(row);
   } else {
@@ -1152,6 +1199,22 @@ function renderReviews(reviews: ReviewsPage): void {
   pageRange.textContent = formatPageRange(reviews.offset, reviews.items.length, reviews.total);
   prevButton.disabled = reviews.offset <= 0;
   nextButton.disabled = reviews.offset + reviews.items.length >= reviews.total;
+}
+
+function syncSortHeaders(currentSort: Readonly<ReviewSort>): void {
+  for (const btn of document.querySelectorAll<HTMLButtonElement>('[data-sort-by]')) {
+    const th = btn.closest('th');
+    const key = btn.dataset.sortBy as ReviewSortBy | undefined;
+    if (key === currentSort.sortBy) {
+      btn.classList.add('is-active');
+      btn.dataset.sortDir = currentSort.sortDir;
+      th?.setAttribute('aria-sort', currentSort.sortDir === 'asc' ? 'ascending' : 'descending');
+    } else {
+      btn.classList.remove('is-active');
+      delete btn.dataset.sortDir;
+      th?.setAttribute('aria-sort', 'none');
+    }
+  }
 }
 
 function currentTheme(): 'dark' | 'light' {
@@ -1263,12 +1326,13 @@ async function load(): Promise<void> {
   const id = ++requestId;
   const currentFilters = filters.get();
   const currentPage = page.get();
+  const currentSort = reviewSort.get();
   setLoading();
 
   try {
     const [metrics, reviews, series] = await Promise.all([
       fetchMetrics(currentFilters),
-      fetchReviews(currentFilters, currentPage),
+      fetchReviews(currentFilters, currentPage, currentSort),
       fetchCharts(currentFilters),
     ]);
     if (id !== requestId) return;
@@ -1292,7 +1356,7 @@ async function load(): Promise<void> {
 
 function syncUrl(replace = false): void {
   if (syncingFromPopState) return;
-  const search = writeFiltersToSearch(filters.get(), page.get());
+  const search = writeFiltersToSearch(filters.get(), page.get(), reviewSort.get());
   const nextUrl = `${window.location.pathname}${search}${window.location.hash}`;
   const currentUrl = `${window.location.pathname}${window.location.search}${window.location.hash}`;
   if (nextUrl !== currentUrl) {
@@ -1323,6 +1387,21 @@ function bindControls(): void {
     });
   }
 
+  for (const btn of document.querySelectorAll<HTMLButtonElement>('[data-sort-by]')) {
+    btn.addEventListener('click', () => {
+      const key = btn.dataset.sortBy as ReviewSortBy | undefined;
+      if (!key) return;
+      const current = reviewSort.get();
+      if (current.sortBy !== key) {
+        reviewSort.set({ sortBy: key, sortDir: 'desc' });
+      } else if (current.sortDir === 'desc') {
+        reviewSort.set({ sortBy: key, sortDir: 'asc' });
+      } else {
+        reviewSort.set({ ...DEFAULT_SORT });
+      }
+    });
+  }
+
   for (const btn of document.querySelectorAll<HTMLButtonElement>('[data-preset]')) {
     btn.addEventListener('click', () => {
       const preset = btn.dataset.preset;
@@ -1330,6 +1409,17 @@ function bindControls(): void {
       if (isPresetActive(filters.get(), preset)) {
         resetFilters();
       } else {
+        syncingFromPopState = true;
+        try {
+          reviewSort.set(
+            preset === 'dissatisfaction'
+              ? { sortBy: 'votes_helpful', sortDir: 'desc' }
+              : { ...DEFAULT_SORT },
+          );
+          page.set(0);
+        } finally {
+          syncingFromPopState = false;
+        }
         filters.set({ ...PRESETS[preset as PresetKey] });
       }
     });
@@ -1357,18 +1447,35 @@ function bindControls(): void {
   });
 
   document.addEventListener('keydown', (event) => {
-    if (event.key !== '/' || event.ctrlKey || event.metaKey || event.altKey) return;
+    if (event.ctrlKey || event.metaKey || event.altKey) return;
     if (
       event.target instanceof HTMLElement &&
       (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA' || event.target.isContentEditable)
     ) {
       return;
     }
-    event.preventDefault();
-    if (sidebarQuery.matches && !sidebarPanel.classList.contains('is-open')) {
-      setMobileSidebar(true);
+    if (event.key === '/') {
+      event.preventDefault();
+      if (sidebarQuery.matches && !sidebarPanel.classList.contains('is-open')) {
+        setMobileSidebar(true);
+      }
+      appInput.focus();
+      return;
     }
-    appInput.focus();
+    if (event.key === '[') {
+      if (!prevButton.disabled) {
+        event.preventDefault();
+        prevButton.click();
+      }
+      return;
+    }
+    if (event.key === ']') {
+      if (!nextButton.disabled) {
+        event.preventDefault();
+        nextButton.click();
+      }
+      return;
+    }
   });
 }
 
@@ -1383,11 +1490,13 @@ function init(): void {
   const initial = readFiltersFromSearch(window.location.search);
   filters.set(initial.filters);
   page.set(initial.page);
+  reviewSort.set(initial.sort);
 
   filters.listen(() => {
     const current = filters.get();
     syncControls(current);
     renderFilterState(current);
+    syncSortHeaders(reviewSort.get());
     if (!syncingFromPopState && page.get() !== 0) {
       page.set(0);
       return;
@@ -1401,12 +1510,25 @@ function init(): void {
     void load();
   });
 
+  reviewSort.listen(() => {
+    syncSortHeaders(reviewSort.get());
+    if (syncingFromPopState) return;
+    if (page.get() !== 0) {
+      page.set(0);
+      return;
+    }
+    syncUrl();
+    void load();
+  });
+
   window.addEventListener('popstate', () => {
     syncingFromPopState = true;
     try {
       const next = readFiltersFromSearch(window.location.search);
       page.set(next.page);
       filters.set(next.filters);
+      reviewSort.set(next.sort);
+      syncSortHeaders(next.sort);
     } finally {
       syncingFromPopState = false;
     }
@@ -1414,6 +1536,7 @@ function init(): void {
 
   syncControls(filters.get());
   renderFilterState(filters.get());
+  syncSortHeaders(reviewSort.get());
   syncUrl(true);
   void load();
 }

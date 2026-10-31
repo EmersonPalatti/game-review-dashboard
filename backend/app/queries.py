@@ -16,6 +16,8 @@ from backend.app.schemas import (
     ReviewFilters,
     ReviewItem,
     ReviewListResponse,
+    ReviewSortBy,
+    SortDir,
 )
 from backend.app.transform import PLAYTIME_BUCKETS, PLAYTIME_LABELS
 
@@ -152,13 +154,28 @@ def list_reviews(
     filters: ReviewFilters,
     limit: int,
     offset: int,
+    sort_by: ReviewSortBy = "created_at",
+    sort_dir: SortDir = "desc",
 ) -> ReviewListResponse:
+    if sort_by == "votes_helpful":
+        primary = Review.votes_helpful.asc() if sort_dir == "asc" else Review.votes_helpful.desc()
+        order_clauses = [primary, Review.timestamp_created.desc(), Review.review_id.desc()]
+    elif sort_by == "playtime_hours":
+        nulls_last = case((Review.playtime_at_review.is_(None), 1), else_=0).asc()
+        primary = Review.playtime_at_review.asc() if sort_dir == "asc" else Review.playtime_at_review.desc()
+        order_clauses = [nulls_last, primary, Review.timestamp_created.desc(), Review.review_id.desc()]
+    else:
+        if sort_dir == "asc":
+            order_clauses = [Review.timestamp_created.asc(), Review.review_id.asc()]
+        else:
+            order_clauses = [Review.timestamp_created.desc(), Review.review_id.desc()]
+
     filtered = apply_filters(select(Review), filters)
     total = session.scalar(
         apply_filters(select(func.count()).select_from(Review), filters)
     )
     rows = session.scalars(
-        filtered.order_by(Review.timestamp_created.desc(), Review.review_id.desc())
+        filtered.order_by(*order_clauses)
         .limit(limit)
         .offset(offset)
     ).all()

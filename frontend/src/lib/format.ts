@@ -73,5 +73,7 @@ export function formatDate(iso: string): string {
 }
 
 export function languageLabel(code: string): string {
-  return languageLabels[code] ?? code;
+  const mapped = languageLabels[code];
+  if (mapped) return mapped;
+  return code ? code.charAt(0).toUpperCase() + code.slice(1) : code;
 }

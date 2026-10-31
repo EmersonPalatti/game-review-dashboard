@@ -602,6 +602,29 @@ section[aria-label='Gráficos'] > .card::before {
   color: var(--ink);
 }
 
+.field-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.shortcut-hint {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--paper);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1;
+  color: var(--muted);
+}
+
 .field-control {
   width: 100%;
   min-height: 44px;
@@ -632,7 +655,7 @@ section[aria-label='Gráficos'] > .card::before {
 
 /* O trilho recorta o que passa da caixa. O anel fica dentro da borda. */
 .field-control:focus-visible {
-  outline: 2px solid var(--ink);
+  outline: 2px solid var(--accent);
   outline-offset: -2px;
 }
 
@@ -958,6 +981,52 @@ html.dark .when-dark {
   text-align: right;
 }
 
+.th-sort {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  padding: 2px 4px;
+  margin: -2px -4px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  transition:
+    color var(--fast) var(--ease),
+    background-color var(--fast) var(--ease);
+}
+
+.th-sort:hover {
+  color: var(--ink);
+  background: var(--raised);
+}
+
+.th-sort.is-active {
+  color: var(--accent);
+  font-weight: 500;
+}
+
+.th-sort-icon {
+  flex: none;
+  width: 12px;
+  height: 12px;
+  opacity: 0.55;
+  transition: opacity var(--fast) var(--ease);
+}
+
+.th-sort:hover .th-sort-icon,
+.th-sort.is-active .th-sort-icon {
+  opacity: 1;
+}
+
+.th-sort[data-sort-dir='desc'] .sort-up,
+.th-sort[data-sort-dir='asc'] .sort-down {
+  opacity: 0.25;
+}
+
 .sheet td:nth-child(4),
 .sheet td:nth-child(5) {
   font-family: var(--font-mono);
@@ -1098,6 +1167,15 @@ html.dark .when-dark {
   text-align: center;
 }
 
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 0;
+}
+
 ::view-transition-old(root),
 ::view-transition-new(root) {
   animation: none;
@@ -1127,6 +1205,8 @@ html[data-theme-reveal='active']::view-transition-new(root) {
   .card,
   .sheet,
   .sheet td,
+  .th-sort,
+  .th-sort-icon,
   .rank-row,
   .rank-fill,
   .combo-menu,

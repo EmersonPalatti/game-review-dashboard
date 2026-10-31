@@ -6,7 +6,14 @@ from sqlalchemy.orm import Session
 
 from backend.app.database import get_db, init_db
 from backend.app.queries import charts, list_reviews, metrics
-from backend.app.schemas import ChartsResponse, MetricsResponse, ReviewFilters, ReviewListResponse
+from backend.app.schemas import (
+    ChartsResponse,
+    MetricsResponse,
+    ReviewFilters,
+    ReviewListResponse,
+    ReviewSortBy,
+    SortDir,
+)
 from backend.app.transform import PLAYTIME_BUCKETS
 
 
@@ -82,6 +89,8 @@ def get_reviews(
     filters: ReviewFilters = Depends(parse_filters),
     limit: int = Query(default=20, ge=1, le=100),
     offset: int = Query(default=0, ge=0),
+    sort_by: ReviewSortBy = Query(default="created_at"),
+    sort_dir: SortDir = Query(default="desc"),
     db: Session = Depends(get_db),
 ) -> ReviewListResponse:
-    return list_reviews(db, filters, limit, offset)
+    return list_reviews(db, filters, limit, offset, sort_by=sort_by, sort_dir=sort_dir)

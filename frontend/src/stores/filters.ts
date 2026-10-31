@@ -54,9 +54,24 @@ export const filters = atom<Filters>({ ...initialFilters });
 export const page = atom(0);
 export const PAGE_SIZE = 20;
 
+export type ReviewSortBy = 'created_at' | 'votes_helpful' | 'playtime_hours';
+export type SortDir = 'asc' | 'desc';
+export type ReviewSort = {
+  sortBy: ReviewSortBy;
+  sortDir: SortDir;
+};
+
+export const DEFAULT_SORT: ReviewSort = {
+  sortBy: 'created_at',
+  sortDir: 'desc',
+};
+
+export const reviewSort = atom<ReviewSort>({ ...DEFAULT_SORT });
+
 export function resetFilters(): void {
-  filters.set({ ...initialFilters });
+  reviewSort.set({ ...DEFAULT_SORT });
   page.set(0);
+  filters.set({ ...initialFilters });
 }
 
 function parseTri(value: string | null): Tri {
@@ -65,7 +80,21 @@ function parseTri(value: string | null): Tri {
   return 'all';
 }
 
-export function readFiltersFromSearch(search: string): { filters: Filters; page: number } {
+function parseSortBy(value: string | null): ReviewSortBy {
+  if (value === 'votes_helpful' || value === 'playtime_hours') return value;
+  return 'created_at';
+}
+
+function parseSortDir(value: string | null): SortDir {
+  if (value === 'asc') return 'asc';
+  return 'desc';
+}
+
+export function readFiltersFromSearch(search: string): {
+  filters: Filters;
+  page: number;
+  sort: ReviewSort;
+} {
   const params = new URLSearchParams(search);
 
   const rawAppId = params.get('app_id');
@@ -93,10 +122,18 @@ export function readFiltersFromSearch(search: string): { filters: Filters; page:
       playtime,
     },
     page: pageNumber,
+    sort: {
+      sortBy: parseSortBy(params.get('sort_by')),
+      sortDir: parseSortDir(params.get('sort_dir')),
+    },
   };
 }
 
-export function writeFiltersToSearch(current: Readonly<Filters>, currentPage: number): string {
+export function writeFiltersToSearch(
+  current: Readonly<Filters>,
+  currentPage: number,
+  currentSort: Readonly<ReviewSort> = DEFAULT_SORT,
+): string {
   const params = new URLSearchParams();
 
   if (current.appId !== null) {
@@ -129,6 +166,11 @@ export function writeFiltersToSearch(current: Readonly<Filters>, currentPage: nu
 
   if (currentPage > 0) {
     params.set('page', String(currentPage));
+  }
+
+  if (currentSort.sortBy !== DEFAULT_SORT.sortBy || currentSort.sortDir !== DEFAULT_SORT.sortDir) {
+    params.set('sort_by', currentSort.sortBy);
+    params.set('sort_dir', currentSort.sortDir);
   }
 
   const query = params.toString();

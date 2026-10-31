@@ -319,6 +319,55 @@ def test_reviews_pagination(client):
     assert tail_items[1]["playtime_at_review_hours"] is None
 
 
+def test_reviews_sorting(client):
+    helpful_desc = client.get(
+        "/api/reviews", params={"sort_by": "votes_helpful", "sort_dir": "desc"}
+    )
+    assert helpful_desc.status_code == 200
+    assert [item["review_id"] for item in helpful_desc.json()["items"]] == [
+        ID_NULL,
+        ID_H1,
+        ID_LT1,
+        ID_H5,
+    ]
+
+    helpful_asc = client.get(
+        "/api/reviews", params={"sort_by": "votes_helpful", "sort_dir": "asc"}
+    )
+    assert helpful_asc.status_code == 200
+    assert [item["review_id"] for item in helpful_asc.json()["items"]] == [
+        ID_H5,
+        ID_LT1,
+        ID_H1,
+        ID_NULL,
+    ]
+
+    playtime_desc = client.get(
+        "/api/reviews", params={"sort_by": "playtime_hours", "sort_dir": "desc"}
+    )
+    assert playtime_desc.status_code == 200
+    assert [item["review_id"] for item in playtime_desc.json()["items"]] == [
+        ID_H5,
+        ID_H1,
+        ID_LT1,
+        ID_NULL,
+    ]
+
+    playtime_asc = client.get(
+        "/api/reviews", params={"sort_by": "playtime_hours", "sort_dir": "asc"}
+    )
+    assert playtime_asc.status_code == 200
+    assert [item["review_id"] for item in playtime_asc.json()["items"]] == [
+        ID_LT1,
+        ID_H1,
+        ID_H5,
+        ID_NULL,
+    ]
+
+    invalid = client.get("/api/reviews", params={"sort_by": "invalid"})
+    assert invalid.status_code == 422
+
+
 def test_charts_follow_filters(client):
     response = client.get("/api/charts")
     assert response.status_code == 200

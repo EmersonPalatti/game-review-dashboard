@@ -1,4 +1,4 @@
-import { PAGE_SIZE, type Filters, type Tri } from '../stores/filters';
+import { DEFAULT_SORT, PAGE_SIZE, type Filters, type ReviewSort, type Tri } from '../stores/filters';
 
 export type GameMetric = {
   app_id: number;
@@ -117,10 +117,18 @@ export function fetchCharts(current: Readonly<Filters>): Promise<Charts> {
   return requestJson<Charts>(query ? `/api/charts?${query}` : '/api/charts');
 }
 
-export function fetchReviews(current: Readonly<Filters>, pageIndex: number): Promise<ReviewsPage> {
+export function fetchReviews(
+  current: Readonly<Filters>,
+  pageIndex: number,
+  sort: Readonly<ReviewSort> = DEFAULT_SORT,
+): Promise<ReviewsPage> {
   const params = new URLSearchParams();
   appendFilters(params, current);
   params.set('limit', String(PAGE_SIZE));
   params.set('offset', String(pageIndex * PAGE_SIZE));
+  if (sort.sortBy !== DEFAULT_SORT.sortBy || sort.sortDir !== DEFAULT_SORT.sortDir) {
+    params.set('sort_by', sort.sortBy);
+    params.set('sort_dir', sort.sortDir);
+  }
   return requestJson<ReviewsPage>(`/api/reviews?${params.toString()}`);
 }

@@ -1,4 +1,9 @@
+from typing import Literal
+
 from pydantic import BaseModel
+
+ReviewSortBy = Literal["created_at", "votes_helpful", "playtime_hours"]
+SortDir = Literal["asc", "desc"]
 
 
 class ReviewFilters(BaseModel):

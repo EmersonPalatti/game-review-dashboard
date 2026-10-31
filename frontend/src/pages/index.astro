@@ -85,7 +85,10 @@ import RailIcon from '../components/RailIcon.astro';
                   </RailIcon>
                   <span class="sidebar-reveal">
                     <span class="sidebar-reveal-inner field">
-                      <label for="filter-app" class="field-label">Jogo</label>
+                      <div class="field-label-row">
+                        <label for="filter-app" class="field-label">Jogo</label>
+                        <kbd class="shortcut-hint" aria-hidden="true" title="Atalho de teclado: /">/</kbd>
+                      </div>
                       <div class="combo">
                         <input
                           id="filter-app"
@@ -222,7 +225,7 @@ import RailIcon from '../components/RailIcon.astro';
                     <span class="sidebar-reveal-inner field">
                       <span class="field-label">Recebido de graça</span>
                       <div class="seg-control" role="group" aria-label="Recebido de graça">
-                        <button type="button" class="seg-btn" data-tri-filter="receivedForFree" data-tri-value="all" aria-pressed="true">Todos</button>
+                        <button type="button" class="seg-btn" data-tri-filter="receivedForFree" data-tri-value="all" aria-pressed="true">Todas</button>
                         <button type="button" class="seg-btn" data-tri-filter="receivedForFree" data-tri-value="yes" aria-pressed="false">Sim</button>
                         <button type="button" class="seg-btn" data-tri-filter="receivedForFree" data-tri-value="no" aria-pressed="false">Não</button>
                       </div>
@@ -245,7 +248,7 @@ import RailIcon from '../components/RailIcon.astro';
                     <span class="sidebar-reveal-inner field">
                       <span class="field-label">Acesso antecipado</span>
                       <div class="seg-control" role="group" aria-label="Acesso antecipado">
-                        <button type="button" class="seg-btn" data-tri-filter="earlyAccess" data-tri-value="all" aria-pressed="true">Todos</button>
+                        <button type="button" class="seg-btn" data-tri-filter="earlyAccess" data-tri-value="all" aria-pressed="true">Todas</button>
                         <button type="button" class="seg-btn" data-tri-filter="earlyAccess" data-tri-value="yes" aria-pressed="false">Sim</button>
                         <button type="button" class="seg-btn" data-tri-filter="earlyAccess" data-tri-value="no" aria-pressed="false">Não</button>
                       </div>
@@ -364,9 +367,25 @@ import RailIcon from '../components/RailIcon.astro';
                   <th scope="col" class="w-[16%]">Jogo</th>
                   <th scope="col" class="w-[12%]">Idioma</th>
                   <th scope="col" class="w-[10%]">Recomendação</th>
-                  <th scope="col" class="w-[9%]">Horas</th>
-                  <th scope="col" class="w-[9%]">Votos úteis</th>
-                  <th scope="col" class="w-[44%]">Trecho</th>
+                  <th scope="col" class="w-[10%]" aria-sort="none">
+                    <button type="button" class="th-sort" data-sort-by="playtime_hours" title="Ordenar por horas jogadas">
+                      <span>Horas</span>
+                      <svg class="th-sort-icon" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path class="sort-up" d="m3.5 4.5 2.5-2.5 2.5 2.5"></path>
+                        <path class="sort-down" d="m3.5 7.5 2.5 2.5 2.5-2.5"></path>
+                      </svg>
+                    </button>
+                  </th>
+                  <th scope="col" class="w-[11%]" aria-sort="none">
+                    <button type="button" class="th-sort" data-sort-by="votes_helpful" title="Ordenar por votos úteis">
+                      <span>Votos&#160;úteis</span>
+                      <svg class="th-sort-icon" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path class="sort-up" d="m3.5 4.5 2.5-2.5 2.5 2.5"></path>
+                        <path class="sort-down" d="m3.5 7.5 2.5 2.5 2.5-2.5"></path>
+                      </svg>
+                    </button>
+                  </th>
+                  <th scope="col" class="w-[41%]">Trecho</th>
                 </tr>
               </thead>
               <tbody id="reviews-body"></tbody>
@@ -375,8 +394,8 @@ import RailIcon from '../components/RailIcon.astro';
           <nav class="flex flex-wrap items-center justify-between gap-3" aria-label="Paginação">
             <p id="page-range" class="meta font-mono tabular-nums">—</p>
             <div class="flex gap-2">
-              <button id="page-prev" type="button" class="btn btn-secondary btn-small" disabled>Anterior</button>
-              <button id="page-next" type="button" class="btn btn-secondary btn-small" disabled>Próxima</button>
+              <button id="page-prev" type="button" class="btn btn-secondary btn-small" disabled aria-keyshortcuts="[" title="Página anterior ([)">Anterior</button>
+              <button id="page-next" type="button" class="btn btn-secondary btn-small" disabled aria-keyshortcuts="]" title="Próxima página (])">Próxima</button>
             </div>
           </nav>
           <p class="meta">Base higienizada: partição 1:1 das 4 tabelas do Kaggle · underflow uint32 corrigido em votos engraçados · resumo truncado em 280&#160;caracteres.</p>
