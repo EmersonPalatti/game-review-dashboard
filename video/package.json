@@ -1,0 +1,28 @@
+{
+  "name": "game-review-showcase-video",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "build": "remotion bundle",
+    "still": "remotion still",
+    "capture": "tsx capture/record.ts",
+    "render:showcase": "remotion render src/index.ts Showcase ../assets/showcase.mp4 --gl=angle",
+    "render:overview": "remotion render src/index.ts Overview ../assets/overview.mp4 --gl=angle"
+  },
+  "dependencies": {
+    "@fontsource/ibm-plex-mono": "^5.3.0",
+    "@fontsource/ibm-plex-sans": "^5.3.0",
+    "@remotion/bundler": "^4.0.285",
+    "@remotion/cli": "^4.0.285",
+    "@remotion/renderer": "^4.0.285",
+    "playwright": "^1.50.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "remotion": "^4.0.285"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.0"
+  }
+}

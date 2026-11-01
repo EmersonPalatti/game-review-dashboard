@@ -407,6 +407,18 @@ def test_charts_follow_filters(client):
     assert alpha.status_code == 200
     assert alpha.json()["games"] == [{"app_name": "Alpha", "review_count": 2}]
 
+    # Crossfilter clássico: ao filtrar por playtime_bucket, a distribuição de playtime
+    # preserva todas as faixas (para manter as 8 barras visíveis e atenuadas no gráfico),
+    # enquanto games, languages e months são filtrados.
+    filtered_playtime = client.get("/api/charts", params={"playtime_bucket": "lt1"})
+    assert filtered_playtime.status_code == 200
+    fp_body = filtered_playtime.json()
+    fp_by_key = {point["key"]: point for point in fp_body["playtime"]}
+    assert fp_by_key["lt1"]["review_count"] == 1
+    assert fp_by_key["h1_2"]["review_count"] == 1
+    assert fp_by_key["h5_10"]["review_count"] == 1
+    assert fp_body["games"] == [{"app_name": "Alpha", "review_count": 1}]
+
 
 @pytest.mark.parametrize("path", ["/api/metrics", "/api/summary", "/api/reviews", "/api/charts"])
 def test_invalid_playtime_bucket_returns_422(client, path):

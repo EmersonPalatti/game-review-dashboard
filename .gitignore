@@ -8,20 +8,43 @@ wheels/
 
 # Virtual environments
 .venv
+venv/
+env/
 
 # Data files
 data/
 *.csv
 
+# SQLite Database
+backend/data/*.db
+
 # Jupyter checkpoints
 .ipynb_checkpoints/
 
-# Dashboard
-node_modules/
-frontend/.astro/
-backend/data/*.db
-.pytest_cache/
+# Environment and secrets
 .env
+.env.*
+!.env.example
+
+# Caches and testing
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# OS and Editor configurations
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Frontend (Astro / Node)
+node_modules/
+frontend/node_modules/
+frontend/.astro/
+frontend/dist/
+
+# Video (Remotion / Captures)
 video/node_modules/
+video/.remotion/
 video/out/
 video/captures/

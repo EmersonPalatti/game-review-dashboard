@@ -1,0 +1,4666 @@
+{
+  "fps": 60,
+  "width": 1170,
+  "height": 2532,
+  "totalFrames": 420,
+  "durationSeconds": 7,
+  "frames": [
+    {
+      "frame": 0,
+      "cursor": {
+        "x": 585,
+        "y": 1266,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 1,
+      "cursor": {
+        "x": 585,
+        "y": 1266,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 2,
+      "cursor": {
+        "x": 585,
+        "y": 1266,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 3,
+      "cursor": {
+        "x": 585,
+        "y": 1266,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 4,
+      "cursor": {
+        "x": 585,
+        "y": 1266,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 5,
+      "cursor": {
+        "x": 585,
+        "y": 1266,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 6,
+      "cursor": {
+        "x": 585,
+        "y": 1266,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 7,
+      "cursor": {
+        "x": 585,
+        "y": 1266,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 8,
+      "cursor": {
+        "x": 585,
+        "y": 1266,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 9,
+      "cursor": {
+        "x": 585,
+        "y": 1266,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 10,
+      "cursor": {
+        "x": 585,
+        "y": 1266,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 11,
+      "cursor": {
+        "x": 585,
+        "y": 1266,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 12,
+      "cursor": {
+        "x": 585,
+        "y": 1266,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 13,
+      "cursor": {
+        "x": 585,
+        "y": 1266,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 14,
+      "cursor": {
+        "x": 585,
+        "y": 1266,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 15,
+      "cursor": {
+        "x": 585,
+        "y": 1266,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 16,
+      "cursor": {
+        "x": 585,
+        "y": 1266,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 17,
+      "cursor": {
+        "x": 585,
+        "y": 1266,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 18,
+      "cursor": {
+        "x": 585,
+        "y": 1266,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 19,
+      "cursor": {
+        "x": 585,
+        "y": 1266,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 20,
+      "cursor": {
+        "x": 585,
+        "y": 1266,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 21,
+      "cursor": {
+        "x": 585,
+        "y": 1266,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 22,
+      "cursor": {
+        "x": 585,
+        "y": 1266,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 23,
+      "cursor": {
+        "x": 585,
+        "y": 1266,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 24,
+      "cursor": {
+        "x": 585,
+        "y": 1266,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 25,
+      "cursor": {
+        "x": 585,
+        "y": 1266,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 26,
+      "cursor": {
+        "x": 585,
+        "y": 1266,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 27,
+      "cursor": {
+        "x": 585,
+        "y": 1266,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 28,
+      "cursor": {
+        "x": 585,
+        "y": 1266,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 29,
+      "cursor": {
+        "x": 585,
+        "y": 1266,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 30,
+      "cursor": {
+        "x": 585,
+        "y": 1266,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 31,
+      "cursor": {
+        "x": 585,
+        "y": 1266,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 32,
+      "cursor": {
+        "x": 585,
+        "y": 1266,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 33,
+      "cursor": {
+        "x": 585,
+        "y": 1266,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 34,
+      "cursor": {
+        "x": 585,
+        "y": 1266,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 35,
+      "cursor": {
+        "x": 585,
+        "y": 1266,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 36,
+      "cursor": {
+        "x": 585,
+        "y": 1266,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 37,
+      "cursor": {
+        "x": 585,
+        "y": 1266,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 38,
+      "cursor": {
+        "x": 585,
+        "y": 1266,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 39,
+      "cursor": {
+        "x": 585,
+        "y": 1266,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 40,
+      "cursor": {
+        "x": 585,
+        "y": 1266,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 41,
+      "cursor": {
+        "x": 585,
+        "y": 1266,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 42,
+      "cursor": {
+        "x": 585,
+        "y": 1266,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 43,
+      "cursor": {
+        "x": 585,
+        "y": 1266,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 44,
+      "cursor": {
+        "x": 585,
+        "y": 1266,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 45,
+      "cursor": {
+        "x": 585,
+        "y": 1266,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 46,
+      "cursor": {
+        "x": 585,
+        "y": 1266,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 47,
+      "cursor": {
+        "x": 585,
+        "y": 1266,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 48,
+      "cursor": {
+        "x": 585,
+        "y": 1266,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 49,
+      "cursor": {
+        "x": 585,
+        "y": 1266,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 50,
+      "cursor": {
+        "x": 585,
+        "y": 1266,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 51,
+      "cursor": {
+        "x": 585,
+        "y": 1266,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 52,
+      "cursor": {
+        "x": 585,
+        "y": 1266,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 53,
+      "cursor": {
+        "x": 585,
+        "y": 1266,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 54,
+      "cursor": {
+        "x": 585,
+        "y": 1266,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 55,
+      "cursor": {
+        "x": 585,
+        "y": 1266,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 56,
+      "cursor": {
+        "x": 585,
+        "y": 1266,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 57,
+      "cursor": {
+        "x": 585,
+        "y": 1266,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 58,
+      "cursor": {
+        "x": 585,
+        "y": 1266,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 59,
+      "cursor": {
+        "x": 585,
+        "y": 1266,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 60,
+      "cursor": {
+        "x": 1056,
+        "y": 71,
+        "down": true,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 61,
+      "cursor": {
+        "x": 1056,
+        "y": 71,
+        "down": true,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 62,
+      "cursor": {
+        "x": 1056,
+        "y": 71,
+        "down": true,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 63,
+      "cursor": {
+        "x": 1056,
+        "y": 71,
+        "down": true,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 64,
+      "cursor": {
+        "x": 1056,
+        "y": 71,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 65,
+      "cursor": {
+        "x": 1056,
+        "y": 71,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 66,
+      "cursor": {
+        "x": 1056,
+        "y": 71,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 67,
+      "cursor": {
+        "x": 1056,
+        "y": 71,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 68,
+      "cursor": {
+        "x": 1056,
+        "y": 71,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 69,
+      "cursor": {
+        "x": 1056,
+        "y": 71,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 70,
+      "cursor": {
+        "x": 1056,
+        "y": 71,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 71,
+      "cursor": {
+        "x": 1056,
+        "y": 71,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 72,
+      "cursor": {
+        "x": 1056,
+        "y": 71,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 73,
+      "cursor": {
+        "x": 1056,
+        "y": 71,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 74,
+      "cursor": {
+        "x": 1056,
+        "y": 71,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 75,
+      "cursor": {
+        "x": 1056,
+        "y": 71,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 76,
+      "cursor": {
+        "x": 1056,
+        "y": 71,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 77,
+      "cursor": {
+        "x": 1056,
+        "y": 71,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 78,
+      "cursor": {
+        "x": 1056,
+        "y": 71,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 79,
+      "cursor": {
+        "x": 1056,
+        "y": 71,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 80,
+      "cursor": {
+        "x": 1056,
+        "y": 71,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 81,
+      "cursor": {
+        "x": 1056,
+        "y": 71,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 82,
+      "cursor": {
+        "x": 1056,
+        "y": 71,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 83,
+      "cursor": {
+        "x": 1056,
+        "y": 71,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 84,
+      "cursor": {
+        "x": 1056,
+        "y": 71,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 85,
+      "cursor": {
+        "x": 1056,
+        "y": 71,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 86,
+      "cursor": {
+        "x": 1056,
+        "y": 71,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 87,
+      "cursor": {
+        "x": 1056,
+        "y": 71,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 88,
+      "cursor": {
+        "x": 1056,
+        "y": 71,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 89,
+      "cursor": {
+        "x": 1056,
+        "y": 71,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 90,
+      "cursor": {
+        "x": 1056,
+        "y": 71,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 91,
+      "cursor": {
+        "x": 1056,
+        "y": 71,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 92,
+      "cursor": {
+        "x": 1056,
+        "y": 71,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 93,
+      "cursor": {
+        "x": 1056,
+        "y": 71,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 94,
+      "cursor": {
+        "x": 1056,
+        "y": 71,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 95,
+      "cursor": {
+        "x": 1056,
+        "y": 71,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 96,
+      "cursor": {
+        "x": 1056,
+        "y": 71,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 97,
+      "cursor": {
+        "x": 1056,
+        "y": 71,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 98,
+      "cursor": {
+        "x": 1056,
+        "y": 71,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 99,
+      "cursor": {
+        "x": 1056,
+        "y": 71,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 100,
+      "cursor": {
+        "x": 1056,
+        "y": 71,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 101,
+      "cursor": {
+        "x": 1056,
+        "y": 71,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 102,
+      "cursor": {
+        "x": 1056,
+        "y": 71,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 103,
+      "cursor": {
+        "x": 1056,
+        "y": 71,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 104,
+      "cursor": {
+        "x": 1056,
+        "y": 71,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 105,
+      "cursor": {
+        "x": 1056,
+        "y": 71,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 106,
+      "cursor": {
+        "x": 1056,
+        "y": 71,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 107,
+      "cursor": {
+        "x": 1056,
+        "y": 71,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 108,
+      "cursor": {
+        "x": 1056,
+        "y": 71,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 109,
+      "cursor": {
+        "x": 1056,
+        "y": 71,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 110,
+      "cursor": {
+        "x": 1056,
+        "y": 71,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 111,
+      "cursor": {
+        "x": 1056,
+        "y": 71,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 112,
+      "cursor": {
+        "x": 1056,
+        "y": 71,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 113,
+      "cursor": {
+        "x": 1056,
+        "y": 71,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 114,
+      "cursor": {
+        "x": 1056,
+        "y": 71,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 115,
+      "cursor": {
+        "x": 1056,
+        "y": 71,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 116,
+      "cursor": {
+        "x": 1056,
+        "y": 71,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 117,
+      "cursor": {
+        "x": 1056,
+        "y": 71,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 118,
+      "cursor": {
+        "x": 1056,
+        "y": 71,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 119,
+      "cursor": {
+        "x": 1056,
+        "y": 71,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 120,
+      "cursor": {
+        "x": 1056,
+        "y": 71,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 121,
+      "cursor": {
+        "x": 1056,
+        "y": 71,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 122,
+      "cursor": {
+        "x": 1056,
+        "y": 71,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 123,
+      "cursor": {
+        "x": 1056,
+        "y": 71,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 124,
+      "cursor": {
+        "x": 1056,
+        "y": 71,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 125,
+      "cursor": {
+        "x": 1056,
+        "y": 71,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 126,
+      "cursor": {
+        "x": 1056,
+        "y": 71,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 127,
+      "cursor": {
+        "x": 1056,
+        "y": 71,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 128,
+      "cursor": {
+        "x": 1056,
+        "y": 71,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 129,
+      "cursor": {
+        "x": 1056,
+        "y": 71,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 130,
+      "cursor": {
+        "x": 1056,
+        "y": 71,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 131,
+      "cursor": {
+        "x": 1056,
+        "y": 71,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 132,
+      "cursor": {
+        "x": 1056,
+        "y": 71,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 133,
+      "cursor": {
+        "x": 1056,
+        "y": 71,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 134,
+      "cursor": {
+        "x": 1056,
+        "y": 71,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 135,
+      "cursor": {
+        "x": 1056,
+        "y": 71,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 136,
+      "cursor": {
+        "x": 627,
+        "y": 1422,
+        "down": true,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 137,
+      "cursor": {
+        "x": 627,
+        "y": 1422,
+        "down": true,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 138,
+      "cursor": {
+        "x": 627,
+        "y": 1422,
+        "down": true,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 139,
+      "cursor": {
+        "x": 627,
+        "y": 1422,
+        "down": true,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 140,
+      "cursor": {
+        "x": 627,
+        "y": 1422,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 141,
+      "cursor": {
+        "x": 627,
+        "y": 1422,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 142,
+      "cursor": {
+        "x": 627,
+        "y": 1422,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 143,
+      "cursor": {
+        "x": 627,
+        "y": 1422,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 144,
+      "cursor": {
+        "x": 627,
+        "y": 1422,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 145,
+      "cursor": {
+        "x": 627,
+        "y": 1422,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 146,
+      "cursor": {
+        "x": 627,
+        "y": 1422,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 147,
+      "cursor": {
+        "x": 627,
+        "y": 1422,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 148,
+      "cursor": {
+        "x": 627,
+        "y": 1422,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 149,
+      "cursor": {
+        "x": 627,
+        "y": 1422,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 150,
+      "cursor": {
+        "x": 627,
+        "y": 1422,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 151,
+      "cursor": {
+        "x": 627,
+        "y": 1422,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 152,
+      "cursor": {
+        "x": 627,
+        "y": 1422,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 153,
+      "cursor": {
+        "x": 627,
+        "y": 1422,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 154,
+      "cursor": {
+        "x": 627,
+        "y": 1422,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 155,
+      "cursor": {
+        "x": 627,
+        "y": 1422,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 156,
+      "cursor": {
+        "x": 627,
+        "y": 1422,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 157,
+      "cursor": {
+        "x": 627,
+        "y": 1422,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 158,
+      "cursor": {
+        "x": 627,
+        "y": 1422,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 159,
+      "cursor": {
+        "x": 627,
+        "y": 1422,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 160,
+      "cursor": {
+        "x": 627,
+        "y": 1422,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 161,
+      "cursor": {
+        "x": 627,
+        "y": 1422,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 162,
+      "cursor": {
+        "x": 627,
+        "y": 1422,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 163,
+      "cursor": {
+        "x": 627,
+        "y": 1422,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 164,
+      "cursor": {
+        "x": 627,
+        "y": 1422,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 165,
+      "cursor": {
+        "x": 627,
+        "y": 1422,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 166,
+      "cursor": {
+        "x": 627,
+        "y": 1422,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 167,
+      "cursor": {
+        "x": 627,
+        "y": 1422,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 168,
+      "cursor": {
+        "x": 627,
+        "y": 1422,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 169,
+      "cursor": {
+        "x": 627,
+        "y": 1422,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 170,
+      "cursor": {
+        "x": 627,
+        "y": 1422,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 171,
+      "cursor": {
+        "x": 627,
+        "y": 1422,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 172,
+      "cursor": {
+        "x": 627,
+        "y": 1422,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 173,
+      "cursor": {
+        "x": 627,
+        "y": 1422,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 174,
+      "cursor": {
+        "x": 627,
+        "y": 1422,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 175,
+      "cursor": {
+        "x": 627,
+        "y": 1422,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 176,
+      "cursor": {
+        "x": 627,
+        "y": 1422,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 177,
+      "cursor": {
+        "x": 627,
+        "y": 1422,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 178,
+      "cursor": {
+        "x": 627,
+        "y": 1422,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 179,
+      "cursor": {
+        "x": 627,
+        "y": 1422,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 180,
+      "cursor": {
+        "x": 627,
+        "y": 1422,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 181,
+      "cursor": {
+        "x": 627,
+        "y": 1422,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 182,
+      "cursor": {
+        "x": 627,
+        "y": 1422,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 183,
+      "cursor": {
+        "x": 627,
+        "y": 1422,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 184,
+      "cursor": {
+        "x": 627,
+        "y": 1422,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 185,
+      "cursor": {
+        "x": 627,
+        "y": 1422,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 186,
+      "cursor": {
+        "x": 627,
+        "y": 1422,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 187,
+      "cursor": {
+        "x": 627,
+        "y": 1422,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 188,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": true,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 189,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": true,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 190,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": true,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 191,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": true,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 192,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 193,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 194,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 195,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 196,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 197,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 198,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 199,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 200,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 201,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 202,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 203,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 204,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 205,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 206,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 207,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 208,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 209,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 210,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 211,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 212,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 213,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 214,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 215,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 216,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 217,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 218,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 219,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 220,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 221,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 222,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 223,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 224,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 225,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 226,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 227,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 228,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 229,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 230,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 231,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 232,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 233,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 234,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 235,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 236,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 237,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 238,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 239,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 240,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 241,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 242,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 243,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 244,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 245,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 246,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 247,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 248,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 249,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 250,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 251,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 252,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 253,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 254,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 255,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 256,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 257,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 258,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 259,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 260,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 261,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 262,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 263,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 264,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 265,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 266,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 267,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 268,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 269,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 270,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 271,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 272,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 273,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 274,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 275,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 276,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 277,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 278,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 279,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 280,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 281,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 282,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 283,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 284,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 285,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 286,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 287,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 288,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 289,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 290,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 0
+    },
+    {
+      "frame": 291,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 1
+    },
+    {
+      "frame": 292,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 2
+    },
+    {
+      "frame": 293,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 3
+    },
+    {
+      "frame": 294,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 4
+    },
+    {
+      "frame": 295,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 6
+    },
+    {
+      "frame": 296,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 9
+    },
+    {
+      "frame": 297,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 12
+    },
+    {
+      "frame": 298,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 16
+    },
+    {
+      "frame": 299,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 21
+    },
+    {
+      "frame": 300,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 27
+    },
+    {
+      "frame": 301,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 33
+    },
+    {
+      "frame": 302,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 41
+    },
+    {
+      "frame": 303,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 50
+    },
+    {
+      "frame": 304,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 60
+    },
+    {
+      "frame": 305,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 71
+    },
+    {
+      "frame": 306,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 83
+    },
+    {
+      "frame": 307,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 97
+    },
+    {
+      "frame": 308,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 113
+    },
+    {
+      "frame": 309,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 129
+    },
+    {
+      "frame": 310,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 148
+    },
+    {
+      "frame": 311,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 168
+    },
+    {
+      "frame": 312,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 190
+    },
+    {
+      "frame": 313,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 214
+    },
+    {
+      "frame": 314,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 239
+    },
+    {
+      "frame": 315,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 267
+    },
+    {
+      "frame": 316,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 296
+    },
+    {
+      "frame": 317,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 328
+    },
+    {
+      "frame": 318,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 362
+    },
+    {
+      "frame": 319,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 398
+    },
+    {
+      "frame": 320,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 437
+    },
+    {
+      "frame": 321,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 477
+    },
+    {
+      "frame": 322,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 521
+    },
+    {
+      "frame": 323,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 567
+    },
+    {
+      "frame": 324,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 615
+    },
+    {
+      "frame": 325,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 667
+    },
+    {
+      "frame": 326,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 721
+    },
+    {
+      "frame": 327,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 777
+    },
+    {
+      "frame": 328,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 837
+    },
+    {
+      "frame": 329,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 900
+    },
+    {
+      "frame": 330,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 963
+    },
+    {
+      "frame": 331,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 1023
+    },
+    {
+      "frame": 332,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 1079
+    },
+    {
+      "frame": 333,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 1133
+    },
+    {
+      "frame": 334,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 1185
+    },
+    {
+      "frame": 335,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 1233
+    },
+    {
+      "frame": 336,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 1279
+    },
+    {
+      "frame": 337,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 1323
+    },
+    {
+      "frame": 338,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 1363
+    },
+    {
+      "frame": 339,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 1402
+    },
+    {
+      "frame": 340,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 1438
+    },
+    {
+      "frame": 341,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 1472
+    },
+    {
+      "frame": 342,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 1504
+    },
+    {
+      "frame": 343,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 1533
+    },
+    {
+      "frame": 344,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 1561
+    },
+    {
+      "frame": 345,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 1586
+    },
+    {
+      "frame": 346,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 1610
+    },
+    {
+      "frame": 347,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 1632
+    },
+    {
+      "frame": 348,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 1652
+    },
+    {
+      "frame": 349,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 1671
+    },
+    {
+      "frame": 350,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 1688
+    },
+    {
+      "frame": 351,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 1703
+    },
+    {
+      "frame": 352,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 1717
+    },
+    {
+      "frame": 353,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 1729
+    },
+    {
+      "frame": 354,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 1740
+    },
+    {
+      "frame": 355,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 1750
+    },
+    {
+      "frame": 356,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 1759
+    },
+    {
+      "frame": 357,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 1767
+    },
+    {
+      "frame": 358,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 1773
+    },
+    {
+      "frame": 359,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 1779
+    },
+    {
+      "frame": 360,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 1784
+    },
+    {
+      "frame": 361,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 1788
+    },
+    {
+      "frame": 362,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 1791
+    },
+    {
+      "frame": 363,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 1794
+    },
+    {
+      "frame": 364,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 1796
+    },
+    {
+      "frame": 365,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 1797
+    },
+    {
+      "frame": 366,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 1798
+    },
+    {
+      "frame": 367,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 1799
+    },
+    {
+      "frame": 368,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 1800
+    },
+    {
+      "frame": 369,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 1800
+    },
+    {
+      "frame": 370,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 1800
+    },
+    {
+      "frame": 371,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 1800
+    },
+    {
+      "frame": 372,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 1800
+    },
+    {
+      "frame": 373,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 1800
+    },
+    {
+      "frame": 374,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 1800
+    },
+    {
+      "frame": 375,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 1800
+    },
+    {
+      "frame": 376,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 1800
+    },
+    {
+      "frame": 377,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 1800
+    },
+    {
+      "frame": 378,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 1800
+    },
+    {
+      "frame": 379,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 1800
+    },
+    {
+      "frame": 380,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 1800
+    },
+    {
+      "frame": 381,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 1800
+    },
+    {
+      "frame": 382,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 1800
+    },
+    {
+      "frame": 383,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 1800
+    },
+    {
+      "frame": 384,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 1800
+    },
+    {
+      "frame": 385,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 1800
+    },
+    {
+      "frame": 386,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 1800
+    },
+    {
+      "frame": 387,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 1800
+    },
+    {
+      "frame": 388,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 1800
+    },
+    {
+      "frame": 389,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 1800
+    },
+    {
+      "frame": 390,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 1800
+    },
+    {
+      "frame": 391,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 1800
+    },
+    {
+      "frame": 392,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 1800
+    },
+    {
+      "frame": 393,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 1800
+    },
+    {
+      "frame": 394,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 1800
+    },
+    {
+      "frame": 395,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 1800
+    },
+    {
+      "frame": 396,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 1800
+    },
+    {
+      "frame": 397,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 1800
+    },
+    {
+      "frame": 398,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 1800
+    },
+    {
+      "frame": 399,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 1800
+    },
+    {
+      "frame": 400,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 1800
+    },
+    {
+      "frame": 401,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 1800
+    },
+    {
+      "frame": 402,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 1800
+    },
+    {
+      "frame": 403,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 1800
+    },
+    {
+      "frame": 404,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 1800
+    },
+    {
+      "frame": 405,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 1800
+    },
+    {
+      "frame": 406,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 1800
+    },
+    {
+      "frame": 407,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 1800
+    },
+    {
+      "frame": 408,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 1800
+    },
+    {
+      "frame": 409,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 1800
+    },
+    {
+      "frame": 410,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 1800
+    },
+    {
+      "frame": 411,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 1800
+    },
+    {
+      "frame": 412,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 1800
+    },
+    {
+      "frame": 413,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 1800
+    },
+    {
+      "frame": 414,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 1800
+    },
+    {
+      "frame": 415,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 1800
+    },
+    {
+      "frame": 416,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 1800
+    },
+    {
+      "frame": 417,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 1800
+    },
+    {
+      "frame": 418,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 1800
+    },
+    {
+      "frame": 419,
+      "cursor": {
+        "x": 1032,
+        "y": 138,
+        "down": false,
+        "pointer": "touch",
+        "hidden": false
+      },
+      "scrollY": 1800
+    }
+  ],
+  "events": [
+    {
+      "frame": 0,
+      "type": "mark",
+      "name": "m_load"
+    },
+    {
+      "frame": 60,
+      "type": "mark",
+      "name": "m_open"
+    },
+    {
+      "frame": 60,
+      "type": "tap",
+      "name": "tap-sidebar-open"
+    },
+    {
+      "frame": 136,
+      "type": "mark",
+      "name": "m_filter"
+    },
+    {
+      "frame": 136,
+      "type": "tap",
+      "name": "tap-tri-filter-recommended-yes"
+    },
+    {
+      "frame": 188,
+      "type": "mark",
+      "name": "m_close"
+    },
+    {
+      "frame": 188,
+      "type": "tap",
+      "name": "tap-sidebar-close"
+    }
+  ]
+}

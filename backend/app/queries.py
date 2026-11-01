@@ -215,7 +215,8 @@ def charts(session: Session, filters: ReviewFilters) -> ChartsResponse:
                 0,
             ).label(f"{key}_pos")
         )
-    bucket_row = session.execute(apply_filters(select(*columns), filters)).one()
+    playtime_filters = filters.model_copy(update={"playtime_bucket": None})
+    bucket_row = session.execute(apply_filters(select(*columns), playtime_filters)).one()
     playtime = []
     for key in PLAYTIME_BUCKETS:
         count = int(getattr(bucket_row, f"{key}_n") or 0)

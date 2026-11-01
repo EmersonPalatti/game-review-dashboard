@@ -131,7 +131,7 @@ class SearchCombo {
       const option = event.target instanceof Element ? event.target.closest('[data-value]') : null;
       if (!(option instanceof HTMLElement)) return;
       this.commit(option.dataset.value ?? this.emptyOption.value);
-      this.input.focus();
+      this.input.blur();
     });
     window.addEventListener('resize', this.onReflow);
     document.addEventListener('scroll', this.onReflow, true);
@@ -483,6 +483,7 @@ const playtimeCombo = choiceCombo(
 );
 
 let requestId = 0;
+let busyTimer = 0;
 let gamesSignature = '';
 let languagesSignature = '';
 const appIdByName = new Map<string, number>();
@@ -1294,13 +1295,19 @@ function revealTheme(next: 'dark' | 'light'): void {
     transition = document.startViewTransition(() => {
       applyTheme(next);
     });
+    (window as unknown as { __themeTransition?: ViewTransition }).__themeTransition = transition;
   } catch {
     cleanup();
     if (currentTheme() !== next) applyTheme(next);
     return;
   }
 
-  transition.finished.finally(cleanup).catch(() => {});
+  transition.finished
+    .finally(() => {
+      cleanup();
+      delete (window as unknown as { __themeTransition?: unknown }).__themeTransition;
+    })
+    .catch(() => {});
   transition.ready
     .then(() => {
       themeReveal = root.animate(
@@ -1317,7 +1324,10 @@ function revealTheme(next: 'dark' | 'light'): void {
 }
 
 function setLoading(): void {
-  main.setAttribute('aria-busy', 'true');
+  window.clearTimeout(busyTimer);
+  busyTimer = window.setTimeout(() => {
+    main.setAttribute('aria-busy', 'true');
+  }, 180);
   delete main.dataset.error;
   errorBanner.hidden = true;
 }
@@ -1327,6 +1337,7 @@ async function load(): Promise<void> {
   const currentFilters = filters.get();
   const currentPage = page.get();
   const currentSort = reviewSort.get();
+  document.documentElement.dataset.fetching = 'true';
   setLoading();
 
   try {
@@ -1350,7 +1361,11 @@ async function load(): Promise<void> {
     loadErrorDetail.textContent = `${detail}Verifique se a API local está ativa em http://127.0.0.1:8000.`;
     errorBanner.hidden = false;
   } finally {
-    if (id === requestId) main.setAttribute('aria-busy', 'false');
+    if (id === requestId) {
+      window.clearTimeout(busyTimer);
+      main.setAttribute('aria-busy', 'false');
+      delete document.documentElement.dataset.fetching;
+    }
   }
 }
 
@@ -1480,6 +1495,7 @@ function bindControls(): void {
 }
 
 function init(): void {
+  document.documentElement.dataset.fetching = 'true';
   initCharts((bucket) => {
     const current = filters.get().playtime;
     patchFilters({ playtime: current === bucket ? 'all' : bucket });

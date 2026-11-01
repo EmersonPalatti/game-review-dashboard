@@ -1,26 +1,95 @@
-# Steam Game Reviews: análise exploratória de dados (1 milhão de reviews)
+# Steam Reviews Dashboard & Análise Exploratória (1M de Reviews)
 
-Análise de 1.000.000 de avaliações da Steam, de março de 2013 a janeiro de 2021, a partir do [Game Reviews Dataset](https://www.kaggle.com/datasets/sridharstreaks/game-reviews-dataset). A base cobre 59 jogos e 912.553 autores. O estudo mede a consistência entre as tabelas, a diferença entre quem recomenda e quem não recomenda, e o tempo de jogo.
+Painel analítico interativo e estudo de dados sobre **1.000.000 de avaliações da Steam** (março de 2013 a janeiro de 2021), derivado do [Game Reviews Dataset no Kaggle](https://www.kaggle.com/datasets/sridharstreaks/game-reviews-dataset). A base cobre **59 jogos** e **912.553 autores únicos**.
 
-A Steam é a principal loja digital de jogos para computador, com centenas de milhões de usuários ativos por mês e dezenas de milhares de títulos. A avaliação pesa na visibilidade do jogo, no algoritmo de recomendação e na compra.
+O projeto reúne duas entregas integradas:
+1. **Dashboard operacional de filtragem cruzada** (Astro, TypeScript, Tailwind CSS v4, Apache ECharts, Nanostores e FastAPI com SQLite) para exploração interativa em tempo real com recortes multidimensionais, KPIs dinâmicos, gráficos reativos e listagem paginada de avaliações.
+2. **Análise exploratória de dados e auditoria relacional** (`analysis.ipynb`), conduzida com o Gemini 4 Argon e subagentes Gemini 3.8 Flash (`AGENTS.md`), auditando as 4 partições relacionais 1:1, saneando anomalias extremas (como underflow de `uint32` e spams de copypasta) e investigando a dinâmica de recomendação e tempo de jogo.
 
-A análise é assistida por IA. O escopo ficou mais solto do que um roteiro fechado de perguntas: o teste era o que o Gemini 4 Argon recuperava dos CSV sem um dicionário de dados. Os subagentes `explorer` e `executor` usam o Gemini 3.8 Flash para ler os arquivos e escrever o notebook. O protocolo está em `AGENTS.md`.
+[![Demonstração do Dashboard e Análise](assets/overview.gif)](assets/overview.mp4)
 
-[![Resumo visual do experimento e principais achados](assets/overview.gif)](assets/overview.mp4)
+> 🎬 **Vídeos demonstrativos em alta definição (60 FPS):**
+> - 📺 [**Showcase Completo do Dashboard (`assets/showcase.mp4`)**](assets/showcase.mp4) — Tour interativo de 45s com filtragem cruzada em tempo real, rankings, presets analíticos, alternância de tema e experiência mobile.
+> - 📊 [**Visão Geral & Metodologia (`assets/overview.mp4`)**](assets/overview.mp4) — Resumo executivo dos desafios, arquitetura de dados e conclusões de negócio.
 
-## 1. Metodologia do experimento
+---
 
-O modelo da conversa principal é o Gemini 4 Argon. Em 13 de outubro de 2026, a Google o lançou para uso geral como modelo de fronteira para trabalho longo em código, finanças, direito e ciência. No [model card](https://deepmind.google/models/model-cards/gemini-4-argon/) daquele mês, o Argon lidera a tabela de comparação no [Vals Index](https://www.vals.ai/benchmarks/vals_index) (68,9%, contra 67,0% do Claude Opus 5.5 e 63,1% do GPT-6 Astra) e em Chartography, leitura de gráficos (71,6%, contra 71,0% e 66,3%). No [exame de análise de dados da Plotly](https://plotly.com/blog/gemini-4-argon-plotly-data-analytics-bench/), publicado no mesmo dia, o Argon acertou 41 de 43 questões (95%) e achou os 5 padrões escondidos na base, sem aviso para procurá-los. Até aquela data, só o GPT-6.1 Sol e o GPT-6 Astra tinham fechado os 5. O total de 41 não era o maior da prova: Sol e Astra fecharam 43 de 43.
+## Sumário
 
-Em 30 de outubro de 2026 o [Gemini 4 Carbon](https://blog.google/innovation-and-ai/models-and-research/gemini-models/introducing-gemini-4-carbon/), anunciado em 28 de outubro, lidera o Artificial Analysis Intelligence Index v5.0 com 59, contra 50 do Argon, na [tabela da DeepMind](https://deepmind.google/models/gemini/). Nesse dia ele ainda não está no uso geral. A Google libera o Carbon primeiro a um grupo de defensores de cibersegurança pelo [Fairwind](https://deepmind.google/fairwind-program/), e só depois a desenvolvedores, empresas e consumidores, sem data publicada. Para quem usa o Gemini no produto, o Argon, aberto ao público desde 13 de outubro, é o modelo de fronteira acessível. Esta análise ficou nele.
+- [1. Recursos do Dashboard](#1-recursos-do-dashboard)
+- [2. Arquitetura da Solução](#2-arquitetura-da-solução)
+- [3. Metodologia do Experimento e Agentes](#3-metodologia-do-experimento-e-agentes)
+- [4. Estrutura do Repositório](#4-estrutura-do-repositório)
+- [5. Modelagem Relacional e Saneamento de Dados](#5-modelagem-relacional-e-saneamento-de-dados)
+- [6. Principais Descobertas de Negócio](#6-principais-descobertas-de-negócio)
+- [7. Como Executar o Projeto](#7-como-executar-o-projeto)
+- [8. Stack Tecnológica](#8-stack-tecnológica)
+- [9. Autor](#9-autor)
 
-O experimento daqui não usa a nota desses exames. O `AGENTS.md` e o prompt inicial não descrevem as colunas nem a relação entre as tabelas. O arquivo só define a delegação: quando chamar um subagente, o que o prompt leva (objetivo, arquivos, critério de pronto e comando de verificação) e o que volta. O `explorer` devolve caminhos, linhas e um resumo. O `executor` devolve os arquivos alterados e o log da verificação.
+---
 
-Lendo os arquivos, o Argon e o Flash chegaram à partição vertical 1:1 por `review_id`, ao underflow `uint32` em `votes_funny`, ao spam de copypasta e ao efeito da janela de reembolso de 2 horas. Nesse critério, o experimento fechou: os quatro achados saíram dos CSV, sem dicionário, e a revisão conferiu o resultado nos arquivos.
+## 1. Recursos do Dashboard
 
-Em produção, o `AGENTS.md` leva uma descrição curta dos dados: granularidade, regras de negócio já conhecidas e a pergunta da análise. Neste estudo essa descrição ficou de fora.
+O painel foi projetado para permitir que analistas, engenheiros e recrutadores técnicos inspecionem os dados reais higienizados com tempo de resposta imediato, sem precisar rodar o notebook manualmente:
 
-Na mesma conversa, um agente só acumula leitura integral de arquivo, saída do Pandas, traceback e o JSON do notebook. Nesta análise, o Argon escreveu um prompt fechado para cada tarefa. O subagente começou sem o histórico anterior. O `explorer` só leu. O `executor` gravou o `analysis.ipynb`, subiu o kernel do JupyterLab e rodou a verificação. O Argon conferiu o relatório em `analysis.ipynb` e neste `README.md` antes de aceitar. Métrica divergente reabria o ciclo. No sanity check, o Flash escreveu e rodou o script. O que entrava no teste, e a leitura do resultado, ficaram com o Argon.
+- **Filtragem cruzada em 7 dimensões**: Recorte simultâneo por jogo (`app_id`), idioma (`language`), status de recomendação (`recommended`), compra direta na loja Steam (`steam_purchase`), jogo recebido gratuitamente (`received_for_free`), avaliações em Acesso Antecipado (`early_access`) e faixa de horas jogadas na publicação (`playtime_bucket`).
+- **Sincronização reativa de métricas**:
+  - **4 KPIs em tempo real**: total de avaliações, taxa global de recomendação, jogos distintos e contas de autores no recorte.
+  - **Evolução temporal (ECharts)**: série mensal com volume de avaliações de março de 2013 a janeiro de 2021.
+  - **Taxa de aprovação por faixa de horas (ECharts)**: visualização da inflexão na janela de reembolso de 2 horas da Valve.
+  - **Rankings bidirecionais**: Top jogos por volume de avaliações e ranking de aprovação por idioma.
+  - **Tabela tabular paginada**: trechos reais das avaliações com ordenação dinâmica por horas jogadas ou votos úteis e navegação paginada (20 itens por página).
+- **Presets guiados por hipóteses da pesquisa**: atalhos na barra de contexto para carregar recortes emblemáticos:
+  - *Janela < 1 h*: avaliações precoces (aprovação cai para 49,6%).
+  - *Acesso antecipado*: impacto de jogos em desenvolvimento (69,8% vs. 83,8% no lançamento).
+  - *Economia da insatisfação*: avaliações negativas (recebem 2,8x mais votos úteis).
+- **Usabilidade e acessibilidade**:
+  - Alternância de tema claro e escuro.
+  - Atalhos de teclado: `/` foca a seleção de jogo, `[` e `]` navegam entre páginas, `Esc` fecha painéis ou limpa seleções.
+  - Chips de filtros ativos com remoção individual ou limpeza global em um clique.
+
+---
+
+## 2. Arquitetura da Solução
+
+O sistema adota uma separação limpa entre processamento de dados, API de agregação e apresentação reativa no frontend:
+
+```mermaid
+flowchart LR
+    subgraph Dados ["Camada de Dados"]
+        CSV["4 CSVs Kaggle (1M Linhas)"] --> SEED["Script de Ingestão e Limpeza\n(backend/app/seed.py)"]
+        SEED --> SQLITE[("SQLite Otimizado\n(backend/data/reviews.db)")]
+    end
+
+    subgraph Backend ["Backend (FastAPI)"]
+        SQLITE --> REPO["Consultas Agregadas & Filtros\n(backend/app/queries.py)"]
+        REPO --> API["Endpoints REST (/api/summary, /api/charts, /api/reviews)\n(backend/app/main.py)"]
+    end
+
+    subgraph Frontend ["Frontend (Astro + Tailwind v4)"]
+        API --> STORE["Estado Global Reativo\n(Nanostores: filters.ts)"]
+        STORE --> CHARTS["Gráficos Interativos\n(Apache ECharts 6)"]
+        STORE --> KPIS["KPI Cards & Rankings"]
+        STORE --> TABLE["Tabela Paginada de Reviews"]
+    end
+```
+
+### Endpoints da API
+
+- `GET /api/summary` (e alias `/api/metrics`): Retorna volume total, taxa de recomendação, total de jogos e autores únicos para os filtros informados.
+  > [!NOTE]
+  > O endpoint `/api/summary` é o caminho oficial consumido pelo frontend para evitar interceptações locais de antivírus (ex.: Kaspersky interceptando requisições a rotas denominadas `/api/metrics`).
+- `GET /api/charts`: Devolve simultaneamente a distribuição mensal (`timeline`), a taxa de aprovação por faixa de horas jogadas (`playtime_buckets`), o top 10 de jogos por volume (`game_rankings`) e os idiomas mais frequentes ordenados por aprovação (`language_rankings`).
+- `GET /api/reviews`: Retorna a lista paginada de avaliações, com suporte a ordenação por data, horas de jogo ou votos úteis, além de paginação via `limit` e `offset`.
+- `GET /docs`: Documentação interativa Swagger/OpenAPI gerada automaticamente pelo FastAPI.
+
+---
+
+## 3. Metodologia do Experimento e Agentes
+
+A análise exploratória original foi construída com um protocolo de orquestração por IA documentado em `AGENTS.md`:
+
+O modelo da conversa principal é o **Gemini 4 Argon** (modelo de fronteira para raciocínio complexo e auditoria de código). Ele atua no planejamento, formulação dos critérios de pronto e conferência nos arquivos. Os subagentes `explorer` e `executor` usam o **Gemini 3.8 Flash** para tarefas de varredura e codificação/verificação com contexto limpo.
 
 ```mermaid
 flowchart TD
@@ -30,48 +99,89 @@ flowchart TD
     C -->|"2. Retorna Caminhos, Linhas e Resumo"| E["Revisão pelo Argon: Audita Resultado nos Arquivos"]
     D -->|"2. Retorna Arquivos Alterados e Log de Verificação"| E
     E -->|"Divergência Detectada: Novo Ciclo de Ajuste"| B
-    E -->|"3. Aprovado com 100% de Consistência"| F["Artefatos Finais Validados (analysis.ipynb e README.md)"]
+    E -->|"3. Aprovado com 100% de Consistência"| F["Artefatos Finais Validados (analysis.ipynb, Dashboard e README.md)"]
 ```
 
-O resultado ficou no mesmo nível, ou acima, de deixar o modelo principal fazer a análise inteira, com menos uso da cota dele. A execução ficou fora da janela do Argon, e a revisão pegou o underflow de `votes_funny`, os textos de copypasta com milhões de caracteres e as horas de `playtime` fora de ordem.
+Sem um dicionário de dados prévio nos prompts, o Argon e o Flash identificaram:
+1. A partição vertical 1:1 estrita por `review_id` entre as quatro tabelas;
+2. O underflow de `uint32` no contador `votes_funny`;
+3. Reviews anômalas de copypasta com milhões de caracteres;
+4. A descontinuidade estatística na taxa de aprovação causada pela regra de reembolso de 2 horas da Valve.
 
-| Camada | Papel / modelo | Onde atua | Cota e qualidade |
-| :--- | :--- | :--- | :--- |
-| Direção analítica | Analista (humano) | Problema, hipóteses de negócio e validação. | Mantém a análise no domínio do produto. |
-| Orquestração e revisão | Gemini 4 Argon | Plano, prompt de delegação e auditoria dos arquivos. | A cota do modelo principal fica na decisão e na revisão. |
-| Exploração | `explorer`, Gemini 3.8 Flash | Varredura dos CSV, colunas, tipos e `review_id`. | A leitura bruta fica fora da conversa principal. |
-| Execução e sanity check | `executor`, Gemini 3.8 Flash | Pandas, Seaborn, kernel, gráficos e scripts de verificação. | Código e checagem repetida ficam sob revisão do Argon. |
+---
 
-## 2. Estrutura do repositório
-
-O ambiente usa o [uv](https://github.com/astral-sh/uv), com as versões fixadas no `pyproject.toml` e scripts para subir o JupyterLab.
-
-O `review_info.csv` passa de 360 MB, acima do limite de arquivo do GitHub. A pasta `data/` está no `.gitignore`. Para reproduzir, baixe o [Game Reviews Dataset](https://www.kaggle.com/datasets/sridharstreaks/game-reviews-dataset) e coloque os 4 CSV em `data/`.
+## 4. Estrutura do Repositório
 
 ```text
-game-review/
-├── assets/                               # Resumo visual animado do experimento (GIF e MP4 1080p)
+game-review-dashboard/
+├── assets/                               # Demonstrações visuais (GIF, MP4 e pôster)
 │   ├── overview.gif                      # Animação inline para o README
-│   └── overview.mp4                      # Vídeo completo em alta definição (1920x1080)
-├── data/                                 # Partições relacionais dos dados (1:1 - baixadas via Kaggle)
-│   ├── review_info.csv                   # Texto, votos, recomendação e engajamento (10 colunas, ~364 MB)
-│   ├── game_info.csv                     # Identificação dos jogos (app_id e app_name) (3 colunas, ~28 MB)
-│   ├── author_info.csv                   # Perfil do autor e telemetria de jogo (8 colunas, ~58 MB)
-│   └── purchase_info.csv                 # Forma de aquisição e early access (4 colunas, ~10 MB)
-├── scripts/                              # Scripts de inicialização do JupyterLab
+│   ├── overview.mp4                      # Vídeo resumo em alta definição
+│   ├── showcase.mp4                      # Vídeo showcase completo do dashboard
+│   └── showcase-poster.png               # Pôster estático de apresentação
+├── backend/                              # API FastAPI e camada de dados
+│   ├── app/
+│   │   ├── database.py                   # Conexão SQLite e sessão SQLAlchemy
+│   │   ├── main.py                       # Rotas da API e middlewares
+│   │   ├── models.py                     # Modelo relacional ORM da tabela reviews
+│   │   ├── queries.py                    # Agregações SQL e filtragem paramétrica
+│   │   ├── schemas.py                    # Schemas de validação Pydantic
+│   │   ├── seed.py                       # Pipeline de ingestão e higienização dos CSVs
+│   │   └── transform.py                  # Regras de limpeza, underflow e buckets
+│   ├── data/
+│   │   └── reviews.db                    # Banco SQLite higienizado (gerado pelo seed)
+│   └── tests/
+│       └── test_api.py                   # Testes automatizados da API (Pytest + TestClient)
+├── data/                                 # Partições originais do Kaggle (.gitignore)
+│   ├── review_info.csv                   # Texto, votos e recomendação (~364 MB)
+│   ├── game_info.csv                     # Dados dos jogos (app_id e app_name) (~28 MB)
+│   ├── author_info.csv                   # Telemetria e perfil do autor (~58 MB)
+│   └── purchase_info.csv                 # Tipo de compra e early access (~10 MB)
+├── frontend/                             # Aplicação web interativa (Astro)
+│   ├── src/
+│   │   ├── components/                   # Componentes de interface (RailIcon, ComboToggle)
+│   │   ├── layouts/
+│   │   │   └── Base.astro                # Layout base HTML com meta tags e fontes
+│   │   ├── lib/
+│   │   │   ├── api.ts                    # Cliente HTTP tipado para a API backend
+│   │   │   └── format.ts                 # Formatação numérica pt-BR e datas
+│   │   ├── pages/
+│   │   │   └── index.astro               # Dashboard com filtros, KPIs, gráficos e tabela
+│   │   ├── scripts/
+│   │   │   ├── charts.ts                 # Configuração e renderização dos gráficos ECharts
+│   │   │   └── dashboard.ts              # Controlador da interface e atalhos de teclado
+│   │   ├── stores/
+│   │   │   └── filters.ts                # Gerenciador de estado reativo (Nanostores)
+│   │   └── styles/
+│   │       └── global.css                # Estilos globais e tokens com Tailwind CSS v4
+│   ├── astro.config.mjs                  # Configuração do Astro e proxy /api -> backend:8000
+│   └── package.json                      # Dependências do frontend
+├── scripts/                              # Utilitários de inicialização do JupyterLab
 │   ├── start-jupyter.ps1                 # Inicialização no Windows PowerShell
-│   └── start-jupyter.sh                  # Inicialização no Linux / macOS Bash
-├── analysis.ipynb                        # Notebook analítico com validações e visualizações
-├── pyproject.toml                        # Definição do projeto e dependências gerenciadas pelo uv
-├── AGENTS.md                             # Protocolo operacional e diretrizes de agentes
+│   └── start-jupyter.sh                  # Inicialização no Linux / macOS
+├── video/                                # Pipeline de captura determinística e renderização Remotion
+│   ├── capture/                          # Captura sem head via Playwright + CDP a 60 FPS
+│   │   ├── engine.ts                     # Engine de gravação, interpolação de cursor e time-dilation
+│   │   ├── record.ts                     # Roteiro das tomadas desktop e mobile
+│   │   └── review.ts                     # Utilitário de inspeção e validação de frames
+│   ├── public/                           # Gravações brutas (desktop/mobile) e trilhas sonoras
+│   ├── src/                              # Composições Remotion (Showcase e Overview a 60 FPS)
+│   └── package.json                      # Scripts de renderização Remotion e dependências
+├── analysis.ipynb                        # Notebook analítico exploratório original
+├── AGENTS.md                             # Protocolo operacional da equipe de agentes de IA
+├── PRODUCT.md                            # Especificação de produto e direcionamento de UX
+├── pyproject.toml                        # Dependências Python gerenciadas via uv
+├── pytest.ini                            # Configuração da suíte de testes
 └── README.md                             # Documentação técnica do projeto
 ```
 
-## 3. Arquitetura relacional e dicionário de dados
+---
 
-Os quatro CSV são uma partição vertical indexada por `review_id`.
+## 5. Modelagem Relacional e Saneamento de Dados
 
-Cada partição tem 1.000.000 de linhas e 1.000.000 de `review_id` distintos. A interseção das quatro chaves também é 1.000.000, com zero registros órfãos ou ausentes. As quatro tabelas compartilham a mesma ordenação física de linhas, e a junção por chave primária aproveita essa ordem.
+### Arquitetura Relacional 1:1
+
+As quatro tabelas CSV compõem uma **partição vertical 1:1 indexada por `review_id`**. Cada tabela tem exatamente 1.000.000 de linhas, com as mesmas chaves e alinhamento ordenado idêntico:
 
 ```mermaid
 erDiagram
@@ -80,109 +190,78 @@ erDiagram
     REVIEW_INFO ||--|| PURCHASE_INFO : "1:1 (review_id)"
 
     REVIEW_INFO {
-        bigint review_id PK "Chave primária única da avaliação"
-        string language "Idioma registrado da avaliação"
-        string review "Texto escrito pelo usuário"
+        bigint review_id PK "Chave primária da avaliação"
+        string language "Idioma registrado"
+        string review "Texto da avaliação"
         bigint timestamp_created "Timestamp Unix de publicação"
         bigint timestamp_updated "Timestamp Unix da última edição"
-        boolean recommended "Recomendação (True = Positiva, False = Negativa)"
-        bigint votes_helpful "Votos de utilidade recebidos"
-        bigint votes_funny "Votos de engraçado (uint32 suscetível a underflow)"
-        float weighted_vote_score "Escore de relevância algorítmica da Steam"
-        bigint comment_count "Número de comentários de outros jogadores"
+        boolean recommended "Recomendação (True = Positiva)"
+        bigint votes_helpful "Votos de utilidade"
+        bigint votes_funny "Votos de engraçado (uint32)"
+        float weighted_vote_score "Escore algorítmico da Steam"
+        bigint comment_count "Número de comentários"
     }
 
     GAME_INFO {
-        bigint review_id PK,FK "Referência relacional 1:1"
-        bigint app_id "Identificador numérico do jogo no catálogo Steam"
-        string app_name "Nome oficial do jogo"
+        bigint review_id PK,FK "Referência 1:1"
+        bigint app_id "Identificador do jogo na Steam"
+        string app_name "Nome do jogo"
     }
 
     AUTHOR_INFO {
-        bigint review_id PK,FK "Referência relacional 1:1"
-        bigint author_steamid "Identificador único do autor na Steam"
-        bigint author_num_games_owned "Total de jogos na biblioteca do autor"
-        bigint author_num_reviews "Total de avaliações públicas do autor"
-        float author_playtime_forever "Tempo total jogado pelo autor (minutos)"
-        float author_playtime_last_two_weeks "Tempo jogado nas últimas 2 semanas (minutos)"
-        float author_playtime_at_review "Tempo de jogo até a publicação (minutos)"
-        float author_last_played "Timestamp Unix da última sessão de jogo"
+        bigint review_id PK,FK "Referência 1:1"
+        bigint author_steamid "ID da conta do autor"
+        bigint author_num_games_owned "Jogos na biblioteca"
+        bigint author_num_reviews "Avaliações públicas do autor"
+        float author_playtime_forever "Tempo total jogado (minutos)"
+        float author_playtime_last_two_weeks "Tempo nas últimas 2 semanas (minutos)"
+        float author_playtime_at_review "Tempo até a publicação (minutos)"
+        float author_last_played "Timestamp da última sessão"
     }
 
     PURCHASE_INFO {
-        bigint review_id PK,FK "Referência relacional 1:1"
-        boolean steam_purchase "Comprado diretamente na loja Steam"
-        boolean received_for_free "Recebido gratuitamente (presente ou promocional)"
-        boolean written_during_early_access "Escrito durante o Acesso Antecipado"
+        bigint review_id PK,FK "Referência 1:1"
+        boolean steam_purchase "Comprado na loja Steam"
+        boolean received_for_free "Recebido gratuitamente"
+        boolean written_during_early_access "Escrito em Acesso Antecipado"
     }
 ```
 
-| Partição | Linhas | Colunas | Memória | Variáveis principais e descrição |
-| :--- | :---: | :---: | :---: | :--- |
-| `review_info.csv` | 1.000.000 | 10 | 487,7 MB | `review_id`, `language`, `review`, `timestamp_created`, `timestamp_updated`, `recommended`, `votes_helpful`, `votes_funny`, `weighted_vote_score`, `comment_count`. Métricas textuais e de engajamento comunitário. |
-| `game_info.csv` | 1.000.000 | 3 | 82,4 MB | `review_id`, `app_id`, `app_name`. Metadados do catálogo. Contém 59 jogos únicos, com correspondência biunívoca entre `app_id` e `app_name`. |
-| `author_info.csv` | 1.000.000 | 8 | 61,0 MB | `review_id`, `author.steamid`, `author.num_games_owned`, `author.num_reviews`, `author.playtime_forever`, `author.playtime_last_two_weeks`, `author.playtime_at_review`, `author.last_played`. População de 912.553 autores únicos (92,47% com 1 review; maior volume por autor é de 22 reviews). |
-| `purchase_info.csv` | 1.000.000 | 4 | 10,5 MB | `review_id`, `steam_purchase`, `received_for_free`, `written_during_early_access`. Contexto contratual e modalidade de aquisição do título. |
+### Regras de Limpeza e Higienização
 
-## 4. Limpeza dos dados
+1. **Underflow de `uint32` em `votes_funny`**: Registrado na origem como inteiro de 32 bits sem sinal. Quando a contagem sofria decremento na API da Valve (-1, -2, etc.), o valor sofria wrap-around para valores próximos de $2^{32} - 1 = 4.294.967.295$. A higienização converte qualquer valor $\ge 4.294.967.292$ para `0`. O valor máximo real observado após a correção é de **8.983 votos**.
+2. **Textos em copypasta extrema**: Duas avaliações apresentam repetição em massa acima do limite padrão da interface: uma com **9.639.004 caracteres** (*Arma 3*) e outra com **4.971.225 caracteres** (*For Honor*). No banco e no dashboard, os resumos textuais são truncados com segurança (`excerpt` de até 280 caracteres).
+3. **Tratamento de nulos e vazios**: `review` possuía 1.294 valores nulos e 174 avaliações compostas apenas de espaços em branco (preenchidos com string vazia). `author.playtime_at_review` continha 1.248 nulos (mantidos como nulos na base e tratados nas agregações).
+4. **Telemetria de horas jogadas**: Em 116 registros (0,01%), o tempo registrado no momento da review superava o tempo total jogado na conta; nesses casos o cálculo de tempo jogado pós-avaliação adota $\max(0, \text{playtime\_forever} - \text{playtime\_at\_review})$.
 
-Antes das estatísticas, a carga passou por checagem de integridade, contadores, texto, nulos e horas de jogo.
+---
 
-```mermaid
-flowchart TD
-    A[Carga das 4 Partições CSV: 1M Linhas] --> B[Auditoria de Integridade Referencial 1:1]
-    B --> C[Correção de Underflow uint32: votes_funny]
-    B --> D[Auditoria Textual: Detecção de Spams Copypasta]
-    B --> E[Tratamento de Dados Faltantes e Strings Vazias]
-    B --> F[Saneamento Telemétrico: Horas de Jogo e Linha Temporal]
-    C --> G[Dataset Analítico Consolidado]
-    D --> G
-    E --> G
-    F --> G
-```
+## 6. Principais Descobertas de Negócio
 
-### Underflow de `uint32` em `votes_funny`
+### Concentração do Catálogo
 
-O contador de votos "engraçado" foi gravado na origem como inteiro de 32 bits sem sinal. Quando a API decrementava (por exemplo, -1, -2, -3, -4), o valor virava um número perto de $2^{32} - 1 = 4.294.967.295$. São 49 registros entre 4.294.967.292 e 4.294.967.295. A coluna `votes_funny_clean` troca valores $\ge 4.294.967.292$ por 0. O máximo real depois da correção é 8.983 votos.
+Cinco jogos concentram **54,65% das avaliações** (546.549 de 1.000.000): *Arma 3*, *The Elder Scrolls V: Skyrim Special Edition*, *For Honor*, *Darkest Dungeon* e *NieR:Automata*.
+- **Maior aprovação**: *STEINS;GATE 0* (96,5%), *The Legend of Heroes: Trails of Cold Steel II* (95,2%) e *Farm Together* (93,8%).
+- **Menor aprovação**: *SOS* (27,8%), *DYNASTY WARRIORS 9* (31,2%) e *Bless Online* (38,0%).
 
-### Texto em copypasta
+### Avaliações Negativas: "A Economia da Insatisfação"
 
-A interface atual da Steam limita a avaliação a 8.000 caracteres. Clientes antigos, ou chamadas diretas, publicaram repetição em massa. Duas avaliações têm 9.639.004 caracteres (*Arma 3*) e 4.971.225 (*For Honor*). Com elas, a média de tamanho sobe para 265 caracteres, com desvio padrão de 10.861. A mediana é 63 caracteres, e 99% das avaliações ficam abaixo de 2.958. Para NLP, o texto pode ser truncado em 8.000 caracteres.
+Embora a base seja majoritariamente favorável (taxa global de **82,97%** de recomendação), os usuários descontentes geram engajamento substancialmente mais intenso:
 
-### Ausências
-
-`review` tem 1.294 nulos (0,13%) e mais 174 textos só com espaço: 1.468 sem texto útil (0,15%). `author.playtime_at_review` tem 1.248 nulos (0,12%), sem telemetria no instante da publicação. O campo de texto nulo foi preenchido com string vazia. As análises de correlação temporal filtram esses casos à parte.
-
-### Horas de jogo e tempo
-
-Em 116 registros (0,01%), `playtime_at_review` passa de `playtime_forever`. O tempo jogado depois da avaliação usa $\max(0, \text{playtime\_forever} - \text{playtime\_at\_review})$. Dois registros têm `author.last_played == 0`, o marco Unix `1970-01-01 00:00:00 UTC`. `timestamp_created` comparado com `timestamp_updated` marca `is_edited` em 13,11% das avaliações.
-
-## 5. Descobertas
-
-### Concentração do catálogo
-
-Cinco jogos concentram 54,65% das avaliações (546.549): Arma 3, The Elder Scrolls V: Skyrim Special Edition, For Honor, Darkest Dungeon e NieR:Automata.
-
-Maior taxa de recomendação: *STEINS;GATE 0* (96,5%), *The Legend of Heroes: Trails of Cold Steel II* (95,2%) e *Farm Together* (93,8%). Menor: *SOS* (27,8%), *DYNASTY WARRIORS 9* (31,2%) e *Bless Online* (38,0%).
-
-### Avaliações negativas ("Economia da Insatisfação")
-
-A base é positiva: 82,97% de recomendações, contra 17,03% de negativas.
-
-| Métrica | Avaliação positiva | Avaliação negativa | Comparação |
+| Métrica | Avaliação Positiva | Avaliação Negativa | Diferença / Impacto |
 | :--- | :---: | :---: | :--- |
-| Proporção na base | 82,97% | 17,03% | ~4,9 para 1 |
-| Probabilidade de receber voto útil (> 0) | 31,6% | 63,3% | 2,0x mais provável |
-| Média de votos úteis recebidos | 2,56 votos | 7,08 votos | 2,8x mais votos úteis |
-| Mediana do tamanho do texto | 57 caracteres | 112 caracteres | ~2,0x mais longo |
-| Média de comentários recebidos | 0,13 comentários | 0,55 comentários | 4,25x mais comentários |
-| Mediana de tempo jogado pós-avaliação | 13,98 horas | 1,18 horas | 11,8x menos tempo jogado |
+| **Proporção na base** | 82,97% | 17,03% | ~4,9 para 1 |
+| **Probabilidade de receber voto útil (> 0)** | 31,6% | 63,3% | **2,0x mais provável** |
+| **Média de votos úteis recebidos** | 2,56 votos | 7,08 votos | **2,8x mais votos úteis** |
+| **Mediana do tamanho do texto** | 57 caracteres | 112 caracteres | **~2,0x mais longo** |
+| **Média de comentários recebidos** | 0,13 comentários | 0,55 comentários | **4,25x mais comentários** |
+| **Mediana de tempo jogado pós-review** | 13,98 horas | 1,18 horas | **Abandono do jogo** |
 
-O texto negativo, com o dobro da mediana, costuma descrever problema técnico, balanceamento ou monetização. Depois da review negativa, a mediana de tempo jogado é 1,18 hora, contra 13,98 horas de quem recomendou.
+O texto de uma avaliação negativa geralmente detalha bugs técnicos, quebras de balanceamento ou decisões impopulares de monetização, servindo como sinal de alerta para a comunidade.
 
-### Janela de reembolso de 2 horas
+### A Janela de Reembolso de 2 Horas da Valve
 
-A Valve devolve a compra se o jogador ficou menos de 2 horas no jogo. Abaixo de 1 hora, a recomendação é 49,6%. De 1 a 2 horas, 59,9%. Essas reviews cedo têm a maior média de votos úteis da base, 4,77, e outros compradores as usam como alerta antes de comprar. Passadas as 2 horas, a aprovação vai a 77,4% (2 a 5 horas) e chega a 93,3% acima de 500 horas. Quem ficou depois do limite de reembolso já tinha interesse no jogo.
+A política de reembolso da Steam permite devolução do dinheiro para jogos com menos de 2 horas jogadas. Os dados revelam uma inflexão acentuada na taxa de aprovação exatamente nessa fronteira:
 
 ```mermaid
 xychart-beta
@@ -192,85 +271,181 @@ xychart-beta
     bar [49.6, 59.9, 77.4, 81.4, 84.9, 88.2, 89.5, 89.9, 93.3]
 ```
 
-### Compra, Acesso Antecipado e edições
+- **Abaixo de 1 hora**: aprovação de apenas **49,6%** (maior média de votos úteis da base: 4,77).
+- **Entre 1 e 2 horas**: aprovação sobe para **59,9%**.
+- **Acima de 2 horas (sem direito a reembolso imediato)**: a taxa salta para **77,4%** (2 a 5 horas) e atinge **93,3%** para jogadores veteranos com mais de 500 horas.
 
-Avaliações escritas no Acesso Antecipado têm 69,8% de aprovação, contra 83,8% nos títulos já em versão estável. A diferença é de 14,0 pontos percentuais.
+### Modalidade de Compra, Acesso Antecipado e Edição
 
-As avaliações editadas são 13,11% da base. A recomendação delas é 74,3%, contra 84,3% nas que não foram editadas. O texto médio tem 769,9 caracteres, contra 188,9, e a média de votos úteis é 8,43, contra 2,56 (3,3 vezes).
+- **Acesso Antecipado**: aprovação de **69,8%** durante o desenvolvimento antecipado vs. **83,8%** na versão estável (diferença de **14,0 pontos percentuais**).
+- **Reviews Editadas**: 13,11% da base foi editada. Têm aprovação de **74,3%** (vs. 84,3% das não editadas), texto 4x mais longo (770 caracteres) e recebem **3,3x mais votos úteis** (8,43 vs. 2,56).
+- **Origem da Aquisição**: compra direta na loja Steam tem 83,8% de aprovação, contra 81,2% em chaves externas e 78,7% em cópias recebidas gratuitamente.
 
-Compra direta na loja Steam: 83,8% de aprovação. Chave de ativação externa: 81,2%. Jogo recebido de graça: 78,7%, contra 83,2% nos pagos.
+---
 
-### Quem escreve muitas avaliações, e o idioma
-
-Autor com 1 avaliação na conta: 84,9% de aprovação e média de 2,14 votos úteis. Autor com mais de 50 avaliações: 76,8% de aprovação (queda de 8,1 pontos percentuais) e 7,09 votos úteis (3,3 vezes a média de quem tem uma só).
-
-| Idioma | Fatia da base | Aprovação | Média de votos úteis |
-| :--- | :---: | :---: | :---: |
-| Inglês | 49,1% | 83,7% | 3,07 |
-| Chinês simplificado | 15,1% | 76,6% | 6,15 |
-| Russo | 8,7% | 82,1% | 4,02 |
-| Português brasileiro | 2,8% (27.965 avaliações) | 88,2% | 2,11 |
-
-### Sazonalidade
-
-Entre 2017 e 2020, os meses de promoção da Valve concentram reviews novas. Na Steam Summer Sale, junho de 2018 teve 40.674 reviews e julho de 2019 teve 33.620. No outono e no inverno, novembro de 2018 teve 40.418, novembro de 2019 teve 46.169 (o maior mês da série) e dezembro de 2019 teve 34.410.
-
-## 6. Como executar
+## 7. Como Executar o Projeto
 
 ### Pré-requisitos
 
-- [Python](https://www.python.org/) 3.14 ou superior (versão usada na análise; o `pyproject.toml` pede `>=3.14`)
-- [uv](https://docs.astral.sh/uv/)
+- [Python](https://www.python.org/) >= 3.14
+- [uv](https://docs.astral.sh/uv/) (gerenciador rápido de pacotes Python)
+- [Node.js](https://nodejs.org/) >= 18 e `npm`
 
-### Clonagem e dados
+---
 
-1. Clone o repositório e sincronize o ambiente:
+### Passo 1: Clonar o Repositório e Sincronizar o Ambiente Python
 
-   ```bash
-   git clone https://github.com/EmersonPalatti/game-review.git
-   cd game-review
-   uv sync
-   ```
+```bash
+git clone https://github.com/EmersonPalatti/game-review-dashboard.git
+cd game-review-dashboard
+uv sync
+```
 
-2. Baixe o [Game Reviews Dataset](https://www.kaggle.com/datasets/sridharstreaks/game-reviews-dataset).
-3. Copie os 4 CSV para `data/`:
+---
+
+### Passo 2: Obter os Dados
+
+1. Baixe o [Game Reviews Dataset no Kaggle](https://www.kaggle.com/datasets/sridharstreaks/game-reviews-dataset).
+2. Extraia os 4 arquivos CSV para a pasta `data/` na raiz do projeto:
    - `data/review_info.csv`
    - `data/game_info.csv`
    - `data/author_info.csv`
    - `data/purchase_info.csv`
 
-### JupyterLab
+---
 
-Windows (PowerShell):
+### Passo 3: Ingerir e Higienizar os Dados no SQLite
 
+Execute o script de seed para criar o banco `backend/data/reviews.db` com todas as validações aplicadas:
+
+```bash
+# Ingestão completa de 1 milhão de registros (~1 a 2 minutos):
+uv run python -m backend.app.seed
+
+# Ou para um teste rápido com amostragem reduzida:
+uv run python -m backend.app.seed --limit 50000
+```
+
+---
+
+### Passo 4: Executar o Backend (FastAPI)
+
+Inicie o servidor da API com hot-reload:
+
+```bash
+uv run uvicorn backend.app.main:app --reload --port 8000
+```
+
+- API disponível em: `http://127.0.0.1:8000`
+- Documentação interativa Swagger: `http://127.0.0.1:8000/docs`
+
+Para rodar a suíte de testes automatizados do backend:
+
+```bash
+uv run pytest
+```
+
+---
+
+### Passo 5: Executar o Frontend (Astro)
+
+Em outro terminal, instale as dependências e suba a interface web:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+- Painel interativo disponível em: `http://localhost:4321` (com proxy automático encaminhando `/api/*` para o backend na porta 8000).
+
+Para gerar o build estático de produção do frontend:
+
+```bash
+npm run build
+```
+
+---
+
+### Passo 6 (Opcional): Executar o Notebook JupyterLab
+
+Caso queira inspecionar a análise exploratória passo a passo em notebook:
+
+**No Windows (PowerShell):**
 ```powershell
 .\scripts\start-jupyter.ps1
 ```
 
-Linux ou macOS (Bash):
-
+**No Linux ou macOS (Bash):**
 ```bash
 chmod +x ./scripts/start-jupyter.sh
 ./scripts/start-jupyter.sh
 ```
 
-O servidor sobe em `http://127.0.0.1:8888/?token=agentic`.
+Acesse em `http://127.0.0.1:8888/?token=agentic`.
 
-### Notebook pela linha de comando
-
+Para reexecutar o notebook via linha de comando:
 ```bash
 uv run jupyter nbconvert --to notebook --execute analysis.ipynb --inplace
 ```
 
-## 7. Tecnologias
+---
 
-- Python
-- [Pandas](https://pandas.pydata.org/) e [NumPy](https://numpy.org/)
-- [Matplotlib](https://matplotlib.org/) e [Seaborn](https://seaborn.pydata.org/)
-- [JupyterLab](https://jupyter.org/) e `ipykernel`
-- [uv](https://docs.astral.sh/uv/)
-- Gemini 4 Argon, com `explorer` e `executor` no Gemini 3.8 Flash, via `AGENTS.md`
+### Passo 7 (Opcional): Pipeline de Vídeo com Remotion e Playwright (`video/`)
 
-## 8. Autor
+Para capturar e renderizar as animações e o showcase a 60 FPS:
 
-[Emerson Palatti](https://github.com/EmersonPalatti).
+```bash
+cd video
+npm install
+
+# 1. Gravar as tomadas determinísticas (com backend na porta 8000 e frontend na porta 4321):
+npm run capture
+
+# 2. Renderizar o vídeo showcase em 1080p a 60 FPS:
+npm run render:showcase
+
+# 3. Renderizar a animação de visão geral (overview):
+npm run render:overview
+```
+
+---
+
+## 8. Stack Tecnológica
+
+### Frontend
+- **[Astro 7](https://astro.build/)**: framework web com arquitetura rápida e zero JavaScript desnecessário.
+- **[TypeScript](https://www.typescriptlang.org/)**: tipagem estática ponta a ponta.
+- **[Tailwind CSS v4](https://tailwindcss.com/)**: estilização orientada a utilitários e variáveis de tema.
+- **[Apache ECharts 6](https://echarts.apache.org/)**: gráficos de alta performance para grandes séries e barras interativas.
+- **[Nanostores](https://github.com/nanostores/nanostores)**: gerenciamento de estado global desacoplado e reativo para filtragem cruzada.
+- **[Lucide Icons](https://lucide.dev/)**: conjunto consistente de ícones.
+
+### Backend & Dados
+- **[Python 3.14](https://www.python.org/)**
+- **[FastAPI](https://fastapi.tiangolo.com/)**: criação de APIs assíncronas com validação automática via **Pydantic**.
+- **[SQLAlchemy 2](https://www.sqlalchemy.org/)**: modelagem ORM e construção de consultas SQL agregadas.
+- **[SQLite](https://www.sqlite.org/)**: armazenamento local transacional e consultas indexadas (preparado para evolução para PostgreSQL/Supabase).
+- **[uv](https://docs.astral.sh/uv/)**: gerenciamento moderno de dependências e ambientes virtuais.
+- **[Pytest](https://pytest.org/)**: testes de integração automatizados da API.
+
+### Análise Exploratória & Machine Learning
+- **[Pandas](https://pandas.pydata.org/) & [NumPy](https://numpy.org/)**: manipulação vetorial e cálculos estatísticos.
+- **[Matplotlib](https://matplotlib.org/) & [Seaborn](https://seaborn.pydata.org/)**: geração de gráficos estáticos no notebook.
+- **[JupyterLab](https://jupyter.org/) & `ipykernel`**: ambiente interativo de ciência de dados.
+
+### Vídeo Programático & Motion Graphics
+- **[Remotion](https://www.remotion.dev/)**: composição, motion design e renderização em React/TypeScript a 60 FPS com decodificação `OffthreadVideo`.
+- **[Playwright](https://playwright.dev/)**: captura determinística via screencast do Chrome DevTools Protocol (CDP) com clock virtual sincronizado.
+- **[FFmpeg](https://ffmpeg.org/)**: muxing de áudio, normalização e codificação H.264/NVENC.
+
+### Orquestração de IA
+- **Gemini 4 Argon** (conversa principal, planejamento analítico e auditoria).
+- **Gemini 3.8 Flash** (`explorer` e `executor` para varredura e codificação).
+- Protocolo operacional especificado em `AGENTS.md`.
+
+---
+
+## 9. Autor
+
+Desenvolvido por **[Emerson Palatti](https://github.com/EmersonPalatti)**.
