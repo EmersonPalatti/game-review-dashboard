@@ -22,3 +22,6 @@ frontend/.astro/
 backend/data/*.db
 .pytest_cache/
 .env
+video/node_modules/
+video/out/
+video/captures/

@@ -515,10 +515,19 @@ section[aria-label='Gráficos'] > .card::before {
 #dashboard-main[aria-busy='true'] .figure,
 #dashboard-main[aria-busy='true'] #chart-month,
 #dashboard-main[aria-busy='true'] #chart-playtime,
-#dashboard-main[aria-busy='true'] .rank-list,
-#dashboard-main[aria-busy='true'] #reviews-body {
+#dashboard-main[aria-busy='true'] .rank-list {
   opacity: 0.78;
   transition: opacity var(--fast) var(--ease);
+}
+
+#dashboard-main[aria-busy='true'] #reviews-body {
+  opacity: 0.45;
+  pointer-events: none;
+  transition: opacity var(--fast) var(--ease);
+}
+
+#dashboard-main[aria-busy='true'] .th-sort {
+  cursor: wait;
 }
 
 #dashboard-main[data-error='true'] section {
@@ -923,15 +932,42 @@ html.dark .when-dark {
   color: var(--secondary);
 }
 
-.sheet {
-  overflow-x: auto;
-  padding: 4px 12px;
+.sheet-card {
+  position: relative;
+  overflow: hidden;
+  background: var(--surface);
   border: 1px solid var(--line);
   border-radius: 12px;
-  background: var(--surface);
   transition:
     background-color var(--fast) var(--ease),
     border-color var(--fast) var(--ease);
+}
+
+.sheet-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 40%;
+  height: 2px;
+  background: var(--accent);
+  opacity: 0;
+  transform: translateX(-100%);
+  pointer-events: none;
+  z-index: 2;
+  transition: opacity var(--fast) var(--ease);
+}
+
+#dashboard-main[aria-busy='true'] .sheet-card::before {
+  opacity: 1;
+  animation: chart-progress 900ms var(--ease) infinite;
+}
+
+.sheet {
+  overflow-x: auto;
+  padding: 4px 12px;
+  border: 0;
+  background: transparent;
 }
 
 .sheet table {
@@ -1203,6 +1239,7 @@ html[data-theme-reveal='active']::view-transition-new(root) {
   .field-control,
   .filter-chip,
   .card,
+  .sheet-card,
   .sheet,
   .sheet td,
   .th-sort,
@@ -1220,7 +1257,8 @@ html[data-theme-reveal='active']::view-transition-new(root) {
     transition: none;
   }
 
-  #dashboard-main[aria-busy='true'] section[aria-label='Gráficos'] > .card::before {
+  #dashboard-main[aria-busy='true'] section[aria-label='Gráficos'] > .card::before,
+  #dashboard-main[aria-busy='true'] .sheet-card::before {
     animation: none;
     width: 100%;
     transform: none;

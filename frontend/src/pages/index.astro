@@ -359,37 +359,39 @@ import RailIcon from '../components/RailIcon.astro';
             <h2 id="reviews-heading" class="title">Avaliações</h2>
             <p class="meta">Clique ou pressione Enter em uma linha para expandir&#160;detalhes</p>
           </div>
-          <div class="sheet" tabindex="0" role="region" aria-label="Tabela de avaliações">
-            <table>
-              <caption class="sr-only">Avaliações da seleção atual</caption>
-              <thead>
-                <tr>
-                  <th scope="col" class="w-[16%]">Jogo</th>
-                  <th scope="col" class="w-[12%]">Idioma</th>
-                  <th scope="col" class="w-[10%]">Recomendação</th>
-                  <th scope="col" class="w-[10%]" aria-sort="none">
-                    <button type="button" class="th-sort" data-sort-by="playtime_hours" title="Ordenar por horas jogadas">
-                      <span>Horas</span>
-                      <svg class="th-sort-icon" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                        <path class="sort-up" d="m3.5 4.5 2.5-2.5 2.5 2.5"></path>
-                        <path class="sort-down" d="m3.5 7.5 2.5 2.5 2.5-2.5"></path>
-                      </svg>
-                    </button>
-                  </th>
-                  <th scope="col" class="w-[11%]" aria-sort="none">
-                    <button type="button" class="th-sort" data-sort-by="votes_helpful" title="Ordenar por votos úteis">
-                      <span>Votos&#160;úteis</span>
-                      <svg class="th-sort-icon" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                        <path class="sort-up" d="m3.5 4.5 2.5-2.5 2.5 2.5"></path>
-                        <path class="sort-down" d="m3.5 7.5 2.5 2.5 2.5-2.5"></path>
-                      </svg>
-                    </button>
-                  </th>
-                  <th scope="col" class="w-[41%]">Trecho</th>
-                </tr>
-              </thead>
-              <tbody id="reviews-body"></tbody>
-            </table>
+          <div class="sheet-card">
+            <div class="sheet" tabindex="0" role="region" aria-label="Tabela de avaliações">
+              <table>
+                <caption class="sr-only">Avaliações da seleção atual</caption>
+                <thead>
+                  <tr>
+                    <th scope="col" class="w-[16%]">Jogo</th>
+                    <th scope="col" class="w-[12%]">Idioma</th>
+                    <th scope="col" class="w-[10%]">Recomendação</th>
+                    <th scope="col" class="w-[10%]" aria-sort="none">
+                      <button type="button" class="th-sort" data-sort-by="playtime_hours" title="Ordenar por horas jogadas">
+                        <span>Horas</span>
+                        <svg class="th-sort-icon" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                          <path class="sort-up" d="m3.5 4.5 2.5-2.5 2.5 2.5"></path>
+                          <path class="sort-down" d="m3.5 7.5 2.5 2.5 2.5-2.5"></path>
+                        </svg>
+                      </button>
+                    </th>
+                    <th scope="col" class="w-[11%]" aria-sort="none">
+                      <button type="button" class="th-sort" data-sort-by="votes_helpful" title="Ordenar por votos úteis">
+                        <span>Votos&#160;úteis</span>
+                        <svg class="th-sort-icon" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                          <path class="sort-up" d="m3.5 4.5 2.5-2.5 2.5 2.5"></path>
+                          <path class="sort-down" d="m3.5 7.5 2.5 2.5 2.5-2.5"></path>
+                        </svg>
+                      </button>
+                    </th>
+                    <th scope="col" class="w-[41%]">Trecho</th>
+                  </tr>
+                </thead>
+                <tbody id="reviews-body"></tbody>
+              </table>
+            </div>
           </div>
           <nav class="flex flex-wrap items-center justify-between gap-3" aria-label="Paginação">
             <p id="page-range" class="meta font-mono tabular-nums">—</p>
