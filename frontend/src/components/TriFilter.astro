@@ -1,0 +1,26 @@
+---
+import type { IconNode } from 'lucide';
+import RailIcon from './RailIcon.astro';
+
+interface Props {
+  filterKey: 'recommended' | 'steamPurchase' | 'receivedForFree' | 'earlyAccess';
+  label: string;
+  icon: IconNode;
+}
+
+const { filterKey, label, icon } = Astro.props;
+---
+
+<div class="sidebar-row is-field" data-filter-row={filterKey} title={label}>
+  <RailIcon icon={icon} />
+  <span class="sidebar-reveal">
+    <span class="sidebar-reveal-inner field">
+      <span class="field-label">{label}</span>
+      <div class="seg-control" role="group" aria-label={label}>
+        <button type="button" class="seg-btn" data-tri-filter={filterKey} data-tri-value="all" aria-pressed="true">Todas</button>
+        <button type="button" class="seg-btn" data-tri-filter={filterKey} data-tri-value="yes" aria-pressed="false">Sim</button>
+        <button type="button" class="seg-btn" data-tri-filter={filterKey} data-tri-value="no" aria-pressed="false">Não</button>
+      </div>
+    </span>
+  </span>
+</div>

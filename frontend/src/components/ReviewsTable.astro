@@ -1,0 +1,79 @@
+<section class="flex flex-col gap-4" aria-labelledby="reviews-heading">
+  <div class="flex flex-wrap items-baseline justify-between gap-2">
+    <h2 id="reviews-heading" class="title">Avaliações</h2>
+    <p class="meta">Clique ou pressione Enter em uma linha para expandir&#160;detalhes</p>
+  </div>
+  <div class="sheet-card">
+    <div class="sheet" tabindex="0" role="region" aria-label="Tabela de avaliações">
+      <table>
+        <caption class="sr-only">Avaliações da seleção atual</caption>
+        <thead>
+          <tr>
+            <th scope="col" class="w-[16%]">Jogo</th>
+            <th scope="col" class="w-[12%]">Idioma</th>
+            <th scope="col" class="w-[10%]">Recomendação</th>
+            <th scope="col" class="w-[10%]" aria-sort="none">
+              <button type="button" class="th-sort" data-sort-by="playtime_hours" title="Ordenar por horas jogadas">
+                <span>Horas</span>
+                <svg class="th-sort-icon" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path class="sort-up" d="m3.5 4.5 2.5-2.5 2.5 2.5"></path>
+                  <path class="sort-down" d="m3.5 7.5 2.5 2.5 2.5-2.5"></path>
+                </svg>
+              </button>
+            </th>
+            <th scope="col" class="w-[11%]" aria-sort="none">
+              <button type="button" class="th-sort" data-sort-by="votes_helpful" title="Ordenar por votos úteis">
+                <span>Votos&#160;úteis</span>
+                <svg class="th-sort-icon" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path class="sort-up" d="m3.5 4.5 2.5-2.5 2.5 2.5"></path>
+                  <path class="sort-down" d="m3.5 7.5 2.5 2.5 2.5-2.5"></path>
+                </svg>
+              </button>
+            </th>
+            <th scope="col" class="w-[41%]">Trecho</th>
+          </tr>
+        </thead>
+        <tbody id="reviews-body"></tbody>
+      </table>
+    </div>
+  </div>
+  <nav class="flex flex-wrap items-center justify-between gap-3" aria-label="Paginação">
+    <p id="page-range" class="meta font-mono tabular-nums">—</p>
+    <div class="flex gap-2">
+      <button id="page-prev" type="button" class="btn btn-secondary btn-small" disabled aria-keyshortcuts="[" title="Página anterior ([)">Anterior</button>
+      <button id="page-next" type="button" class="btn btn-secondary btn-small" disabled aria-keyshortcuts="]" title="Próxima página (])">Próxima</button>
+    </div>
+  </nav>
+  <p class="meta">Base higienizada: partição 1:1 das 4 tabelas do Kaggle · underflow uint32 corrigido em votos engraçados · resumo truncado em 280&#160;caracteres.</p>
+
+  <template id="tpl-review-row">
+    <tr class="review-row" tabindex="0" aria-expanded="false">
+      <td data-slot="game"></td>
+      <td data-slot="language"></td>
+      <td data-slot="recommendation"></td>
+      <td data-slot="hours"></td>
+      <td data-slot="helpful"></td>
+      <td>
+        <div class="excerpt-cell">
+          <div class="excerpt-line">
+            <svg class="excerpt-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="m9 18 6-6-6-6"></path>
+            </svg>
+            <div class="excerpt-text" data-slot="excerpt"></div>
+          </div>
+          <div class="review-badges" data-slot="badges"></div>
+        </div>
+      </td>
+    </tr>
+  </template>
+  <template id="tpl-review-empty">
+    <tr>
+      <td colspan="6" class="empty-cell">
+        <div class="empty-state">
+          <p>Nenhuma avaliação com esses filtros.</p>
+          <button type="button" class="btn btn-secondary btn-small" data-slot="clear">Limpar filtros</button>
+        </div>
+      </td>
+    </tr>
+  </template>
+</section>

@@ -1,0 +1,26 @@
+---
+import { Sun, Moon } from 'lucide';
+import RailIcon from './RailIcon.astro';
+---
+
+<button
+  id="theme-toggle"
+  type="button"
+  class="sidebar-row theme-toggle"
+  aria-pressed="false"
+  aria-label="Alternar tema claro e escuro"
+  title="Alternar tema"
+>
+  <span class="when-light">
+    <RailIcon icon={Sun} />
+  </span>
+  <span class="when-dark">
+    <RailIcon icon={Moon} />
+  </span>
+  <span class="sidebar-reveal">
+    <span class="sidebar-reveal-inner">
+      <span class="when-light">Escuro</span>
+      <span class="when-dark">Claro</span>
+    </span>
+  </span>
+</button>

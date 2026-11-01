@@ -1,0 +1,18 @@
+---
+import { Menu } from 'lucide';
+import RailIcon from './RailIcon.astro';
+---
+
+<div class="sidebar-mobile-bar">
+  <span class="mobile-wordmark">Reviews da Steam</span>
+  <button
+    id="sidebar-open"
+    type="button"
+    class="sidebar-burger"
+    aria-expanded="false"
+    aria-controls="app-sidebar"
+    aria-label="Mostrar filtros"
+  >
+    <RailIcon icon={Menu} />
+  </button>
+</div>

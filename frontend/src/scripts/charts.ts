@@ -1,6 +1,7 @@
 import * as echarts from 'echarts';
 import type { ECharts, EChartsOption } from 'echarts';
 import type { Charts } from '../lib/api';
+import { BASELINE_RATE, REFUND_BUCKETS } from '../lib/constants';
 import { formatInteger, formatPercent } from '../lib/format';
 import type { PlaytimeBucket } from '../stores/filters';
 
@@ -240,7 +241,7 @@ function paintPlaytime(data: Charts, colors: ReturnType<typeof palette>, animate
     playtimeElement.setAttribute('role', 'img');
     const totalReviews = data.playtime.reduce((sum, point) => sum + point.review_count, 0);
     const refundReviews = data.playtime
-      .filter((point) => point.key === 'lt1' || point.key === 'h1_2')
+      .filter((point) => REFUND_BUCKETS.includes(point.key as PlaytimeBucket))
       .reduce((sum, point) => sum + point.review_count, 0);
     playtimeElement.setAttribute(
       'aria-label',
@@ -261,10 +262,9 @@ function paintPlaytime(data: Charts, colors: ReturnType<typeof palette>, animate
           const index = (row as { dataIndex: number }).dataIndex;
           const point = data.playtime[index];
           if (!point) return '';
-          const refund =
-            point.key === 'lt1' || point.key === 'h1_2'
-              ? '<br/>Janela de reembolso Steam (&lt; 2 h)'
-              : '';
+          const refund = REFUND_BUCKETS.includes(point.key as PlaytimeBucket)
+            ? '<br/>Janela de reembolso Steam (&lt; 2 h)'
+            : '';
           const action = '<br/>Clique para filtrar a faixa';
           if (point.recommendation_rate === null) {
             return `${point.label}<br/>sem avaliações${refund}${action}`;
@@ -313,7 +313,7 @@ function paintPlaytime(data: Charts, colors: ReturnType<typeof palette>, animate
                 opacity = 0.45;
               }
             } else {
-              if (point.key === 'lt1' || point.key === 'h1_2') {
+              if (REFUND_BUCKETS.includes(point.key as PlaytimeBucket)) {
                 color = colors.negative;
               } else {
                 color = colors.ink;
@@ -340,7 +340,7 @@ function paintPlaytime(data: Charts, colors: ReturnType<typeof palette>, animate
             z: 4,
             data: [
               {
-                yAxis: 82.97,
+                yAxis: Number((BASELINE_RATE * 100).toFixed(2)),
                 lineStyle: {
                   color: colors.surface,
                   type: 'solid',
@@ -350,7 +350,7 @@ function paintPlaytime(data: Charts, colors: ReturnType<typeof palette>, animate
                 label: { show: false },
               },
               {
-                yAxis: 82.97,
+                yAxis: Number((BASELINE_RATE * 100).toFixed(2)),
                 lineStyle: {
                   color: colors.accent,
                   type: [5, 4],

@@ -1,0 +1,51 @@
+---
+import type { IconNode } from 'lucide';
+import ComboToggle from './ComboToggle.astro';
+import RailIcon from './RailIcon.astro';
+
+interface Props {
+  rowKey: 'app' | 'language' | 'playtime';
+  inputId: string;
+  label: string;
+  icon: IconNode;
+  shortcut?: string;
+}
+
+const { rowKey, inputId, label, icon, shortcut } = Astro.props;
+const listId = `${inputId}-list`;
+---
+
+<div class="sidebar-row is-field" data-filter-row={rowKey} title={label}>
+  <RailIcon icon={icon} />
+  <span class="sidebar-reveal">
+    <span class="sidebar-reveal-inner field">
+      {
+        shortcut ? (
+          <div class="field-label-row">
+            <label for={inputId} class="field-label">{label}</label>
+            <kbd class="shortcut-hint" aria-hidden="true" title={`Atalho de teclado: ${shortcut}`}>{shortcut}</kbd>
+          </div>
+        ) : (
+          <label for={inputId} class="field-label">{label}</label>
+        )
+      }
+      <div class="combo">
+        <input
+          id={inputId}
+          class="field-control"
+          type="text"
+          role="combobox"
+          aria-autocomplete="list"
+          aria-expanded="false"
+          aria-controls={listId}
+          aria-keyshortcuts={shortcut}
+          autocomplete="off"
+          spellcheck="false"
+          placeholder="Todos"
+        />
+        <ul id={listId} class="combo-menu" role="listbox"></ul>
+        <ComboToggle controls={listId} />
+      </div>
+    </span>
+  </span>
+</div>

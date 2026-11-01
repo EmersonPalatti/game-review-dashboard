@@ -1,0 +1,15 @@
+---
+interface Props {
+  title: string;
+  subtitle: string;
+  colSpan2?: boolean;
+}
+
+const { title, subtitle, colSpan2 = false } = Astro.props;
+---
+
+<article class={colSpan2 ? 'card lg:col-span-2' : 'card'}>
+  <h2 class="title">{title}</h2>
+  <p class="meta mt-2">{subtitle}</p>
+  <slot />
+</article>
