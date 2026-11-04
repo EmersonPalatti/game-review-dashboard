@@ -495,7 +495,7 @@ section[aria-label='Gráficos'] > .card::before {
   transition: opacity var(--fast) var(--ease);
 }
 
-#dashboard-main[aria-busy='true'] section[aria-label='Gráficos'] > .card::before {
+section[aria-label='Gráficos'][data-fetching='true'] > .card::before {
   opacity: 1;
   animation: chart-progress 900ms var(--ease) infinite;
 }
@@ -516,21 +516,25 @@ section[aria-label='Gráficos'] > .card::before {
   transition: opacity var(--fast) var(--ease);
 }
 
-#dashboard-main[aria-busy='true'] .figure,
-#dashboard-main[aria-busy='true'] #chart-month,
-#dashboard-main[aria-busy='true'] #chart-playtime,
-#dashboard-main[aria-busy='true'] .rank-list {
+section[aria-label='Indicadores'][data-fetching='true'] .figure {
   opacity: 0.78;
   transition: opacity var(--fast) var(--ease);
 }
 
-#dashboard-main[aria-busy='true'] #reviews-body {
+section[aria-label='Gráficos'][data-fetching='true'] #chart-month,
+section[aria-label='Gráficos'][data-fetching='true'] #chart-playtime,
+section[aria-label='Gráficos'][data-fetching='true'] .rank-list {
+  opacity: 0.78;
+  transition: opacity var(--fast) var(--ease);
+}
+
+section[data-fetch-region='reviews'][data-fetching='true'] #reviews-body {
   opacity: 0.45;
   pointer-events: none;
   transition: opacity var(--fast) var(--ease);
 }
 
-#dashboard-main[aria-busy='true'] .th-sort {
+section[data-fetch-region='reviews'][data-fetching='true'] .th-sort {
   cursor: wait;
 }
 
@@ -979,7 +983,7 @@ html.dark .when-dark {
   transition: opacity var(--fast) var(--ease);
 }
 
-#dashboard-main[aria-busy='true'] .sheet-card::before {
+section[data-fetch-region='reviews'][data-fetching='true'] .sheet-card::before {
   opacity: 1;
   animation: chart-progress 900ms var(--ease) infinite;
 }
@@ -1278,8 +1282,8 @@ html[data-theme-reveal='active']::view-transition-new(root) {
     transition: none;
   }
 
-  #dashboard-main[aria-busy='true'] section[aria-label='Gráficos'] > .card::before,
-  #dashboard-main[aria-busy='true'] .sheet-card::before {
+  section[aria-label='Gráficos'][data-fetching='true'] > .card::before,
+  section[data-fetch-region='reviews'][data-fetching='true'] .sheet-card::before {
     animation: none;
     width: 100%;
     transform: none;

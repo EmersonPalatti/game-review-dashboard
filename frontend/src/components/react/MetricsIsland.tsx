@@ -6,6 +6,7 @@ import {
   type ReactNode,
 } from 'react';
 import { fetchMetrics } from '../../lib/api';
+import { useDelayedFlag } from '../../lib/fetchFeedback';
 import {
   BASELINE_AUTHORS,
   BASELINE_GAMES,
@@ -155,11 +156,14 @@ function MetricsContent() {
   const baselineGames = useRef(BASELINE_GAMES);
   const baselineAuthors = useRef(BASELINE_AUTHORS);
 
-  const { data, error, isPending, isPlaceholderData, refetch } = useQuery({
+  const { data, error, isPending, isFetching, isPlaceholderData, refetch } = useQuery({
     queryKey,
     queryFn: () => fetchMetrics(currentFilters),
     placeholderData: keepPreviousData,
   });
+
+  const showBusy = useDelayedFlag(isFetching);
+  const showUpdating = useDelayedFlag(isPlaceholderData);
 
   useEffect(() => {
     if (data) latestMetrics.set(data);
@@ -174,15 +178,23 @@ function MetricsContent() {
   }
 
   useEffect(() => {
-    if (!data) return;
-
     const subtitle = document.getElementById('context-subtitle');
     if (!subtitle) return;
+
+    if (showUpdating) {
+      subtitle.textContent = 'Atualizando…';
+      return;
+    }
+
+    if (isPlaceholderData) return;
+
+    if (!data) return;
+
     const presetNote = activePresetNote(currentFilters);
     subtitle.textContent = presetNote
       ? `${formatInteger(data.total_reviews)} avaliações · ${formatInteger(data.game_count)} jogos · ${presetNote}`
       : `${formatInteger(data.total_reviews)} avaliações · ${formatInteger(data.game_count)} jogos · ${BASELINE_PERIOD_SHORT}`;
-  }, [data, currentFilters]);
+  }, [data, currentFilters, isPlaceholderData, showUpdating]);
 
   const filtered = activeFilterCount(currentFilters) > 0;
 
@@ -260,7 +272,12 @@ function MetricsContent() {
   }
 
   return (
-    <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4" aria-label="Indicadores">
+    <section
+      className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4"
+      aria-label="Indicadores"
+      data-fetching={showBusy ? 'true' : 'false'}
+      aria-busy={showBusy}
+    >
       {errorBlock}
       {METRIC_CARDS_CONFIG.map((card) => (
         <MetricCardBody

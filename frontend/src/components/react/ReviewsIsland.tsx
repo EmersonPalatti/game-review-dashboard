@@ -16,6 +16,7 @@ import {
   type ReactNode,
 } from 'react';
 import { fetchReviewWindow, type ReviewItem } from '../../lib/api';
+import { useDelayedFlag } from '../../lib/fetchFeedback';
 import { PLACEHOLDER } from '../../lib/constants';
 import { formatDate, formatHours, formatInteger, languageLabel } from '../../lib/format';
 import { useFilters, useReviewSort } from '../../lib/useNanostore';
@@ -164,6 +165,7 @@ function ReviewsTableContent() {
     isPending,
     isFetching,
     isFetchingNextPage,
+    isPlaceholderData,
     hasNextPage,
     fetchNextPage,
     refetch,
@@ -180,6 +182,11 @@ function ReviewsTableContent() {
 
   const items = useMemo(() => data?.pages.flatMap((page) => page.items) ?? [], [data]);
   const total = data?.pages.at(-1)?.total ?? data?.pages[0]?.total ?? 0;
+
+  const cutRefetchActive =
+    items.length > 0 && !isFetchingNextPage && (isPlaceholderData || isFetching);
+  const showBusy = useDelayedFlag(isFetching && !isFetchingNextPage);
+  const showUpdating = useDelayedFlag(cutRefetchActive);
 
   useEffect(() => {
     setExpanded(new Set());
@@ -311,15 +318,24 @@ function ReviewsTableContent() {
   let statusText: string;
   if (isPending && items.length === 0) {
     statusText = 'Carregando avaliações…';
+  } else if (isFetchingNextPage) {
+    statusText = `${formatInteger(items.length)} de ${formatInteger(total)} carregadas · carregando mais…`;
+  } else if (showUpdating) {
+    statusText = 'Atualizando…';
   } else if (total === 0) {
     statusText = '0 de 0';
   } else {
     statusText = `${formatInteger(items.length)} de ${formatInteger(total)} carregadas`;
-    if (isFetchingNextPage) statusText += ' · carregando mais…';
   }
 
   return (
-    <section className="flex flex-col gap-4" aria-labelledby="reviews-heading">
+    <section
+      className="flex flex-col gap-4"
+      aria-labelledby="reviews-heading"
+      data-fetch-region="reviews"
+      data-fetching={showBusy ? 'true' : 'false'}
+      aria-busy={showBusy}
+    >
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 id="reviews-heading" className="title">
           Avaliações
@@ -441,7 +457,18 @@ function ReviewsTableContent() {
       ) : null}
 
       <p id="reviews-status" className="meta font-mono tabular-nums">
-        {statusText}
+        {isFetchingNextPage ? (
+          <>
+            <span aria-hidden="true">
+              {`${formatInteger(items.length)} de ${formatInteger(total)} carregadas · `}
+            </span>
+            <span aria-live="polite">carregando mais…</span>
+          </>
+        ) : (
+          <span aria-live="polite" aria-atomic="true">
+            {statusText}
+          </span>
+        )}
       </p>
 
       <p className="meta">

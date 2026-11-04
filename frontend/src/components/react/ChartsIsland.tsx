@@ -1,6 +1,7 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useEffect, useMemo } from 'react';
 import { fetchCharts, fetchMetrics, type GameBar, type LanguageBar } from '../../lib/api';
+import { useDelayedFlag } from '../../lib/fetchFeedback';
 import { PLACEHOLDER } from '../../lib/constants';
 import { formatInteger, formatPercent, languageLabel } from '../../lib/format';
 import { useFilters } from '../../lib/useNanostore';
@@ -108,11 +109,18 @@ function ChartsContent() {
     placeholderData: keepPreviousData,
   });
 
-  const { data: chartsData, error, refetch } = useQuery({
+  const {
+    data: chartsData,
+    error,
+    isFetching: chartsFetching,
+    refetch,
+  } = useQuery({
     queryKey: chartsKey,
     queryFn: () => fetchCharts(currentFilters),
     placeholderData: keepPreviousData,
   });
+
+  const showBusy = useDelayedFlag(chartsFetching);
 
   useEffect(() => {
     initCharts((bucket) => {
@@ -154,7 +162,12 @@ function ChartsContent() {
   }, [chartsData, metricsData, currentFilters.appId, currentFilters.language]);
 
   return (
-    <section className="grid grid-cols-1 gap-4 lg:grid-cols-3" aria-label="Gráficos">
+    <section
+      className="grid grid-cols-1 gap-4 lg:grid-cols-3"
+      aria-label="Gráficos"
+      data-fetching={showBusy ? 'true' : 'false'}
+      aria-busy={showBusy}
+    >
       <article className="card lg:col-span-2">
         <h2 className="title">Avaliações por mês</h2>
         <p className="meta mt-2">Publicadas em cada mês do recorte</p>

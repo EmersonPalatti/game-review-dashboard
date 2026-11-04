@@ -17,7 +17,7 @@ import { ReviewsIsland } from '../components/react/ReviewsIsland';
       <div class="stage mx-auto flex w-full max-w-[1320px] flex-col gap-8 px-6 py-6">
         <ContextBar />
 
-        <div id="load-error" role="alert" hidden class="card">
+        <div id="load-error" aria-hidden="true" hidden class="card">
           <p>Não foi possível carregar os dados.</p>
           <p id="load-error-detail" class="meta mt-1">Verifique se a API local está ativa em http://127.0.0.1:8000.</p>
           <button id="retry" type="button" class="btn btn-primary mt-4">Tentar de novo</button>
