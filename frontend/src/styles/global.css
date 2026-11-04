@@ -370,6 +370,10 @@ html.dark {
   gap: 8px;
 }
 
+.context-top .preset-bar {
+  flex-basis: 100%;
+}
+
 .preset-btn {
   display: inline-flex;
   align-items: center;
@@ -528,6 +532,23 @@ section[aria-label='Gráficos'] > .card::before {
 
 #dashboard-main[aria-busy='true'] .th-sort {
   cursor: wait;
+}
+
+.sheet-virtual {
+  max-height: min(32rem, 70vh);
+  overflow: auto;
+}
+
+.sheet-virtual thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--surface);
+}
+
+.sheet-spacer td {
+  padding: 0;
+  border: 0;
 }
 
 #dashboard-main[data-error='true'] section {

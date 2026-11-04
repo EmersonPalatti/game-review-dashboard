@@ -132,6 +132,22 @@ export function repaintCharts(): void {
   if (lastData) paint(lastData, false);
 }
 
+export function disposeCharts(): void {
+  window.removeEventListener('resize', resizeCharts);
+  chartObserver?.disconnect();
+  chartObserver = null;
+  for (const id of CHART_IDS) {
+    const instance = charts.get(id);
+    if (instance) {
+      instance.dispose();
+    }
+    charts.delete(id);
+  }
+  lastData = null;
+  lastActivePlaytime = 'all';
+  onSelectPlaytime = null;
+}
+
 function paint(data: Charts, animate = true): void {
   const colors = palette();
   paintMonth(data, colors, animate);

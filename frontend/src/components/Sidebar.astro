@@ -1,19 +1,8 @@
 ---
-import {
-  Eraser,
-  Gamepad2,
-  Gift,
-  Languages,
-  Rocket,
-  ShoppingBag,
-  ThumbsUp,
-  Timer,
-  X,
-} from 'lucide';
-import FilterCombo from './FilterCombo.astro';
+import { X } from 'lucide';
 import RailIcon from './RailIcon.astro';
 import ThemeToggle from './ThemeToggle.astro';
-import TriFilter from './TriFilter.astro';
+import { FiltersIsland } from './react/FiltersIsland';
 ---
 
 <aside id="app-sidebar" class="sidebar sidebar-panel" aria-label="Filtros">
@@ -34,62 +23,7 @@ import TriFilter from './TriFilter.astro';
     <div class="mt-8 flex flex-col">
       <ThemeToggle />
 
-      <form id="filters-form" class="mt-4 flex flex-col gap-2" autocomplete="off">
-        <div class="filter-group">
-          <FilterCombo
-            rowKey="app"
-            inputId="filter-app"
-            label="Jogo"
-            icon={Gamepad2}
-            shortcut="/"
-          />
-          <FilterCombo
-            rowKey="language"
-            inputId="filter-language"
-            label="Idioma"
-            icon={Languages}
-          />
-          <FilterCombo
-            rowKey="playtime"
-            inputId="filter-playtime"
-            label="Tempo na avaliação"
-            icon={Timer}
-          />
-        </div>
-
-        <div class="filter-group">
-          <TriFilter
-            filterKey="recommended"
-            label="Recomendação"
-            icon={ThumbsUp}
-          />
-        </div>
-
-        <div class="filter-group">
-          <TriFilter
-            filterKey="steamPurchase"
-            label="Compra na Steam"
-            icon={ShoppingBag}
-          />
-          <TriFilter
-            filterKey="receivedForFree"
-            label="Recebido de graça"
-            icon={Gift}
-          />
-          <TriFilter
-            filterKey="earlyAccess"
-            label="Acesso antecipado"
-            icon={Rocket}
-          />
-        </div>
-      </form>
-      <button id="clear-filters" type="button" class="sidebar-row clear-row mt-4" title="Limpar filtros">
-        <RailIcon icon={Eraser} />
-        <span class="sidebar-reveal">
-          <span class="sidebar-reveal-inner">Limpar filtros</span>
-        </span>
-      </button>
-      <p id="filter-summary" class="sidebar-summary meta mt-2">Nenhum filtro ativo</p>
+      <FiltersIsland client:load />
     </div>
   </div>
 </aside>

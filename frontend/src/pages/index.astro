@@ -3,10 +3,9 @@ import Base from '../layouts/Base.astro';
 import MobileBar from '../components/MobileBar.astro';
 import Sidebar from '../components/Sidebar.astro';
 import ContextBar from '../components/ContextBar.astro';
-import MetricCard from '../components/MetricCard.astro';
-import ChartCard from '../components/ChartCard.astro';
-import ReviewsTable from '../components/ReviewsTable.astro';
-import { METRIC_CARDS_CONFIG } from '../lib/constants';
+import { ChartsIsland } from '../components/react/ChartsIsland';
+import { MetricsIsland } from '../components/react/MetricsIsland';
+import { ReviewsIsland } from '../components/react/ReviewsIsland';
 ---
 
 <Base>
@@ -14,7 +13,7 @@ import { METRIC_CARDS_CONFIG } from '../lib/constants';
     <MobileBar />
     <Sidebar />
 
-    <main id="dashboard-main" class="min-w-0 flex-1" aria-busy="true">
+    <main id="dashboard-main" class="min-w-0 flex-1">
       <div class="stage mx-auto flex w-full max-w-[1320px] flex-col gap-8 px-6 py-6">
         <ContextBar />
 
@@ -24,57 +23,11 @@ import { METRIC_CARDS_CONFIG } from '../lib/constants';
           <button id="retry" type="button" class="btn btn-primary mt-4">Tentar de novo</button>
         </div>
 
-        <section class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4" aria-label="Indicadores">
-          {METRIC_CARDS_CONFIG.map((card) => <MetricCard {...card} />)}
-        </section>
+        <MetricsIsland client:load />
 
-        <section class="grid grid-cols-1 gap-4 lg:grid-cols-3" aria-label="Gráficos">
-          <ChartCard
-            title="Avaliações por mês"
-            subtitle="Publicadas em cada mês do recorte"
-            colSpan2
-          >
-            <div id="chart-month" class="mt-4 h-[320px] w-full"></div>
-            <p id="chart-month-empty" class="meta mt-4" hidden>Nenhum mês no recorte.</p>
-          </ChartCard>
+        <ChartsIsland client:visible />
 
-          <ChartCard
-            title="Volume por jogo"
-            subtitle={'Jogos com mais avaliações · clique para\u00a0filtrar'}
-          >
-            <ol id="rank-games" class="rank-list"></ol>
-          </ChartCard>
-
-          <ChartCard
-            title="Recomendação por tempo de jogo"
-            subtitle={'Aprovação por faixa (reembolso até 2\u00a0h) · clique para\u00a0filtrar'}
-            colSpan2
-          >
-            <div id="chart-playtime" class="mt-4 h-[280px] w-full"></div>
-            <p id="chart-playtime-empty" class="meta mt-4" hidden>Nenhuma faixa no recorte.</p>
-          </ChartCard>
-
-          <ChartCard
-            title="Aprovação por idioma"
-            subtitle={'Top idiomas por volume, ordenados pela aprovação · clique para\u00a0filtrar'}
-          >
-            <ol id="rank-languages" class="rank-list"></ol>
-          </ChartCard>
-
-          <template id="tpl-rank-row">
-            <li class="rank-row" tabindex="0" role="button" aria-pressed="false">
-              <div class="rank-line">
-                <span class="min-w-0 flex-1 truncate" data-slot="name"></span>
-                <span class="rank-value" data-slot="value"></span>
-              </div>
-              <div class="rank-track" aria-hidden="true">
-                <div class="rank-fill" data-slot="fill"></div>
-              </div>
-            </li>
-          </template>
-        </section>
-
-        <ReviewsTable />
+        <ReviewsIsland client:visible />
       </div>
     </main>
   </div>

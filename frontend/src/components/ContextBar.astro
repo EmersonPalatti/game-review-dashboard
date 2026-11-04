@@ -1,5 +1,6 @@
 ---
-import { BASELINE_PERIOD_SHORT, THESIS_PRESETS } from '../lib/constants';
+import { BASELINE_PERIOD_SHORT } from '../lib/constants';
+import { ContextIsland } from './react/ContextIsland';
 ---
 
 <header id="context-bar" class="context-bar" aria-label="Recorte ativo">
@@ -8,30 +9,6 @@ import { BASELINE_PERIOD_SHORT, THESIS_PRESETS } from '../lib/constants';
       <h2 class="title">Painel de avaliações</h2>
       <p id="context-subtitle" class="meta">1.000.000 de avaliações · 59 jogos · {BASELINE_PERIOD_SHORT}</p>
     </div>
-    <div id="active-chips" class="active-chips" aria-live="polite"></div>
+    <ContextIsland client:load />
   </div>
-  <div id="thesis-presets" class="preset-bar" role="group" aria-label="Recortes guiados da análise">
-    <span class="meta">Recortes do estudo:</span>
-    {
-      THESIS_PRESETS.map((preset) => (
-        <button
-          type="button"
-          class="preset-btn"
-          data-preset={preset.key}
-          aria-pressed="false"
-          title={preset.title}
-        >
-          {preset.label}
-        </button>
-      ))
-    }
-  </div>
-
-  <template id="tpl-filter-chip">
-    <button type="button" class="filter-chip">
-      <span class="filter-chip-label" data-slot="label"></span>
-      <span class="filter-chip-value" data-slot="value"></span>
-      <span class="filter-chip-remove" aria-hidden="true">×</span>
-    </button>
-  </template>
 </header>
