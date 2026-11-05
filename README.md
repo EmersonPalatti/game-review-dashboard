@@ -32,21 +32,23 @@ O projeto reúne duas entregas integradas:
 
 O painel foi projetado para permitir que analistas, engenheiros e recrutadores técnicos inspecionem os dados reais higienizados com tempo de resposta imediato, sem precisar rodar o notebook manualmente:
 
-- **Filtragem cruzada em 7 dimensões**: Recorte simultâneo por jogo (`app_id`), idioma (`language`), status de recomendação (`recommended`), compra direta na loja Steam (`steam_purchase`), jogo recebido gratuitamente (`received_for_free`), avaliações em Acesso Antecipado (`early_access`) e faixa de horas jogadas na publicação (`playtime_bucket`).
-- **Sincronização reativa de métricas**:
-  - **4 KPIs em tempo real**: total de avaliações, taxa global de recomendação, jogos distintos e contas de autores no recorte.
-  - **Evolução temporal (ECharts)**: série mensal com volume de avaliações de março de 2013 a janeiro de 2021.
-  - **Taxa de aprovação por faixa de horas (ECharts)**: visualização da inflexão na janela de reembolso de 2 horas da Valve.
-  - **Rankings bidirecionais**: Top jogos por volume de avaliações e ranking de aprovação por idioma.
-  - **Tabela virtualizada com Infinite Scroll (TanStack Table + TanStack Virtual)**: renderização sob demanda apenas das linhas visíveis no viewport, rolagem contínua em janelas de 100 avaliações com cache assíncrono (TanStack Query), ordenação dinâmica por horas jogadas, votos úteis ou data de publicação, além de expansão de linhas para inspeção detalhada de badges e metadados.
+- **Filtragem cruzada multidimensional (8 dimensões)**: Recorte simultâneo por jogo (`app_id`), idioma (`language`), status de recomendação (`recommended`), compra direta na loja Steam (`steam_purchase`), jogo recebido gratuitamente (`received_for_free`), avaliações em Acesso Antecipado (`early_access`), faixa de horas jogadas na publicação (`playtime_bucket`) e **intervalo de datas / período temporal** (`date_from` e `date_to`).
+  - **Seletor de período com calendário**: componente de intervalo de datas com atalhos anuais rápidos (2018, 2019, 2020), popover de calendário interativo com navegação rápida de ano/mês, validação contra os limites da base (05/03/2013 a 23/01/2021) e chips dinâmicos no cabeçalho.
+- **Sincronização reativa de métricas e gráficos interativos**:
+  - **4 KPIs em tempo real**: total de avaliações, taxa global de recomendação com comparativo contra a média, jogos distintos e contas de autores no recorte.
+  - **Evolução temporal com zoom e filtro por clique (ECharts)**: série mensal de volume com controle deslizante `dataZoom`, destaque automático do pico histórico e **interatividade bidirecional**: clique em qualquer mês diretamente na linha para filtrar todo o dashboard por aquele mês. Ao filtrar um mês específico, a série temporal preserva a curva histórica de contexto com linha pontilhada de referência (`markLine`) e marcador destacado (`month-selected`), enquanto os outros painéis detalham o mês selecionado. Um novo clique no mês limpa o recorte.
+  - **Taxa de aprovação por faixa de horas com filtro por clique (ECharts)**: visualização da inflexão na janela de reembolso de 2 horas da Valve, com linha de referência de aprovação global e alternância interativa de filtro ao clicar diretamente em qualquer barra.
+  - **Rankings bidirecionais**: Top jogos por volume de avaliações e ranking de aprovação por idioma com badges percentuais e barras de progresso proporcionais.
+  - **Tabela virtualizada com Infinite Scroll (TanStack Table + TanStack Virtual)**: renderização sob demanda apenas das linhas visíveis no viewport, rolagem contínua em janelas de 100 avaliações com cache assíncrono (TanStack Query), ordenação dinâmica por horas jogadas, votos úteis ou data de publicação, além de expansão de linhas para inspeção detalhada de badges e metadados completos (votos engraçados higienizados, pontuação ponderada da Steam, comentários e decomposição de horas jogadas).
 - **Presets guiados por hipóteses da pesquisa**: atalhos na barra de contexto para carregar recortes emblemáticos:
   - *Janela < 1 h*: avaliações precoces (aprovação cai para 49,6%).
   - *Acesso antecipado*: impacto de jogos em desenvolvimento (69,8% vs. 83,8% no lançamento).
   - *Economia da insatisfação*: avaliações negativas (recebem 2,8x mais votos úteis).
-- **Usabilidade e acessibilidade**:
-  - Alternância de tema claro e escuro.
-  - Atalhos de teclado e acessibilidade: `/` foca a seleção de jogo na barra lateral, `Esc` fecha painéis, seletores e a gaveta mobile, além de navegação completa via teclado.
-  - Chips de filtros ativos com remoção individual ou limpeza global em um clique.
+- **Usabilidade, acessibilidade e feedback visual**:
+  - Feedback visual anti-flicker: indicador de carregamento progressivo com utilitário `useDelayedFlag` (tolerância de 150 ms) para transições suaves sem piscadas em leituras de cache instantâneas.
+  - Alternância instantânea de tema claro e escuro persistida no armazenamento local.
+  - Atalhos de teclado e acessibilidade: `/` foca a seleção de jogo na barra lateral, `Esc` fecha painéis, seletores e a gaveta móvel, além de atributos ARIA e suporte a navegação por teclado.
+  - Chips de filtros ativos com remoção individual ou limpeza global em um clique, sincronizados bidirecionalmente com a URL (`history.pushState` / `replaceState`).
 
 ---
 
@@ -69,9 +71,9 @@ flowchart LR
     subgraph Frontend ["Frontend (Astro + React Islands)"]
         API --> QUERY["TanStack Query (Cache & Infinite)\n(QueryRoot / queryClient)"]
         STORE["Estado Global Reativo\n(Nanostores: filters.ts)"] <--> QUERY
-        STORE <--> FILTERS["Filters & Context Islands (client:load)\nControles laterais e Presets"]
+        STORE <--> FILTERS["Filters & Context Islands (client:load)\nControles, Calendário e Presets"]
         QUERY --> KPIS["MetricsIsland (client:load)\n4 KPI Cards"]
-        QUERY --> CHARTS["ChartsIsland (client:visible)\nApache ECharts 6"]
+        QUERY --> CHARTS["ChartsIsland (client:visible)\nApache ECharts 6 (Zoom & Click-to-Filter)"]
         QUERY --> TABLE["ReviewsIsland (client:visible)\nTanStack Table + Virtual"]
     end
 ```
@@ -80,21 +82,22 @@ flowchart LR
 
 O frontend adota uma abordagem híbrida moderna de alto desempenho:
 - **Astro & React Islands (`@astrojs/react`)**: A casca da aplicação (layout, sidebar estrutural, cabeçalho) é gerada estaticamente pelo Astro com **zero JavaScript desnecessário** para o cliente. A interatividade é isolada em ilhas React independentes:
-  - `ContextIsland` e `FiltersIsland` (`client:load`): hidratados imediatamente para garantir controle imediato sobre presets e seletores de dimensão.
+  - `ContextIsland` e `FiltersIsland` (`client:load`): hidratados imediatamente para garantir controle imediato sobre presets analíticos, seletores de dimensão e o seletor `DateRangeFilter` (calendário popover com presets anuais e validação de datas).
   - `MetricsIsland` (`client:load`): reage instantaneamente aos filtros exibindo os 4 KPIs agregados.
-  - `ChartsIsland` (`client:visible`): renderiza os gráficos Apache ECharts apenas quando entram no campo de visão (lazy hydration).
-  - `ReviewsIsland` (`client:visible`): tabela virtualizada sob demanda para navegação pelas avaliações.
+  - `ChartsIsland` (`client:visible`): renderiza os gráficos Apache ECharts apenas quando entram no campo de visão (lazy hydration), com suporte a zoom temporal (`dataZoom`) e filtros reativos disparados por clique direto nos meses ou faixas de horas.
+  - `ReviewsIsland` (`client:visible`): tabela virtualizada sob demanda para navegação e expansão detalhada das avaliações.
 - **TanStack Query (React Query v5)**: Orquestra o ciclo de vida das requisições assíncronas aos endpoints da API (`/api/summary`, `/api/charts`, `/api/reviews`). Provê cache transparente em memória, deduplicação de buscas concorrentes, estados suaves de transição (`keepPreviousData` / `isPlaceholderData`) e gerenciamento de carregamento progressivo contínuo via `useInfiniteQuery` (janelas de 100 itens).
 - **TanStack Table + TanStack Virtual**: Motor headless declarativo para tipagem, ordenação multicritério e formatação de colunas, combinado a um virtualizador de DOM (`useVirtualizer`) com medição dinâmica de altura. Apenas as linhas visíveis na janela de rolagem são renderizadas no DOM, viabilizando rolagem infinita estável a 60 FPS sobre centenas de avaliações carregadas.
-- **Nanostores**: Barramento reativo atômico ultraleve que conecta os filtros da barra lateral e os presets analíticos a todas as ilhas React sem a necessidade de um Provider monolítico englobando toda a árvore HTML.
+- **Nanostores**: Barramento reativo atômico ultraleve que conecta os filtros da barra lateral, datas e presets analíticos a todas as ilhas React sem a necessidade de um Provider monolítico englobando toda a árvore HTML.
+- **Feedback visual calibrado e anti-flicker**: Utilitário `useDelayedFlag` com retardo de 150 ms para evitar piscadas na interface em transições ultra-rápidas ou com dados em cache de memória.
 
 ### Endpoints da API
 
-- `GET /api/summary` (e alias `/api/metrics`): Retorna volume total, taxa de recomendação, total de jogos e autores únicos para os filtros informados.
+- `GET /api/summary` (e alias `/api/metrics`): Retorna volume total, taxa de recomendação, total de jogos e autores únicos para os filtros informados (suporta `app_id`, `language`, `recommended`, `steam_purchase`, `received_for_free`, `early_access`, `playtime_bucket`, `date_from` e `date_to`).
   > [!NOTE]
   > O endpoint `/api/summary` é o caminho oficial consumido pelo frontend para evitar interceptações locais de antivírus (ex.: Kaspersky interceptando requisições a rotas denominadas `/api/metrics`).
-- `GET /api/charts`: Devolve simultaneamente a distribuição mensal (`timeline`), a taxa de aprovação por faixa de horas jogadas (`playtime_buckets`), o top 10 de jogos por volume (`game_rankings`) e os idiomas mais frequentes ordenados por aprovação (`language_rankings`).
-- `GET /api/reviews`: Retorna a lista paginada de avaliações, com suporte a ordenação por data, horas de jogo ou votos úteis, além de paginação via `limit` e `offset`.
+- `GET /api/charts`: Devolve simultaneamente a distribuição mensal (`timeline`), a taxa de aprovação por faixa de horas jogadas (`playtime_buckets`), o top 10 de jogos por volume (`game_rankings`) e os idiomas mais frequentes ordenados por aprovação (`language_rankings`). Ao filtrar um único mês (`date_from` e `date_to` no mesmo mês), a série mensal preserva a curva completa para destacar o mês selecionado no gráfico sem colapsar a 1 ponto, enquanto os demais painéis são filtrados pelo mês.
+- `GET /api/reviews`: Retorna a lista paginada de avaliações com suporte a todos os filtros dimensionais e temporais, ordenação por data (`created_at`), horas de jogo (`playtime_hours`) ou votos úteis (`votes_helpful`), além de paginação via `limit` (até 100) e `offset`.
 - `GET /docs`: Documentação interativa Swagger/OpenAPI gerada automaticamente pelo FastAPI.
 
 ---
@@ -155,11 +158,13 @@ game-review-dashboard/
 │   ├── src/
 │   │   ├── components/                   # Componentes estáticos e estruturais da interface
 │   │   │   ├── react/                    # Ilhas interativas React
-│   │   │   │   ├── ChartsIsland.tsx      # Ilha dos gráficos ECharts (client:visible)
-│   │   │   │   ├── ContextIsland.tsx     # Presets analíticos e chips de filtro (client:load)
-│   │   │   │   ├── FiltersIsland.tsx     # Controles laterais e seletores (client:load)
+│   │   │   │   ├── ChartsIsland.tsx      # Ilha dos gráficos ECharts (client:visible) com zoom e filtros por clique
+│   │   │   │   ├── ContextIsland.tsx     # Presets analíticos e chips dinâmicos de filtro (client:load)
+│   │   │   │   ├── DateRangeFilter.tsx   # Seletor de período com presets anuais e calendário interativo
+│   │   │   │   ├── FiltersIsland.tsx     # Controles laterais, combos com busca e seletores (client:load)
 │   │   │   │   ├── MetricsIsland.tsx     # 4 cards de KPIs agregados (client:load)
 │   │   │   │   ├── QueryRoot.tsx         # Provedor compartilhado do TanStack Query
+│   │   │   │   ├── RailIcon.tsx          # Componente de ícones vetoriais padronizados
 │   │   │   │   └── ReviewsIsland.tsx     # Tabela virtualizada com TanStack Table + Virtual (client:visible)
 │   │   │   ├── ContextBar.astro          # Barra superior de contexto
 │   │   │   ├── MobileBar.astro           # Barra de navegação móvel
@@ -169,19 +174,22 @@ game-review-dashboard/
 │   │   │   └── Base.astro                # Layout base HTML com meta tags e fontes IBM Plex
 │   │   ├── lib/
 │   │   │   ├── api.ts                    # Cliente HTTP tipado para a API backend
-│   │   │   ├── constants.ts              # Constantes e parâmetros padrão
-│   │   │   ├── fetchFeedback.ts          # Feedback visual com anti-flicker calibrado
+│   │   │   ├── constants.ts              # Constantes, presets e parâmetros padrão
+│   │   │   ├── fetchFeedback.ts          # Feedback visual com anti-flicker calibrado (useDelayedFlag)
 │   │   │   ├── format.ts                 # Formatação numérica pt-BR e datas
 │   │   │   ├── queryClient.ts            # Instância centralizada do TanStack QueryClient
 │   │   │   └── useNanostore.ts           # Hook de integração React com Nanostores
 │   │   ├── pages/
 │   │   │   └── index.astro               # Ponto de entrada do dashboard Astro
 │   │   ├── scripts/
-│   │   │   ├── charts.ts                 # Configuração e renderização dos gráficos ECharts
+│   │   │   ├── charts.ts                 # Configuração, eventos de clique e renderização dos gráficos ECharts
+│   │   │   ├── combo.ts                  # Comportamento de foco, busca e acessibilidade dos seletores dropdown
 │   │   │   ├── dashboard.ts              # Sincronização de URL, atalhos de teclado e tema
+│   │   │   ├── renderers.ts              # Utilitários de renderização de rankings
 │   │   │   └── theme.ts                  # Persistência do tema claro/escuro
 │   │   ├── stores/
-│   │   │   ├── filters.ts                # Estado global reativo dos filtros (Nanostores)
+│   │   │   ├── filters.ts                # Estado global reativo dos filtros e datas (Nanostores)
+│   │   │   ├── metrics.ts                # Armazenamento complementar de métricas
 │   │   │   └── urlSync.ts                # Sincronização bidirecional entre filtros e URL
 │   │   └── styles/
 │   │       └── global.css                # Estilos globais e tokens com Tailwind CSS v4
