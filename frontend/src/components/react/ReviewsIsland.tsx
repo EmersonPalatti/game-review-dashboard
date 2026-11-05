@@ -424,7 +424,7 @@ function ReviewsTableContent() {
         <h2 id="reviews-heading" className="title">
           Avaliações
         </h2>
-        <p className="meta">Clique ou pressione Enter em uma linha para expandir{'\u00a0'}detalhes</p>
+        <p className="meta">Clique na linha ou pressione Enter no botão de detalhes para expandir</p>
       </div>
 
       <div className="sheet-card">
