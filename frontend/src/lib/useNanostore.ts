@@ -12,6 +12,8 @@ import { latestMetrics } from '../stores/metrics';
 const serverFilters: Filters = {
   appId: null,
   language: null,
+  dateFrom: null,
+  dateTo: null,
   recommended: 'all',
   steamPurchase: 'all',
   receivedForFree: 'all',

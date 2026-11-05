@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { PRESETS, THESIS_PRESETS, isPresetActive, type PresetKey } from '../../lib/constants';
-import { languageLabel } from '../../lib/format';
+import { formatDate, languageLabel } from '../../lib/format';
 import { useFilters, useLatestMetrics } from '../../lib/useNanostore';
 import { renderFilterChips, type FilterChip } from '../../scripts/renderers';
 import {
@@ -33,6 +33,22 @@ function buildFilterChips(current: Filters, gameNameById: Map<number, string>): 
       label: 'Idioma',
       value: languageLabel(current.language),
       clear: () => patchFilters({ language: null }),
+    });
+  }
+
+  if (current.dateFrom !== null || current.dateTo !== null) {
+    let value = '';
+    if (current.dateFrom !== null && current.dateTo !== null) {
+      value = `${formatDate(current.dateFrom)} a ${formatDate(current.dateTo)}`;
+    } else if (current.dateFrom !== null) {
+      value = `A partir de ${formatDate(current.dateFrom)}`;
+    } else if (current.dateTo !== null) {
+      value = `Até ${formatDate(current.dateTo)}`;
+    }
+    chips.push({
+      label: 'Período',
+      value,
+      clear: () => patchFilters({ dateFrom: null, dateTo: null }),
     });
   }
 

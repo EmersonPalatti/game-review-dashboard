@@ -54,6 +54,8 @@ export const THESIS_PRESETS: readonly ThesisPreset[] = [
     filters: {
       appId: null,
       language: null,
+      dateFrom: null,
+      dateTo: null,
       recommended: 'all',
       steamPurchase: 'all',
       receivedForFree: 'all',
@@ -69,6 +71,8 @@ export const THESIS_PRESETS: readonly ThesisPreset[] = [
     filters: {
       appId: null,
       language: null,
+      dateFrom: null,
+      dateTo: null,
       recommended: 'all',
       steamPurchase: 'all',
       receivedForFree: 'all',
@@ -84,6 +88,8 @@ export const THESIS_PRESETS: readonly ThesisPreset[] = [
     filters: {
       appId: null,
       language: null,
+      dateFrom: null,
+      dateTo: null,
       recommended: 'no',
       steamPurchase: 'all',
       receivedForFree: 'all',
@@ -107,6 +113,8 @@ export function isPresetActive(current: Filters, preset: string): boolean {
   return (
     current.appId === target.appId &&
     current.language === target.language &&
+    current.dateFrom === target.dateFrom &&
+    current.dateTo === target.dateTo &&
     current.recommended === target.recommended &&
     current.steamPurchase === target.steamPurchase &&
     current.receivedForFree === target.receivedForFree &&

@@ -33,6 +33,8 @@ export function isPlaytimeBucket(value: string): value is Exclude<PlaytimeBucket
 export type Filters = {
   appId: number | null;
   language: string | null;
+  dateFrom: string | null;
+  dateTo: string | null;
   recommended: Tri;
   steamPurchase: Tri;
   receivedForFree: Tri;
@@ -43,6 +45,8 @@ export type Filters = {
 const initialFilters: Filters = {
   appId: null,
   language: null,
+  dateFrom: null,
+  dateTo: null,
   recommended: 'all',
   steamPurchase: 'all',
   receivedForFree: 'all',
@@ -57,6 +61,7 @@ export function activeFilterCount(current: Readonly<Filters>): number {
   return [
     current.appId !== null,
     current.language !== null,
+    current.dateFrom !== null || current.dateTo !== null,
     current.recommended !== 'all',
     current.steamPurchase !== 'all',
     current.receivedForFree !== 'all',
@@ -116,10 +121,18 @@ export function readFiltersFromSearch(search: string): {
   const rawPlaytime = params.get('playtime_bucket') ?? '';
   const playtime: PlaytimeBucket = isPlaytimeBucket(rawPlaytime) ? rawPlaytime : 'all';
 
+  const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
+  const rawDateFrom = params.get('date_from');
+  const dateFrom = rawDateFrom && DATE_REGEX.test(rawDateFrom) ? rawDateFrom : null;
+  const rawDateTo = params.get('date_to');
+  const dateTo = rawDateTo && DATE_REGEX.test(rawDateTo) ? rawDateTo : null;
+
   return {
     filters: {
       appId,
       language,
+      dateFrom,
+      dateTo,
       recommended: parseTri(params.get('recommended')),
       steamPurchase: parseTri(params.get('steam_purchase')),
       receivedForFree: parseTri(params.get('received_for_free')),
@@ -145,6 +158,14 @@ export function writeFiltersToSearch(
 
   if (current.language !== null && current.language.trim() !== '') {
     params.set('language', current.language.trim());
+  }
+
+  if (current.dateFrom !== null) {
+    params.set('date_from', current.dateFrom);
+  }
+
+  if (current.dateTo !== null) {
+    params.set('date_to', current.dateTo);
   }
 
   if (current.recommended !== 'all') {

@@ -14,6 +14,8 @@ class ReviewFilters(BaseModel):
     received_for_free: bool | None = None
     early_access: bool | None = None
     playtime_bucket: str | None = None
+    date_from: str | None = None
+    date_to: str | None = None
 
 
 class GameFacet(BaseModel):

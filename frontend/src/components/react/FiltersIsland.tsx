@@ -23,6 +23,7 @@ import {
   type Tri,
 } from '../../stores/filters';
 import { RailIcon } from './RailIcon';
+import { DateRangeFilter } from './DateRangeFilter';
 
 function patchFilters(patch: Partial<Filters>): void {
   filters.set({ ...filters.get(), ...patch });
@@ -341,6 +342,10 @@ export function FiltersIsland() {
             inputRef={playtimeInputRef}
             menuRef={playtimeMenuRef}
           />
+        </div>
+
+        <div className="filter-group">
+          <DateRangeFilter />
         </div>
 
         <div className="filter-group">

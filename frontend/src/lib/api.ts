@@ -88,6 +88,12 @@ function appendFilters(params: URLSearchParams, current: Readonly<Filters>): voi
   if (current.language) {
     params.set('language', current.language);
   }
+  if (current.dateFrom) {
+    params.set('date_from', current.dateFrom);
+  }
+  if (current.dateTo) {
+    params.set('date_to', current.dateTo);
+  }
   setTri(params, 'recommended', current.recommended);
   setTri(params, 'steam_purchase', current.steamPurchase);
   setTri(params, 'received_for_free', current.receivedForFree);

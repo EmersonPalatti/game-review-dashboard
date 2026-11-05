@@ -426,3 +426,200 @@ def test_invalid_playtime_bucket_returns_422(client, path):
     assert response.status_code == 422
     assert "nope" in response.text
     assert "playtime_bucket" in response.text
+
+
+@pytest.mark.parametrize("path", ["/api/summary", "/api/charts", "/api/reviews"])
+def test_date_filtering_matching(client, path):
+    response = client.get(path, params={"date_from": "2023-11-14", "date_to": "2023-11-14"})
+    assert response.status_code == 200
+    data = response.json()
+    if path == "/api/summary":
+        assert data["total_reviews"] == 4
+        assert data["recommendation_rate"] == 0.5
+    elif path == "/api/charts":
+        assert len(data["games"]) == 2
+        assert data["months"][0]["review_count"] == 4
+    elif path == "/api/reviews":
+        assert data["total"] == 4
+        assert len(data["items"]) == 4
+
+
+@pytest.mark.parametrize("path", ["/api/summary", "/api/charts", "/api/reviews"])
+def test_date_filtering_no_matching(client, path):
+    response = client.get(path, params={"date_from": "2023-11-15"})
+    assert response.status_code == 200
+    data = response.json()
+    if path == "/api/summary":
+        assert data["total_reviews"] == 0
+        assert data["recommendation_rate"] == 0.0
+        assert data["game_count"] == 0
+        assert data["author_count"] == 0
+    elif path == "/api/charts":
+        assert data["games"] == []
+        assert data["languages"] == []
+        assert data["months"] == []
+        for point in data["playtime"]:
+            assert point["review_count"] == 0
+    elif path == "/api/reviews":
+        assert data["total"] == 0
+        assert data["items"] == []
+
+
+@pytest.mark.parametrize("path", ["/api/summary", "/api/charts", "/api/reviews"])
+def test_date_filtering_boundary_conditions(client, path):
+    # Boundary before: date_to on previous day excludes all reviews
+    res_before = client.get(path, params={"date_to": "2023-11-13"})
+    assert res_before.status_code == 200
+    if path == "/api/summary":
+        assert res_before.json()["total_reviews"] == 0
+    elif path == "/api/reviews":
+        assert res_before.json()["total"] == 0
+
+    # Boundary open range: only date_from=2023-11-14 includes all reviews
+    res_from_only = client.get(path, params={"date_from": "2023-11-14"})
+    assert res_from_only.status_code == 200
+    if path == "/api/summary":
+        assert res_from_only.json()["total_reviews"] == 4
+    elif path == "/api/reviews":
+        assert res_from_only.json()["total"] == 4
+
+    # Boundary open range: only date_to=2023-11-14 includes all reviews
+    res_to_only = client.get(path, params={"date_to": "2023-11-14"})
+    assert res_to_only.status_code == 200
+    if path == "/api/summary":
+        assert res_to_only.json()["total_reviews"] == 4
+    elif path == "/api/reviews":
+        assert res_to_only.json()["total"] == 4
+
+
+def test_date_filtering_exact_second_boundaries():
+    from sqlalchemy import select
+
+    from backend.app.queries import apply_filters
+    from backend.app.schemas import ReviewFilters
+
+    test_engine = create_engine("sqlite://", poolclass=StaticPool)
+    Base.metadata.create_all(test_engine)
+    TestSession = sessionmaker(bind=test_engine)
+
+    # 2023-11-14 00:00:00 UTC is 1699920000
+    # 2023-11-14 23:59:59 UTC is 1700006399
+    r_before = Review(
+        review_id=901,
+        app_id=1,
+        app_name="Test",
+        language="en",
+        recommended=True,
+        votes_helpful=0,
+        votes_funny=0,
+        comment_count=0,
+        weighted_vote_score=0.0,
+        timestamp_created=1699919999,  # 2023-11-13 23:59:59 UTC
+        timestamp_updated=1699919999,
+        author_steamid=111,
+        steam_purchase=True,
+        received_for_free=False,
+        early_access=False,
+        excerpt="",
+    )
+    r_start = Review(
+        review_id=902,
+        app_id=1,
+        app_name="Test",
+        language="en",
+        recommended=True,
+        votes_helpful=0,
+        votes_funny=0,
+        comment_count=0,
+        weighted_vote_score=0.0,
+        timestamp_created=1699920000,  # 2023-11-14 00:00:00 UTC
+        timestamp_updated=1699920000,
+        author_steamid=112,
+        steam_purchase=True,
+        received_for_free=False,
+        early_access=False,
+        excerpt="",
+    )
+    r_end = Review(
+        review_id=903,
+        app_id=1,
+        app_name="Test",
+        language="en",
+        recommended=True,
+        votes_helpful=0,
+        votes_funny=0,
+        comment_count=0,
+        weighted_vote_score=0.0,
+        timestamp_created=1700006399,  # 2023-11-14 23:59:59 UTC
+        timestamp_updated=1700006399,
+        author_steamid=113,
+        steam_purchase=True,
+        received_for_free=False,
+        early_access=False,
+        excerpt="",
+    )
+    r_after = Review(
+        review_id=904,
+        app_id=1,
+        app_name="Test",
+        language="en",
+        recommended=True,
+        votes_helpful=0,
+        votes_funny=0,
+        comment_count=0,
+        weighted_vote_score=0.0,
+        timestamp_created=1700006400,  # 2023-11-15 00:00:00 UTC
+        timestamp_updated=1700006400,
+        author_steamid=114,
+        steam_purchase=True,
+        received_for_free=False,
+        early_access=False,
+        excerpt="",
+    )
+
+    with TestSession() as session:
+        session.add_all([r_before, r_start, r_end, r_after])
+        session.commit()
+
+        # date_from and date_to both 2023-11-14 should match r_start and r_end only
+        stmt = apply_filters(
+            select(Review.review_id),
+            ReviewFilters(date_from="2023-11-14", date_to="2023-11-14"),
+        )
+        matched_ids = session.scalars(stmt).all()
+        assert set(matched_ids) == {902, 903}
+
+
+@pytest.mark.parametrize("path", ["/api/summary", "/api/charts", "/api/reviews"])
+@pytest.mark.parametrize(
+    "param_name,invalid_value",
+    [
+        ("date_from", "invalid"),
+        ("date_from", "2023-13-01"),
+        ("date_from", "2023-02-30"),
+        ("date_to", "invalid"),
+        ("date_to", "2023-99-99"),
+        ("date_to", "2023-04-31"),
+    ],
+)
+def test_invalid_date_format_returns_422(client, path, param_name, invalid_value):
+    response = client.get(path, params={param_name: invalid_value})
+    assert response.status_code == 422
+
+
+def test_apply_filters_invalid_date_raises_http_exception():
+    from fastapi import HTTPException
+    from sqlalchemy import select
+
+    from backend.app.queries import apply_filters
+    from backend.app.schemas import ReviewFilters
+
+    with pytest.raises(HTTPException) as exc_info_from:
+        apply_filters(select(Review), ReviewFilters(date_from="2023-02-30"))
+    assert exc_info_from.value.status_code == 422
+    assert exc_info_from.value.detail == "Data inválida. Use o formato AAAA-MM-DD."
+
+    with pytest.raises(HTTPException) as exc_info_to:
+        apply_filters(select(Review), ReviewFilters(date_to="not-valid"))
+    assert exc_info_to.value.status_code == 422
+    assert exc_info_to.value.detail == "Data inválida. Use o formato AAAA-MM-DD."

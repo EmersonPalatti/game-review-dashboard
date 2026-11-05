@@ -52,6 +52,8 @@ def parse_filters(
     received_for_free: bool | None = Query(default=None),
     early_access: bool | None = Query(default=None),
     playtime_bucket: str | None = Query(default=None),
+    date_from: str | None = Query(default=None, pattern=r"^\d{4}-\d{2}-\d{2}$"),
+    date_to: str | None = Query(default=None, pattern=r"^\d{4}-\d{2}-\d{2}$"),
 ) -> ReviewFilters:
     _reject_unknown_bucket(playtime_bucket)
     return ReviewFilters(
@@ -62,6 +64,8 @@ def parse_filters(
         received_for_free=received_for_free,
         early_access=early_access,
         playtime_bucket=playtime_bucket,
+        date_from=date_from,
+        date_to=date_to,
     )
 
 

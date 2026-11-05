@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 
+from fastapi import HTTPException
 from sqlalchemy import and_, case, func, select
 from sqlalchemy.orm import Session
 
@@ -42,6 +43,32 @@ def apply_filters(stmt, filters: ReviewFilters):
             stmt = stmt.where(Review.playtime_at_review >= low)
         if high is not None:
             stmt = stmt.where(Review.playtime_at_review < high)
+    if filters.date_from is not None:
+        try:
+            ts_from = int(
+                datetime.strptime(filters.date_from, "%Y-%m-%d")
+                .replace(tzinfo=timezone.utc)
+                .timestamp()
+            )
+        except ValueError as err:
+            raise HTTPException(
+                status_code=422,
+                detail="Data inválida. Use o formato AAAA-MM-DD.",
+            ) from err
+        stmt = stmt.where(Review.timestamp_created >= ts_from)
+    if filters.date_to is not None:
+        try:
+            ts_to = int(
+                datetime.strptime(filters.date_to, "%Y-%m-%d")
+                .replace(hour=23, minute=59, second=59, tzinfo=timezone.utc)
+                .timestamp()
+            )
+        except ValueError as err:
+            raise HTTPException(
+                status_code=422,
+                detail="Data inválida. Use o formato AAAA-MM-DD.",
+            ) from err
+        stmt = stmt.where(Review.timestamp_created <= ts_to)
     return stmt
 
 

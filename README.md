@@ -3,7 +3,7 @@
 Painel analítico interativo e estudo de dados sobre **1.000.000 de avaliações da Steam** (março de 2013 a janeiro de 2021), derivado do [Game Reviews Dataset no Kaggle](https://www.kaggle.com/datasets/sridharstreaks/game-reviews-dataset). A base cobre **59 jogos** e **912.553 autores únicos**.
 
 O projeto reúne duas entregas integradas:
-1. **Dashboard operacional de filtragem cruzada** (Astro, TypeScript, Tailwind CSS v4, Apache ECharts, Nanostores e FastAPI com SQLite) para exploração interativa em tempo real com recortes multidimensionais, KPIs dinâmicos, gráficos reativos e listagem paginada de avaliações.
+1. **Dashboard operacional de filtragem cruzada** (Astro, React Islands, TanStack Query, TanStack Table + TanStack Virtual, Apache ECharts, Nanostores, Tailwind CSS v4 e FastAPI com SQLite) para exploração interativa em tempo real com recortes multidimensionais, KPIs dinâmicos, gráficos reativos e listagem virtualizada de avaliações com rolagem infinita.
 2. **Análise exploratória de dados e auditoria relacional** (`analysis.ipynb`), conduzida com o Gemini 4 Argon e subagentes Gemini 3.8 Flash (`AGENTS.md`), auditando as 4 partições relacionais 1:1, saneando anomalias extremas (como underflow de `uint32` e spams de copypasta) e investigando a dinâmica de recomendação e tempo de jogo.
 
 [![Demonstração do Dashboard e Análise](assets/overview.gif)](assets/overview.mp4)
@@ -38,14 +38,14 @@ O painel foi projetado para permitir que analistas, engenheiros e recrutadores t
   - **Evolução temporal (ECharts)**: série mensal com volume de avaliações de março de 2013 a janeiro de 2021.
   - **Taxa de aprovação por faixa de horas (ECharts)**: visualização da inflexão na janela de reembolso de 2 horas da Valve.
   - **Rankings bidirecionais**: Top jogos por volume de avaliações e ranking de aprovação por idioma.
-  - **Tabela tabular paginada**: trechos reais das avaliações com ordenação dinâmica por horas jogadas ou votos úteis e navegação paginada (20 itens por página).
+  - **Tabela virtualizada com Infinite Scroll (TanStack Table + TanStack Virtual)**: renderização sob demanda apenas das linhas visíveis no viewport, rolagem contínua em janelas de 100 avaliações com cache assíncrono (TanStack Query), ordenação dinâmica por horas jogadas, votos úteis ou data de publicação, além de expansão de linhas para inspeção detalhada de badges e metadados.
 - **Presets guiados por hipóteses da pesquisa**: atalhos na barra de contexto para carregar recortes emblemáticos:
   - *Janela < 1 h*: avaliações precoces (aprovação cai para 49,6%).
   - *Acesso antecipado*: impacto de jogos em desenvolvimento (69,8% vs. 83,8% no lançamento).
   - *Economia da insatisfação*: avaliações negativas (recebem 2,8x mais votos úteis).
 - **Usabilidade e acessibilidade**:
   - Alternância de tema claro e escuro.
-  - Atalhos de teclado: `/` foca a seleção de jogo, `[` e `]` navegam entre páginas, `Esc` fecha painéis ou limpa seleções.
+  - Atalhos de teclado e acessibilidade: `/` foca a seleção de jogo na barra lateral, `Esc` fecha painéis, seletores e a gaveta mobile, além de navegação completa via teclado.
   - Chips de filtros ativos com remoção individual ou limpeza global em um clique.
 
 ---
@@ -66,13 +66,27 @@ flowchart LR
         REPO --> API["Endpoints REST (/api/summary, /api/charts, /api/reviews)\n(backend/app/main.py)"]
     end
 
-    subgraph Frontend ["Frontend (Astro + Tailwind v4)"]
-        API --> STORE["Estado Global Reativo\n(Nanostores: filters.ts)"]
-        STORE --> CHARTS["Gráficos Interativos\n(Apache ECharts 6)"]
-        STORE --> KPIS["KPI Cards & Rankings"]
-        STORE --> TABLE["Tabela Paginada de Reviews"]
+    subgraph Frontend ["Frontend (Astro + React Islands)"]
+        API --> QUERY["TanStack Query (Cache & Infinite)\n(QueryRoot / queryClient)"]
+        STORE["Estado Global Reativo\n(Nanostores: filters.ts)"] <--> QUERY
+        STORE <--> FILTERS["Filters & Context Islands (client:load)\nControles laterais e Presets"]
+        QUERY --> KPIS["MetricsIsland (client:load)\n4 KPI Cards"]
+        QUERY --> CHARTS["ChartsIsland (client:visible)\nApache ECharts 6"]
+        QUERY --> TABLE["ReviewsIsland (client:visible)\nTanStack Table + Virtual"]
     end
 ```
+
+### Arquitetura de Frontend: Ilhas Reativas e Cache Desacoplado
+
+O frontend adota uma abordagem híbrida moderna de alto desempenho:
+- **Astro & React Islands (`@astrojs/react`)**: A casca da aplicação (layout, sidebar estrutural, cabeçalho) é gerada estaticamente pelo Astro com **zero JavaScript desnecessário** para o cliente. A interatividade é isolada em ilhas React independentes:
+  - `ContextIsland` e `FiltersIsland` (`client:load`): hidratados imediatamente para garantir controle imediato sobre presets e seletores de dimensão.
+  - `MetricsIsland` (`client:load`): reage instantaneamente aos filtros exibindo os 4 KPIs agregados.
+  - `ChartsIsland` (`client:visible`): renderiza os gráficos Apache ECharts apenas quando entram no campo de visão (lazy hydration).
+  - `ReviewsIsland` (`client:visible`): tabela virtualizada sob demanda para navegação pelas avaliações.
+- **TanStack Query (React Query v5)**: Orquestra o ciclo de vida das requisições assíncronas aos endpoints da API (`/api/summary`, `/api/charts`, `/api/reviews`). Provê cache transparente em memória, deduplicação de buscas concorrentes, estados suaves de transição (`keepPreviousData` / `isPlaceholderData`) e gerenciamento de carregamento progressivo contínuo via `useInfiniteQuery` (janelas de 100 itens).
+- **TanStack Table + TanStack Virtual**: Motor headless declarativo para tipagem, ordenação multicritério e formatação de colunas, combinado a um virtualizador de DOM (`useVirtualizer`) com medição dinâmica de altura. Apenas as linhas visíveis na janela de rolagem são renderizadas no DOM, viabilizando rolagem infinita estável a 60 FPS sobre centenas de avaliações carregadas.
+- **Nanostores**: Barramento reativo atômico ultraleve que conecta os filtros da barra lateral e os presets analíticos a todas as ilhas React sem a necessidade de um Provider monolítico englobando toda a árvore HTML.
 
 ### Endpoints da API
 
@@ -137,24 +151,41 @@ game-review-dashboard/
 │   ├── game_info.csv                     # Dados dos jogos (app_id e app_name) (~28 MB)
 │   ├── author_info.csv                   # Telemetria e perfil do autor (~58 MB)
 │   └── purchase_info.csv                 # Tipo de compra e early access (~10 MB)
-├── frontend/                             # Aplicação web interativa (Astro)
+├── frontend/                             # Aplicação web interativa (Astro + React Islands)
 │   ├── src/
-│   │   ├── components/                   # Componentes de interface (RailIcon, ComboToggle)
+│   │   ├── components/                   # Componentes estáticos e estruturais da interface
+│   │   │   ├── react/                    # Ilhas interativas React
+│   │   │   │   ├── ChartsIsland.tsx      # Ilha dos gráficos ECharts (client:visible)
+│   │   │   │   ├── ContextIsland.tsx     # Presets analíticos e chips de filtro (client:load)
+│   │   │   │   ├── FiltersIsland.tsx     # Controles laterais e seletores (client:load)
+│   │   │   │   ├── MetricsIsland.tsx     # 4 cards de KPIs agregados (client:load)
+│   │   │   │   ├── QueryRoot.tsx         # Provedor compartilhado do TanStack Query
+│   │   │   │   └── ReviewsIsland.tsx     # Tabela virtualizada com TanStack Table + Virtual (client:visible)
+│   │   │   ├── ContextBar.astro          # Barra superior de contexto
+│   │   │   ├── MobileBar.astro           # Barra de navegação móvel
+│   │   │   ├── Sidebar.astro             # Painel lateral responsivo
+│   │   │   └── ThemeToggle.astro         # Alternância de tema claro/escuro
 │   │   ├── layouts/
-│   │   │   └── Base.astro                # Layout base HTML com meta tags e fontes
+│   │   │   └── Base.astro                # Layout base HTML com meta tags e fontes IBM Plex
 │   │   ├── lib/
 │   │   │   ├── api.ts                    # Cliente HTTP tipado para a API backend
-│   │   │   └── format.ts                 # Formatação numérica pt-BR e datas
+│   │   │   ├── constants.ts              # Constantes e parâmetros padrão
+│   │   │   ├── fetchFeedback.ts          # Feedback visual com anti-flicker calibrado
+│   │   │   ├── format.ts                 # Formatação numérica pt-BR e datas
+│   │   │   ├── queryClient.ts            # Instância centralizada do TanStack QueryClient
+│   │   │   └── useNanostore.ts           # Hook de integração React com Nanostores
 │   │   ├── pages/
-│   │   │   └── index.astro               # Dashboard com filtros, KPIs, gráficos e tabela
+│   │   │   └── index.astro               # Ponto de entrada do dashboard Astro
 │   │   ├── scripts/
 │   │   │   ├── charts.ts                 # Configuração e renderização dos gráficos ECharts
-│   │   │   └── dashboard.ts              # Controlador da interface e atalhos de teclado
+│   │   │   ├── dashboard.ts              # Sincronização de URL, atalhos de teclado e tema
+│   │   │   └── theme.ts                  # Persistência do tema claro/escuro
 │   │   ├── stores/
-│   │   │   └── filters.ts                # Gerenciador de estado reativo (Nanostores)
+│   │   │   ├── filters.ts                # Estado global reativo dos filtros (Nanostores)
+│   │   │   └── urlSync.ts                # Sincronização bidirecional entre filtros e URL
 │   │   └── styles/
 │   │       └── global.css                # Estilos globais e tokens com Tailwind CSS v4
-│   ├── astro.config.mjs                  # Configuração do Astro e proxy /api -> backend:8000
+│   ├── astro.config.mjs                  # Configuração do Astro com integrações React e Tailwind
 │   └── package.json                      # Dependências do frontend
 ├── scripts/                              # Utilitários de inicialização do JupyterLab
 │   ├── start-jupyter.ps1                 # Inicialização no Windows PowerShell
@@ -414,12 +445,16 @@ npm run render:overview
 ## 8. Stack Tecnológica
 
 ### Frontend
-- **[Astro 7](https://astro.build/)**: framework web com arquitetura rápida e zero JavaScript desnecessário.
-- **[TypeScript](https://www.typescriptlang.org/)**: tipagem estática ponta a ponta.
-- **[Tailwind CSS v4](https://tailwindcss.com/)**: estilização orientada a utilitários e variáveis de tema.
-- **[Apache ECharts 6](https://echarts.apache.org/)**: gráficos de alta performance para grandes séries e barras interativas.
-- **[Nanostores](https://github.com/nanostores/nanostores)**: gerenciamento de estado global desacoplado e reativo para filtragem cruzada.
-- **[Lucide Icons](https://lucide.dev/)**: conjunto consistente de ícones.
+- **[Astro 7](https://astro.build/)**: framework web com arquitetura de ilhas (Islands Architecture) e zero JavaScript enviado para a casca estática da aplicação.
+- **[React 19 & React Islands](https://react.dev/) (`@astrojs/react`)**: ilhas interativas de componentes hidratadas sob demanda (`client:load` para filtros, presets e KPIs; `client:visible` para gráficos ECharts e tabela de reviews).
+- **[TanStack Query v5](https://tanstack.com/query/latest)**: gerenciamento de estado assíncrono, cache inteligente em memória, deduplicação de requisições, refetch reativo e paginação infinita (`useInfiniteQuery`).
+- **[TanStack Table v9](https://tanstack.com/table/latest)**: motor headless para gerenciamento tabular, ordenação dinâmica multicritério e mapeamento de colunas fortemente tipado.
+- **[TanStack Virtual v3](https://tanstack.com/virtual/latest)**: virtualização de lista (`useVirtualizer`) com medição dinâmica de altura de linhas, garantindo rolagem suave a 60 FPS e consumo mínimo de memória no DOM.
+- **[Apache ECharts 6](https://echarts.apache.org/)**: gráficos interativos de alta performance para séries temporais e taxas de aprovação por tempo de jogo.
+- **[Nanostores](https://github.com/nanostores/nanostores)**: barramento de estado reativo, desacoplado e ultraleve para sincronização entre ilhas React independentes sem Providers globais.
+- **[Tailwind CSS v4](https://tailwindcss.com/)**: estilização moderna com suporte nativo a CSS moderno, design tokens e transições de tema claro/escuro.
+- **[TypeScript](https://www.typescriptlang.org/)**: tipagem estática ponta a ponta alinhada aos modelos Pydantic do backend.
+- **[Lucide Icons](https://lucide.dev/)**: pacote consistente de ícones vetoriais.
 
 ### Backend & Dados
 - **[Python 3.14](https://www.python.org/)**
