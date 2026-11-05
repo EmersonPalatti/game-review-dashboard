@@ -12,7 +12,10 @@ const MONTHS = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', '
 const charts = new Map<string, ECharts>();
 let lastData: Charts | null = null;
 let lastActivePlaytime: PlaytimeBucket = 'all';
+let lastActiveMonth: string | null = null;
+let lastMonthZoom: { start: number; end: number } | null = null;
 let onSelectPlaytime: ((bucket: PlaytimeBucket) => void) | null = null;
+let onSelectMonth: ((month: string) => void) | null = null;
 
 function prefersReducedMotion(): boolean {
   return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -39,6 +42,7 @@ function palette() {
     secondary: token('--secondary'),
     muted: token('--muted'),
     line: token('--line'),
+    raised: token('--raised'),
     surface: token('--surface'),
     accent: token('--accent'),
     negative: token('--negative'),
@@ -83,8 +87,12 @@ function resizeCharts(): void {
 
 let chartObserver: ResizeObserver | null = null;
 
-export function initCharts(onPlaytimeSelect?: (bucket: PlaytimeBucket) => void): void {
+export function initCharts(
+  onPlaytimeSelect?: (bucket: PlaytimeBucket) => void,
+  onMonthSelect?: (month: string) => void,
+): void {
   if (onPlaytimeSelect) onSelectPlaytime = onPlaytimeSelect;
+  if (onMonthSelect) onSelectMonth = onMonthSelect;
   window.removeEventListener('resize', resizeCharts);
   chartObserver?.disconnect();
   chartObserver = new ResizeObserver(() => resizeCharts());
@@ -98,6 +106,49 @@ export function initCharts(onPlaytimeSelect?: (bucket: PlaytimeBucket) => void):
     charts.set(id, echarts.init(element));
     chartObserver.observe(element);
   }
+  const monthChart = chart('chart-month');
+  monthChart.off('datazoom');
+  monthChart.on('datazoom', (params: unknown) => {
+    const payload = params as {
+      start?: number;
+      end?: number;
+      batch?: Array<{ start?: number; end?: number }>;
+    };
+    const start = payload.batch?.[0]?.start ?? payload.start ?? 0;
+    const end = payload.batch?.[0]?.end ?? payload.end ?? 100;
+    if (start <= 0.5 && end >= 99.5) {
+      lastMonthZoom = null;
+    } else {
+      lastMonthZoom = { start, end };
+    }
+  });
+  const monthZr = monthChart.getZr();
+  let downPoint: [number, number] | null = null;
+  monthZr.on('mousedown', (event: { offsetX: number; offsetY: number }) => {
+    downPoint = [event.offsetX, event.offsetY];
+  });
+  monthZr.on('mousemove', (event: { offsetX: number; offsetY: number }) => {
+    const inGrid = monthChart.containPixel('grid', [event.offsetX, event.offsetY]);
+    if (inGrid) {
+      monthZr.setCursorStyle('pointer');
+    }
+  });
+  monthZr.on('click', (event: { offsetX: number; offsetY: number }) => {
+    if (!lastData || !onSelectMonth || lastData.months.length === 0) return;
+    if (
+      downPoint &&
+      Math.hypot(event.offsetX - downPoint[0], event.offsetY - downPoint[1]) > 5
+    ) {
+      return;
+    }
+    const pointInPixel: [number, number] = [event.offsetX, event.offsetY];
+    if (!monthChart.containPixel('grid', pointInPixel)) return;
+    const pointInGrid = monthChart.convertFromPixel({ seriesIndex: 0 }, pointInPixel);
+    const dataIndex = Array.isArray(pointInGrid) ? Math.round(pointInGrid[0]) : -1;
+    const point = lastData.months[dataIndex];
+    if (!point) return;
+    onSelectMonth(point.month);
+  });
   const playtimeChart = chart('chart-playtime');
   playtimeChart.off('click');
   playtimeChart.on('click', (params: { dataIndex?: number }) => {
@@ -122,9 +173,14 @@ function setChartVisible(id: string, emptyId: string, visible: boolean): void {
   if (empty) empty.hidden = visible;
 }
 
-export function renderCharts(data: Charts, activePlaytime: PlaytimeBucket = lastActivePlaytime): void {
+export function renderCharts(
+  data: Charts,
+  activePlaytime: PlaytimeBucket = lastActivePlaytime,
+  activeMonth: string | null = lastActiveMonth,
+): void {
   lastData = data;
   lastActivePlaytime = activePlaytime;
+  lastActiveMonth = activeMonth;
   paint(data, true);
 }
 
@@ -145,7 +201,10 @@ export function disposeCharts(): void {
   }
   lastData = null;
   lastActivePlaytime = 'all';
+  lastActiveMonth = null;
+  lastMonthZoom = null;
   onSelectPlaytime = null;
+  onSelectMonth = null;
 }
 
 function paint(data: Charts, animate = true): void {
@@ -167,6 +226,10 @@ function paintMonth(data: Charts, colors: ReturnType<typeof palette>, animate: b
     if (current && best && current.review_count > best.review_count) peakIndex = index;
   }
   const best = data.months[peakIndex];
+  const activeIndex =
+    lastActiveMonth !== null
+      ? data.months.findIndex((point) => point.month === lastActiveMonth)
+      : -1;
 
   const monthElement = document.getElementById('chart-month');
   if (monthElement) {
@@ -179,11 +242,67 @@ function paintMonth(data: Charts, colors: ReturnType<typeof palette>, animate: b
     }
   }
 
+  if (data.months.length <= 12) {
+    lastMonthZoom = null;
+  }
+
+  const zoomStart = lastMonthZoom ? lastMonthZoom.start : 0;
+  const zoomEnd = lastMonthZoom ? lastMonthZoom.end : 100;
+
   chart('chart-month').setOption(
     {
       ...motionConfig(animate),
       backgroundColor: 'transparent',
-      grid: { left: 8, right: 16, top: 16, bottom: 8, containLabel: true },
+      grid: { left: 8, right: 16, top: 16, bottom: 42, containLabel: true },
+      dataZoom: [
+        {
+          id: 'month-zoom',
+          type: 'slider',
+          show: data.months.length > 2,
+          xAxisIndex: 0,
+          filterMode: 'filter',
+          start: zoomStart,
+          end: zoomEnd,
+          height: 16,
+          bottom: 4,
+          left: 62,
+          right: 16,
+          borderColor: colors.line,
+          backgroundColor: colors.raised,
+          fillerColor: `${colors.accent}22`,
+          dataBackground: {
+            lineStyle: { color: colors.muted, width: 1, opacity: 0.45 },
+            areaStyle: { color: colors.muted, opacity: 0.1 },
+          },
+          selectedDataBackground: {
+            lineStyle: { color: colors.accent, width: 1.25, opacity: 0.85 },
+            areaStyle: { color: colors.accent, opacity: 0.2 },
+          },
+          handleIcon:
+            'path://M-1,-7 L1,-7 C1.7,-7 2.2,-6.4 2.2,-5.6 L2.2,5.6 C2.2,6.4 1.7,7 1,7 L-1,7 C-1.7,7 -2.2,6.4 -2.2,5.6 L-2.2,-5.6 C-2.2,-6.4 -1.7,-7 -1,-7 Z',
+          handleSize: '100%',
+          handleStyle: {
+            color: colors.surface,
+            borderColor: colors.accent,
+            borderWidth: 1.5,
+            shadowBlur: 0,
+          },
+          moveHandleSize: 0,
+          emphasis: {
+            handleStyle: {
+              color: colors.accent,
+              borderColor: colors.accent,
+            },
+          },
+          textStyle: {
+            color: colors.muted,
+            fontFamily: '"IBM Plex Mono", monospace',
+            fontSize: 11,
+          },
+          labelFormatter: (_value: number, valueStr: string) => formatMonth(valueStr),
+          brushSelect: false,
+        },
+      ],
       tooltip: {
         ...tooltipBase(colors),
         trigger: 'axis',
@@ -193,7 +312,11 @@ function paintMonth(data: Charts, colors: ReturnType<typeof palette>, animate: b
           const point = data.months[index];
           if (!point) return '';
           const peak = index === peakIndex ? '<br/>pico do recorte' : '';
-          return `${formatMonth(point.month)}<br/>${formatInteger(point.review_count)} avaliações${peak}`;
+          const action =
+            index === activeIndex
+              ? '<br/>Clique para limpar o filtro'
+              : '<br/>Clique para filtrar o mês';
+          return `${formatMonth(point.month)}<br/>${formatInteger(point.review_count)} avaliações${peak}${action}`;
         },
       },
       xAxis: {
@@ -226,20 +349,62 @@ function paintMonth(data: Charts, colors: ReturnType<typeof palette>, animate: b
           type: 'line',
           data: data.months.map((point) => point.review_count),
           showSymbol: false,
-          cursor: 'default',
+          symbol: 'circle',
+          symbolSize: 6,
+          cursor: 'pointer',
           lineStyle: { color: colors.secondary, width: 1.75 },
-          itemStyle: { color: colors.secondary },
-          emphasis: { disabled: true },
+          itemStyle: { color: colors.accent },
+          emphasis: {
+            disabled: false,
+            scale: true,
+            itemStyle: { color: colors.accent },
+          },
+          markLine: {
+            silent: true,
+            symbol: ['none', 'none'],
+            z: 2,
+            data:
+              activeIndex >= 0 && lastActiveMonth !== null
+                ? [
+                    {
+                      xAxis: lastActiveMonth,
+                      lineStyle: {
+                        color: colors.accent,
+                        type: [5, 4],
+                        width: 1.5,
+                      },
+                      label: { show: false },
+                    },
+                  ]
+                : [],
+          },
         },
         {
           id: 'month-peak',
           type: 'scatter',
           data: data.months.map((point, index) => (index === peakIndex ? point.review_count : null)),
           symbolSize: 8,
-          cursor: 'default',
-          itemStyle: { color: colors.accent },
+          cursor: 'pointer',
+          itemStyle: {
+            color: activeIndex >= 0 && activeIndex !== peakIndex ? colors.muted : colors.accent,
+            opacity: activeIndex >= 0 && activeIndex !== peakIndex ? 0.55 : 1,
+          },
           tooltip: { show: false },
           z: 3,
+        },
+        {
+          id: 'month-selected',
+          type: 'scatter',
+          data: data.months.map((point, index) => (index === activeIndex ? point.review_count : null)),
+          symbolSize: 9,
+          cursor: 'pointer',
+          itemStyle: {
+            color: colors.accent,
+            borderColor: colors.surface,
+            borderWidth: 2,
+          },
+          tooltip: { show: false },
+          z: 4,
         },
       ],
     } satisfies EChartsOption,

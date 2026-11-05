@@ -30,6 +30,30 @@ export function isPlaytimeBucket(value: string): value is Exclude<PlaytimeBucket
   return value in PLAYTIME_LABELS;
 }
 
+export function getMonthDateRange(month: string): { dateFrom: string; dateTo: string } {
+  const [yearStr, monthStr] = month.split('-');
+  const year = Number(yearStr);
+  const monthNum = Number(monthStr);
+  const lastDay = new Date(year, monthNum, 0).getDate();
+  const paddedMonth = String(monthNum).padStart(2, '0');
+  const paddedDay = String(lastDay).padStart(2, '0');
+  return {
+    dateFrom: `${year}-${paddedMonth}-01`,
+    dateTo: `${year}-${paddedMonth}-${paddedDay}`,
+  };
+}
+
+export function getActiveMonth(
+  dateFrom: string | null,
+  dateTo: string | null,
+): string | null {
+  if (!dateFrom || !dateTo) return null;
+  if (dateFrom.length === 10 && dateTo.length === 10 && dateFrom.slice(0, 7) === dateTo.slice(0, 7)) {
+    return dateFrom.slice(0, 7);
+  }
+  return null;
+}
+
 export type Filters = {
   appId: number | null;
   language: string | null;

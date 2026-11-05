@@ -297,6 +297,18 @@ def charts(session: Session, filters: ReviewFilters) -> ChartsResponse:
         )
     )
 
+    is_single_month = (
+        filters.date_from is not None
+        and filters.date_to is not None
+        and len(filters.date_from) == 10
+        and len(filters.date_to) == 10
+        and filters.date_from[:7] == filters.date_to[:7]
+    )
+    month_filters = (
+        filters.model_copy(update={"date_from": None, "date_to": None})
+        if is_single_month
+        else filters
+    )
     month_key = func.strftime("%Y-%m", Review.timestamp_created, "unixepoch").label("month")
     month_count = func.count().label("review_count")
     month_rows = session.execute(
@@ -305,7 +317,7 @@ def charts(session: Session, filters: ReviewFilters) -> ChartsResponse:
             .where(Review.timestamp_created.is_not(None))
             .group_by(month_key)
             .order_by(month_key.asc()),
-            filters,
+            month_filters,
         )
     ).all()
 

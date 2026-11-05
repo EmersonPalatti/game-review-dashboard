@@ -419,6 +419,28 @@ def test_charts_follow_filters(client):
     assert fp_by_key["h5_10"]["review_count"] == 1
     assert fp_body["games"] == [{"app_name": "Alpha", "review_count": 1}]
 
+    # Ao filtrar um único mês (date_from e date_to no mesmo AAAA-MM), a série mensal
+    # preserva a curva completa para destacar o mês selecionado sem colapsar para 1 ponto,
+    # enquanto os demais painéis são filtrados pelo mês.
+    single_month = client.get(
+        "/api/charts",
+        params={"date_from": "2023-10-01", "date_to": "2023-10-31"},
+    )
+    assert single_month.status_code == 200
+    sm_body = single_month.json()
+    assert sm_body["games"] == []
+    assert sm_body["languages"] == []
+    assert sm_body["months"] == [{"month": "2023-11", "review_count": 4}]
+
+    # Intervalos de múltiplos meses (como os presets de ano) aplicam zoom na série mensal.
+    multi_month = client.get(
+        "/api/charts",
+        params={"date_from": "2023-01-01", "date_to": "2023-10-31"},
+    )
+    assert multi_month.status_code == 200
+    mm_body = multi_month.json()
+    assert mm_body["months"] == []
+
 
 @pytest.mark.parametrize("path", ["/api/metrics", "/api/summary", "/api/reviews", "/api/charts"])
 def test_invalid_playtime_bucket_returns_422(client, path):

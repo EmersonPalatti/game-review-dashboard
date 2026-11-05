@@ -7,7 +7,12 @@ import { formatInteger, formatPercent, languageLabel } from '../../lib/format';
 import { useFilters } from '../../lib/useNanostore';
 import { disposeCharts, initCharts, renderCharts } from '../../scripts/charts';
 import { rankRow } from '../../scripts/renderers';
-import { filters, type Filters } from '../../stores/filters';
+import {
+  filters,
+  getActiveMonth,
+  getMonthDateRange,
+  type Filters,
+} from '../../stores/filters';
 import { QueryRoot } from './QueryRoot';
 
 function patchFilters(patch: Partial<Filters>): void {
@@ -121,12 +126,24 @@ function ChartsContent() {
   });
 
   const showBusy = useDelayedFlag(chartsFetching);
+  const activeMonth = getActiveMonth(currentFilters.dateFrom, currentFilters.dateTo);
 
   useEffect(() => {
-    initCharts((bucket) => {
-      const current = filters.get().playtime;
-      patchFilters({ playtime: current === bucket ? 'all' : bucket });
-    });
+    initCharts(
+      (bucket) => {
+        const current = filters.get().playtime;
+        patchFilters({ playtime: current === bucket ? 'all' : bucket });
+      },
+      (month) => {
+        const current = filters.get();
+        const currentMonth = getActiveMonth(current.dateFrom, current.dateTo);
+        if (currentMonth === month) {
+          patchFilters({ dateFrom: null, dateTo: null });
+        } else {
+          patchFilters(getMonthDateRange(month));
+        }
+      },
+    );
     return () => {
       disposeCharts();
     };
@@ -134,9 +151,9 @@ function ChartsContent() {
 
   useEffect(() => {
     if (chartsData) {
-      renderCharts(chartsData, currentFilters.playtime);
+      renderCharts(chartsData, currentFilters.playtime, activeMonth);
     }
-  }, [chartsData, currentFilters.playtime]);
+  }, [chartsData, currentFilters.playtime, activeMonth]);
 
   useEffect(() => {
     const rankGames = document.getElementById('rank-games');
@@ -170,7 +187,9 @@ function ChartsContent() {
     >
       <article className="card lg:col-span-2">
         <h2 className="title">Avaliações por mês</h2>
-        <p className="meta mt-2">Publicadas em cada mês do recorte · pico destacado</p>
+        <p className="meta mt-2">
+          Publicadas em cada mês do recorte · pico destacado · clique para{'\u00a0'}filtrar
+        </p>
         <div id="chart-month" className="mt-4 h-[320px] w-full" />
         <p id="chart-month-empty" className="meta mt-4" hidden>
           Nenhum mês no recorte.
