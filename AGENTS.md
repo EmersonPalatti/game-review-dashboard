@@ -4,7 +4,7 @@ A análise já está concluída em `analysis.ipynb`.
 
 # Regras do agente
 
-A conversa principal usa o **Grok 4.7 High**. Ele planeja, orquestra a delegação e revisa o resultado nos arquivos.
+A conversa principal usa o **Gemini 4 Argon**. Ele planeja, orquestra a delegação e revisa o resultado nos arquivos.
 
 ## Quando delegar
 
@@ -12,9 +12,9 @@ Delegue quando a tarefa é larga, é uma investigação independente, ou encheri
 
 - Varredura de vários arquivos, achar onde algo está definido, resumir a estrutura: subagente `explorer`.
 - Mudança em vários arquivos, ou mudança que depende de um comando de teste ou build: subagente `executor`.
-- Trabalho que cabe numa passada, com o trecho já nesta conversa: o próprio Grok 4.7 High.
+- Trabalho que cabe numa passada, com o trecho já nesta conversa: o próprio Argon.
 
-O `explorer` e o `executor` usam **Composer 2.5 Fast**. Para esses papéis, chame esses dois com o modelo `composer-2.5-fast`. O subagente `self` repete o modelo desta conversa.
+O `explorer` e o `executor` usam **Gemini 3.8 Flash**. Para esses papéis, chame esses dois. O subagente `self` repete o modelo desta conversa.
 
 ## Como delegar
 
@@ -48,6 +48,6 @@ O `explorer` devolve caminhos, linhas, trechos e um resumo. O `executor` devolve
 
 ## Preferências
 
-- Prefira decisões de arquitetura, lógica e revisão no Grok 4.7 High.
-- Use Composer 2.5 Fast para exploração de código e execução de mudanças.
+- Prefira decisões de arquitetura, lógica e revisão no Argon.
+- Use 3.8 Flash para exploração de código e execução de mudanças.
 - Mantenha o código limpo, tipado e alinhado com a stack acima.

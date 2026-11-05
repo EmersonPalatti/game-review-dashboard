@@ -170,7 +170,7 @@ function ChartsContent() {
     >
       <article className="card lg:col-span-2">
         <h2 className="title">Avaliações por mês</h2>
-        <p className="meta mt-2">Publicadas em cada mês do recorte</p>
+        <p className="meta mt-2">Publicadas em cada mês do recorte · pico destacado</p>
         <div id="chart-month" className="mt-4 h-[320px] w-full" />
         <p id="chart-month-empty" className="meta mt-4" hidden>
           Nenhum mês no recorte.
@@ -204,12 +204,12 @@ function ChartsContent() {
         <ol id="rank-languages" className="rank-list" />
       </article>
 
-      {error ? (
+      {error && chartsData !== undefined ? (
         <div
           className="flex flex-wrap items-center gap-3 lg:col-span-3"
           role="alert"
         >
-          <p className="meta">Não foi possível carregar os gráficos.</p>
+          <p className="meta">Não foi possível atualizar os gráficos.</p>
           <button
             type="button"
             className="btn btn-secondary btn-small"

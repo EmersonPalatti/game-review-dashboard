@@ -1,7 +1,6 @@
 import { queryClient } from '../lib/queryClient';
 import {
   filters,
-  page,
   readFiltersFromSearch,
   reviewSort,
   writeFiltersToSearch,
@@ -24,6 +23,10 @@ const sidebarPanel = requireElement('app-sidebar', HTMLElement);
 const sidebarOpenButton = requireElement('sidebar-open', HTMLButtonElement);
 const sidebarCloseButton = requireElement('sidebar-close', HTMLButtonElement);
 const sidebarQuery = window.matchMedia('(max-width: 767px)');
+const retryButton = requireElement('retry', HTMLButtonElement);
+const loadError = requireElement('load-error', HTMLElement);
+const loadErrorDetail = requireElement('load-error-detail', HTMLElement);
+void loadErrorDetail;
 
 function syncMobileSidebar(): void {
   const open = sidebarPanel.classList.contains('is-open');
@@ -57,13 +60,30 @@ document.addEventListener('keydown', (event) => {
   if (sidebarPanel.querySelector('.combo-menu.is-open')) return;
   setMobileSidebar(false);
 });
+document.addEventListener('close-mobile-sidebar', () => {
+  setMobileSidebar(false);
+});
 syncMobileSidebar();
 
-const retryButton = requireElement('retry', HTMLButtonElement);
+function syncGlobalError(): void {
+  const queries = queryClient.getQueryCache().getAll();
+  const hasError = queries.some((q) => q.state.status === 'error');
+  const hasAnyData = queries.some((q) => q.state.data !== undefined);
+
+  if (hasError && !hasAnyData) {
+    loadError.hidden = false;
+    loadError.setAttribute('aria-hidden', 'false');
+    main.dataset.error = 'true';
+  } else {
+    loadError.hidden = true;
+    loadError.setAttribute('aria-hidden', 'true');
+    delete main.dataset.error;
+  }
+}
 
 function syncUrl(replace = false): void {
   if (isUrlSyncSuppressed()) return;
-  const search = writeFiltersToSearch(filters.get(), page.get(), reviewSort.get());
+  const search = writeFiltersToSearch(filters.get(), reviewSort.get());
   const nextUrl = `${window.location.pathname}${search}${window.location.hash}`;
   const currentUrl = `${window.location.pathname}${window.location.search}${window.location.hash}`;
   if (nextUrl !== currentUrl) {
@@ -77,7 +97,10 @@ function syncUrl(replace = false): void {
 
 function bindControls(): void {
   retryButton.addEventListener('click', () => {
-    void queryClient.invalidateQueries();
+    loadError.hidden = true;
+    loadError.setAttribute('aria-hidden', 'true');
+    delete main.dataset.error;
+    void queryClient.refetchQueries();
   });
 
   document.addEventListener('keydown', (event) => {
@@ -105,36 +128,25 @@ function init(): void {
   setupTheme(themeButton, repaintCharts);
   bindControls();
 
+  queryClient.getQueryCache().subscribe(() => {
+    syncGlobalError();
+  });
+
   const initial = readFiltersFromSearch(window.location.search);
   filters.set(initial.filters);
-  page.set(initial.page);
   reviewSort.set(initial.sort);
 
   filters.listen(() => {
-    if (!isUrlSyncSuppressed() && page.get() !== 0) {
-      page.set(0);
-      return;
-    }
-    syncUrl();
-  });
-
-  page.listen(() => {
     syncUrl();
   });
 
   reviewSort.listen(() => {
-    if (isUrlSyncSuppressed()) return;
-    if (page.get() !== 0) {
-      page.set(0);
-      return;
-    }
     syncUrl();
   });
 
   window.addEventListener('popstate', () => {
     suppressUrlSyncDuring(() => {
       const next = readFiltersFromSearch(window.location.search);
-      page.set(next.page);
       filters.set(next.filters);
       reviewSort.set(next.sort);
     });

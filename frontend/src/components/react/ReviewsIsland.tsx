@@ -12,7 +12,6 @@ import {
   useMemo,
   useRef,
   useState,
-  type KeyboardEvent,
   type ReactNode,
 } from 'react';
 import { fetchReviewWindow, type ReviewItem } from '../../lib/api';
@@ -55,6 +54,8 @@ function cycleSort(key: ReviewSortBy): void {
     reviewSort.set({ sortBy: key, sortDir: 'desc' });
   } else if (current.sortDir === 'desc') {
     reviewSort.set({ sortBy: key, sortDir: 'asc' });
+  } else if (key === 'created_at') {
+    reviewSort.set({ sortBy: 'created_at', sortDir: 'desc' });
   } else {
     reviewSort.set({ ...DEFAULT_SORT });
   }
@@ -72,7 +73,48 @@ function RecommendationCell({ recommended }: { recommended: boolean }) {
   return <span className="nao">Não</span>;
 }
 
-function ReviewBadges({ item }: { item: ReviewItem }) {
+function ReviewBadges({
+  item,
+  isExpanded,
+  isTruncated,
+}: {
+  item: ReviewItem;
+  isExpanded: boolean;
+  isTruncated: boolean;
+}) {
+  let secondaryCount = 0;
+  if (item.received_for_free) secondaryCount++;
+  if (!item.steam_purchase) secondaryCount++;
+  if (item.votes_funny > 0) secondaryCount++;
+  if (item.comment_count > 0) secondaryCount++;
+
+  if (!isExpanded) {
+    return (
+      <div className="review-badges">
+        <span className="review-badge">{formatDate(item.created_at)}</span>
+        {item.early_access ? (
+          <span className="review-badge is-accent">Acesso antecipado</span>
+        ) : null}
+        {secondaryCount > 0 ? (
+          <span
+            className="review-badge"
+            title="Clique na linha para expandir mais detalhes"
+          >
+            +{secondaryCount} {secondaryCount === 1 ? 'detalhe' : 'detalhes'}
+          </span>
+        ) : null}
+        {isTruncated ? (
+          <span
+            className="review-badge"
+            title="Resumo limitado a 280 caracteres na higienização da base"
+          >
+            280 car.
+          </span>
+        ) : null}
+      </div>
+    );
+  }
+
   return (
     <div className="review-badges">
       <span className="review-badge">{formatDate(item.created_at)}</span>
@@ -89,29 +131,62 @@ function ReviewBadges({ item }: { item: ReviewItem }) {
       {item.comment_count > 0 ? (
         <span className="review-badge">{formatInteger(item.comment_count)} coment.</span>
       ) : null}
+      {isTruncated ? (
+        <span
+          className="review-badge"
+          title="Resumo limitado a 280 caracteres na higienização da base"
+        >
+          Truncado em 280 caracteres
+        </span>
+      ) : null}
     </div>
   );
 }
 
-function ExcerptCell({ item }: { item: ReviewItem }) {
+function ExcerptCell({
+  item,
+  isExpanded,
+  onToggle,
+}: {
+  item: ReviewItem;
+  isExpanded: boolean;
+  onToggle: () => void;
+}) {
+  const isTruncated = (item.excerpt?.length ?? 0) >= 275;
+
   return (
     <div className="excerpt-cell">
       <div className="excerpt-line">
-        <svg
-          className="excerpt-chevron"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          aria-hidden="true"
+        <button
+          type="button"
+          className="excerpt-toggle inline-flex items-center justify-center p-0 m-0 border-0 bg-transparent text-inherit cursor-pointer flex-none"
+          aria-expanded={isExpanded}
+          aria-label={
+            isExpanded
+              ? 'Recolher detalhes da avaliação'
+              : 'Expandir detalhes da avaliação'
+          }
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggle();
+          }}
         >
-          <path d="m9 18 6-6-6-6" />
-        </svg>
+          <svg
+            className="excerpt-chevron"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d="m9 18 6-6-6-6" />
+          </svg>
+        </button>
         <div className="excerpt-text">{item.excerpt || 'Sem texto na avaliação.'}</div>
       </div>
-      <ReviewBadges item={item} />
+      <ReviewBadges item={item} isExpanded={isExpanded} isTruncated={isTruncated} />
     </div>
   );
 }
@@ -213,6 +288,15 @@ function ReviewsTableContent() {
     if (!isPending) tryFetchNext();
   }, [items.length, isPending, tryFetchNext]);
 
+  const toggleExpanded = useCallback((reviewId: number) => {
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(reviewId)) next.delete(reviewId);
+      else next.add(reviewId);
+      return next;
+    });
+  }, []);
+
   const columns = useMemo(
     () => [
       columnHelper.accessor('app_name', {
@@ -269,12 +353,28 @@ function ReviewsTableContent() {
       }),
       columnHelper.display({
         id: 'excerpt',
-        header: 'Trecho',
-        meta: { thClass: 'w-[41%]' },
-        cell: (info) => <ExcerptCell item={info.row.original} />,
+        header: () => (
+          <div className="flex items-center justify-between gap-2">
+            <span>Trecho</span>
+            <SortHeaderButton
+              label="Data"
+              sortKey="created_at"
+              title="Ordenar por data de publicação"
+              currentSort={currentSort}
+            />
+          </div>
+        ),
+        meta: { thClass: 'w-[41%]', sortKey: 'created_at' as ReviewSortBy },
+        cell: (info) => (
+          <ExcerptCell
+            item={info.row.original}
+            isExpanded={expanded.has(info.row.original.review_id)}
+            onToggle={() => toggleExpanded(info.row.original.review_id)}
+          />
+        ),
       }),
     ],
-    [currentSort],
+    [currentSort, expanded, toggleExpanded],
   );
 
   const table = useLegacyTable({
@@ -291,22 +391,6 @@ function ReviewsTableContent() {
     overscan: 8,
     measureElement: (el) => el.getBoundingClientRect().height,
   });
-
-  const toggleExpanded = (reviewId: number) => {
-    setExpanded((prev) => {
-      const next = new Set(prev);
-      if (next.has(reviewId)) next.delete(reviewId);
-      else next.add(reviewId);
-      return next;
-    });
-  };
-
-  const onRowKeyDown = (event: KeyboardEvent<HTMLTableRowElement>, reviewId: number) => {
-    if (event.key === 'Enter' || event.key === ' ') {
-      event.preventDefault();
-      toggleExpanded(reviewId);
-    }
-  };
 
   const virtualRows = virtualizer.getVirtualItems();
   const paddingTop = virtualRows[0]?.start ?? 0;
@@ -378,7 +462,7 @@ function ReviewsTableContent() {
                 </tr>
               ))}
             </thead>
-            <tbody id="reviews-body" aria-busy={isFetching ? 'true' : 'false'}>
+            <tbody id="reviews-body">
               {showEmpty ? (
                 <tr>
                   <td colSpan={6} className="empty-cell">
@@ -415,10 +499,7 @@ function ReviewsTableContent() {
                         data-index={virtualRow.index}
                         ref={virtualizer.measureElement}
                         className={isExpanded ? 'review-row is-expanded' : 'review-row'}
-                        tabIndex={0}
-                        aria-expanded={isExpanded}
                         onClick={() => toggleExpanded(reviewId)}
-                        onKeyDown={(event) => onRowKeyDown(event, reviewId)}
                       >
                         {row.getVisibleCells().map((cell) => (
                           <td key={cell.id}>
@@ -443,7 +524,7 @@ function ReviewsTableContent() {
         </div>
       </div>
 
-      {error ? (
+      {error && items.length > 0 ? (
         <div className="flex flex-wrap items-center gap-3" role="alert">
           <p className="meta">Não foi possível carregar as avaliações.</p>
           <button

@@ -51,8 +51,19 @@ const initialFilters: Filters = {
 };
 
 export const filters = atom<Filters>({ ...initialFilters });
-export const page = atom(0);
 export const PAGE_SIZE = 20;
+
+export function activeFilterCount(current: Readonly<Filters>): number {
+  return [
+    current.appId !== null,
+    current.language !== null,
+    current.recommended !== 'all',
+    current.steamPurchase !== 'all',
+    current.receivedForFree !== 'all',
+    current.earlyAccess !== 'all',
+    current.playtime !== 'all',
+  ].filter(Boolean).length;
+}
 
 export type ReviewSortBy = 'created_at' | 'votes_helpful' | 'playtime_hours';
 export type SortDir = 'asc' | 'desc';
@@ -70,7 +81,6 @@ export const reviewSort = atom<ReviewSort>({ ...DEFAULT_SORT });
 
 export function resetFilters(): void {
   reviewSort.set({ ...DEFAULT_SORT });
-  page.set(0);
   filters.set({ ...initialFilters });
 }
 
@@ -92,7 +102,6 @@ function parseSortDir(value: string | null): SortDir {
 
 export function readFiltersFromSearch(search: string): {
   filters: Filters;
-  page: number;
   sort: ReviewSort;
 } {
   const params = new URLSearchParams(search);
@@ -107,10 +116,6 @@ export function readFiltersFromSearch(search: string): {
   const rawPlaytime = params.get('playtime_bucket') ?? '';
   const playtime: PlaytimeBucket = isPlaytimeBucket(rawPlaytime) ? rawPlaytime : 'all';
 
-  const rawPage = params.get('page');
-  const parsedPage = rawPage !== null ? parseInt(rawPage, 10) : NaN;
-  const pageNumber = Number.isInteger(parsedPage) && parsedPage >= 0 ? parsedPage : 0;
-
   return {
     filters: {
       appId,
@@ -121,7 +126,6 @@ export function readFiltersFromSearch(search: string): {
       earlyAccess: parseTri(params.get('early_access')),
       playtime,
     },
-    page: pageNumber,
     sort: {
       sortBy: parseSortBy(params.get('sort_by')),
       sortDir: parseSortDir(params.get('sort_dir')),
@@ -131,7 +135,6 @@ export function readFiltersFromSearch(search: string): {
 
 export function writeFiltersToSearch(
   current: Readonly<Filters>,
-  currentPage: number,
   currentSort: Readonly<ReviewSort> = DEFAULT_SORT,
 ): string {
   const params = new URLSearchParams();
@@ -162,10 +165,6 @@ export function writeFiltersToSearch(
 
   if (current.playtime !== 'all') {
     params.set('playtime_bucket', current.playtime);
-  }
-
-  if (currentPage > 0) {
-    params.set('page', String(currentPage));
   }
 
   if (currentSort.sortBy !== DEFAULT_SORT.sortBy || currentSort.sortDir !== DEFAULT_SORT.sortDir) {

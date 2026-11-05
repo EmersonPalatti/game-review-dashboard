@@ -7,7 +7,6 @@ import {
   DEFAULT_SORT,
   PLAYTIME_LABELS,
   filters,
-  page,
   resetFilters,
   reviewSort,
   type Filters,
@@ -91,7 +90,6 @@ function applyPreset(preset: PresetKey): void {
         ? { sortBy: 'votes_helpful', sortDir: 'desc' }
         : { ...DEFAULT_SORT },
     );
-    page.set(0);
   });
   filters.set({ ...PRESETS[preset] });
 }

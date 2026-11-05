@@ -11,10 +11,11 @@ import {
 } from 'lucide';
 import { useEffect, useLayoutEffect, useRef, type RefObject } from 'react';
 import { PLAYTIME_OPTIONS } from '../../lib/constants';
-import { languageLabel } from '../../lib/format';
+import { formatInteger, languageLabel } from '../../lib/format';
 import { useFilters, useLatestMetrics } from '../../lib/useNanostore';
 import { SearchCombo, type ComboOption } from '../../scripts/combo';
 import {
+  activeFilterCount,
   filters,
   resetFilters,
   type Filters,
@@ -53,18 +54,6 @@ function catalogSignature(options: ComboOption[]): string {
   return options.map((item) => `${item.value}\u0000${item.label}\u0000${item.count ?? ''}`).join('\u0001');
 }
 
-function activeFilterCount(current: Filters): number {
-  return [
-    current.appId !== null,
-    current.language !== null,
-    current.recommended !== 'all',
-    current.steamPurchase !== 'all',
-    current.receivedForFree !== 'all',
-    current.earlyAccess !== 'all',
-    current.playtime !== 'all',
-  ].filter(Boolean).length;
-}
-
 function activeFilterLabel(count: number): string {
   if (count === 0) return 'Nenhum filtro ativo';
   if (count === 1) return '1 filtro ativo';
@@ -73,15 +62,13 @@ function activeFilterLabel(count: number): string {
 
 type TriFilterKey = 'recommended' | 'steamPurchase' | 'receivedForFree' | 'earlyAccess';
 
-function ComboToggle({ controls }: { controls: string }) {
+function ComboToggle() {
   return (
     <button
       type="button"
       className="combo-toggle"
       tabIndex={-1}
-      aria-label="Mostrar opções"
-      aria-expanded="false"
-      aria-controls={controls}
+      aria-label="Alternar lista de opções"
     >
       <svg
         className="combo-toggle-icon"
@@ -155,6 +142,7 @@ function FilterCombo({
               type="text"
               role="combobox"
               aria-autocomplete="list"
+              aria-haspopup="listbox"
               aria-expanded="false"
               aria-controls={listId}
               aria-keyshortcuts={shortcut}
@@ -163,7 +151,7 @@ function FilterCombo({
               placeholder="Todos"
             />
             <ul ref={menuRef} id={listId} className="combo-menu" role="listbox" />
-            <ComboToggle controls={listId} />
+            <ComboToggle />
           </div>
         </span>
       </span>
@@ -408,6 +396,16 @@ export function FiltersIsland() {
       <p id="filter-summary" className="sidebar-summary meta mt-2">
         {activeFilterLabel(count)}
       </p>
+      <div className="sidebar-mobile-actions mt-4 md:hidden">
+        <button
+          id="apply-filters-mobile"
+          type="button"
+          className="btn btn-primary w-full"
+          onClick={() => document.dispatchEvent(new CustomEvent('close-mobile-sidebar'))}
+        >
+          {metrics ? `Ver ${formatInteger(metrics.total_reviews)} avaliações` : 'Ver resultados'}
+        </button>
+      </div>
     </>
   );
 }

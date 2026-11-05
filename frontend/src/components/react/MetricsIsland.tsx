@@ -19,7 +19,7 @@ import {
 } from '../../lib/constants';
 import { formatInteger, formatPercent } from '../../lib/format';
 import { useFilters } from '../../lib/useNanostore';
-import { type Filters } from '../../stores/filters';
+import { activeFilterCount, type Filters } from '../../stores/filters';
 import { latestMetrics } from '../../stores/metrics';
 import { QueryRoot } from './QueryRoot';
 
@@ -41,18 +41,6 @@ const ppFormat = new Intl.NumberFormat('pt-BR', {
   maximumFractionDigits: 2,
   signDisplay: 'exceptZero',
 });
-
-function activeFilterCount(current: Filters): number {
-  return [
-    current.appId !== null,
-    current.language !== null,
-    current.recommended !== 'all',
-    current.steamPurchase !== 'all',
-    current.receivedForFree !== 'all',
-    current.earlyAccess !== 'all',
-    current.playtime !== 'all',
-  ].filter(Boolean).length;
-}
 
 function AnimatedFigure({
   id,
@@ -260,10 +248,10 @@ function MetricsContent() {
   );
 
   let errorBlock: ReactNode = null;
-  if (error) {
+  if (error && metrics !== undefined) {
     errorBlock = (
       <div className="flex flex-wrap items-center gap-3 sm:col-span-2 xl:col-span-4" role="alert">
-        <p className="meta">Não foi possível carregar os indicadores.</p>
+        <p className="meta">Não foi possível atualizar os indicadores (verifique a API em 127.0.0.1:8000).</p>
         <button type="button" className="btn btn-secondary btn-small" onClick={() => void refetch()}>
           Tentar de novo
         </button>
