@@ -1,12 +1,13 @@
+import logging
 import os
 from contextlib import asynccontextmanager
 
-from fastapi import Depends, FastAPI, HTTPException, Query
+from fastapi import Depends, FastAPI, HTTPException, Query, Response
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 
-from backend.app.database import get_db, init_db
-from backend.app.queries import charts, list_reviews, metrics
+from backend.app.database import SessionLocal, get_db, init_db
+from backend.app.queries import charts, list_reviews, metrics, warmup_caches
 from backend.app.schemas import (
     ChartsResponse,
     MetricsResponse,
@@ -17,10 +18,17 @@ from backend.app.schemas import (
 )
 from backend.app.transform import PLAYTIME_BUCKETS
 
+logger = logging.getLogger(__name__)
+
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     init_db()
+    try:
+        with SessionLocal() as db:
+            warmup_caches(db)
+    except Exception as err:
+        logger.warning("Cache warmup skipped or failed: %s", err)
     yield
 
 
@@ -86,22 +94,31 @@ def parse_filters(
 @app.get("/api/metrics", response_model=MetricsResponse)
 @app.get("/api/summary", response_model=MetricsResponse)
 def get_metrics(
+    response: Response,
     filters: ReviewFilters = Depends(parse_filters),
     db: Session = Depends(get_db),
 ) -> MetricsResponse:
+    response.headers["Cache-Control"] = (
+        "public, max-age=3600, s-maxage=86400, stale-while-revalidate=86400"
+    )
     return metrics(db, filters)
 
 
 @app.get("/api/charts", response_model=ChartsResponse)
 def get_charts(
+    response: Response,
     filters: ReviewFilters = Depends(parse_filters),
     db: Session = Depends(get_db),
 ) -> ChartsResponse:
+    response.headers["Cache-Control"] = (
+        "public, max-age=3600, s-maxage=86400, stale-while-revalidate=86400"
+    )
     return charts(db, filters)
 
 
 @app.get("/api/reviews", response_model=ReviewListResponse)
 def get_reviews(
+    response: Response,
     filters: ReviewFilters = Depends(parse_filters),
     limit: int = Query(default=20, ge=1, le=100),
     offset: int = Query(default=0, ge=0),
@@ -109,4 +126,7 @@ def get_reviews(
     sort_dir: SortDir = Query(default="desc"),
     db: Session = Depends(get_db),
 ) -> ReviewListResponse:
+    response.headers["Cache-Control"] = (
+        "public, max-age=300, s-maxage=1800, stale-while-revalidate=3600"
+    )
     return list_reviews(db, filters, limit, offset, sort_by=sort_by, sort_dir=sort_dir)

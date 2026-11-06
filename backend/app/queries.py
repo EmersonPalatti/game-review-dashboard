@@ -1,4 +1,7 @@
+from collections import OrderedDict
 from datetime import datetime, timezone
+from threading import Lock
+from typing import Generic, TypeVar
 
 from fastapi import HTTPException
 from sqlalchemy import and_, case, func, select
@@ -72,6 +75,66 @@ def apply_filters(stmt, filters: ReviewFilters):
     return stmt
 
 
+T = TypeVar("T")
+
+
+class LRUCache(Generic[T]):
+    def __init__(self, maxsize: int = 256) -> None:
+        self.maxsize = maxsize
+        self._cache: OrderedDict[tuple, T] = OrderedDict()
+        self._lock = Lock()
+
+    def get(self, key: tuple) -> T | None:
+        with self._lock:
+            if key not in self._cache:
+                return None
+            self._cache.move_to_end(key)
+            return self._cache[key]
+
+    def set(self, key: tuple, value: T) -> None:
+        with self._lock:
+            if key in self._cache:
+                self._cache.move_to_end(key)
+            self._cache[key] = value
+            if len(self._cache) > self.maxsize:
+                self._cache.popitem(last=False)
+
+    def clear(self) -> None:
+        with self._lock:
+            self._cache.clear()
+
+
+_metrics_cache: LRUCache[MetricsResponse] = LRUCache[MetricsResponse](maxsize=256)
+_charts_cache: LRUCache[ChartsResponse] = LRUCache[ChartsResponse](maxsize=256)
+
+
+def _filter_cache_key(filters: ReviewFilters) -> tuple:
+    return (
+        filters.app_id,
+        filters.language,
+        filters.recommended,
+        filters.steam_purchase,
+        filters.received_for_free,
+        filters.early_access,
+        filters.playtime_bucket,
+        filters.date_from,
+        filters.date_to,
+    )
+
+
+def clear_cache() -> None:
+    global _facets
+    _facets = None
+    _metrics_cache.clear()
+    _charts_cache.clear()
+
+
+def warmup_caches(session: Session) -> None:
+    default_filters = ReviewFilters()
+    metrics(session, default_filters)
+    charts(session, default_filters)
+
+
 _facets: tuple[list[GameFacet], list[LanguageFacet]] | None = None
 
 
@@ -140,6 +203,11 @@ def _to_item(row: Review) -> ReviewItem:
 
 
 def metrics(session: Session, filters: ReviewFilters) -> MetricsResponse:
+    cache_key = _filter_cache_key(filters)
+    cached = _metrics_cache.get(cache_key)
+    if cached is not None:
+        return cached
+
     # Autor fica numa query separada: no mesmo SELECT o SQLite varre a tabela
     # inteira e o COUNT DISTINCT de 1 milhão de contas leva cerca de 4 s.
     recommended_count = func.coalesce(
@@ -166,7 +234,7 @@ def metrics(session: Session, filters: ReviewFilters) -> MetricsResponse:
     recommended = int(totals.recommended_reviews or 0)
     rate = recommended / total if total else 0.0
     games, languages = _global_facets(session)
-    return MetricsResponse(
+    result = MetricsResponse(
         total_reviews=total,
         recommendation_rate=rate,
         game_count=int(totals.game_count or 0),
@@ -174,6 +242,8 @@ def metrics(session: Session, filters: ReviewFilters) -> MetricsResponse:
         games=games,
         languages=languages,
     )
+    _metrics_cache.set(cache_key, result)
+    return result
 
 
 def list_reviews(
@@ -230,6 +300,11 @@ def _playtime_condition(low: int | None, high: int | None):
 
 
 def charts(session: Session, filters: ReviewFilters) -> ChartsResponse:
+    cache_key = _filter_cache_key(filters)
+    cached = _charts_cache.get(cache_key)
+    if cached is not None:
+        return cached
+
     columns = []
     for key, bounds in PLAYTIME_BUCKETS.items():
         condition = _playtime_condition(*bounds)
@@ -329,7 +404,7 @@ def charts(session: Session, filters: ReviewFilters) -> ChartsResponse:
         )
     ).all()
 
-    return ChartsResponse(
+    result = ChartsResponse(
         playtime=playtime,
         games=[
             GameBar(app_name=row.app_name, review_count=int(row.review_count))
@@ -342,3 +417,5 @@ def charts(session: Session, filters: ReviewFilters) -> ChartsResponse:
             if row.month
         ],
     )
+    _charts_cache.set(cache_key, result)
+    return result

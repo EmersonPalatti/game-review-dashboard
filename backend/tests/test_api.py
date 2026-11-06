@@ -9,6 +9,7 @@ from sqlalchemy.pool import StaticPool
 from backend.app.database import get_db
 from backend.app.main import app
 from backend.app.models import Base, Review
+from backend.app.queries import clear_cache
 from backend.app.transform import (
     PLAYTIME_BUCKETS,
     clean_votes_funny,
@@ -131,11 +132,16 @@ def _sample_reviews() -> list[Review]:
 
 @pytest.fixture(scope="module")
 def client():
+    clear_cache()
     Base.metadata.drop_all(engine)
     Base.metadata.create_all(engine)
     with SessionLocal() as session:
         session.add_all(_sample_reviews())
         session.commit()
+
+    import backend.app.main as main_mod
+    orig_session_local = main_mod.SessionLocal
+    main_mod.SessionLocal = SessionLocal
 
     def override_get_db():
         db = SessionLocal()
@@ -149,7 +155,9 @@ def client():
         with TestClient(app) as test_client:
             yield test_client
     finally:
+        main_mod.SessionLocal = orig_session_local
         app.dependency_overrides.clear()
+        clear_cache()
 
 
 def test_review_ids_are_64_bit():
@@ -651,4 +659,76 @@ def test_health_endpoint(client):
     response = client.get("/health")
     assert response.status_code == 200
     assert response.json() == {"status": "ok"}
+
+
+def test_cache_control_headers(client):
+    res_summary = client.get("/api/summary")
+    assert res_summary.status_code == 200
+    assert (
+        res_summary.headers.get("Cache-Control")
+        == "public, max-age=3600, s-maxage=86400, stale-while-revalidate=86400"
+    )
+
+    res_metrics = client.get("/api/metrics")
+    assert res_metrics.status_code == 200
+    assert (
+        res_metrics.headers.get("Cache-Control")
+        == "public, max-age=3600, s-maxage=86400, stale-while-revalidate=86400"
+    )
+
+    res_charts = client.get("/api/charts")
+    assert res_charts.status_code == 200
+    assert (
+        res_charts.headers.get("Cache-Control")
+        == "public, max-age=3600, s-maxage=86400, stale-while-revalidate=86400"
+    )
+
+    res_reviews = client.get("/api/reviews")
+    assert res_reviews.status_code == 200
+    assert (
+        res_reviews.headers.get("Cache-Control")
+        == "public, max-age=300, s-maxage=1800, stale-while-revalidate=3600"
+    )
+
+
+def test_in_memory_caching_and_warmup():
+    from backend.app.queries import (
+        _charts_cache,
+        _metrics_cache,
+        charts,
+        clear_cache,
+        metrics,
+        warmup_caches,
+    )
+    from backend.app.schemas import ReviewFilters
+
+    test_engine = create_engine("sqlite://", poolclass=StaticPool)
+    Base.metadata.create_all(test_engine)
+    TestSession = sessionmaker(bind=test_engine)
+
+    with TestSession() as session:
+        session.add_all(_sample_reviews())
+        session.commit()
+
+        clear_cache()
+        assert len(_metrics_cache._cache) == 0
+        assert len(_charts_cache._cache) == 0
+
+        # warmup_caches populates the default filters cache
+        warmup_caches(session)
+        assert len(_metrics_cache._cache) == 1
+        assert len(_charts_cache._cache) == 1
+
+        # Second call returns the cached object
+        m1 = metrics(session, ReviewFilters())
+        m2 = metrics(session, ReviewFilters())
+        assert m1 is m2
+
+        c1 = charts(session, ReviewFilters())
+        c2 = charts(session, ReviewFilters())
+        assert c1 is c2
+
+        clear_cache()
+        assert len(_metrics_cache._cache) == 0
+        assert len(_charts_cache._cache) == 0
 
