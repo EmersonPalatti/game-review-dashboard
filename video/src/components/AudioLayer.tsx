@@ -1,11 +1,18 @@
 import React from 'react';
 import { Audio, interpolate, staticFile, useCurrentFrame } from 'remotion';
 
-interface AudioLayerProps {
-  totalFrames: number;
+export interface SoundEvent {
+  frame: number;
+  src: string;
+  volume: number;
 }
 
-export const AudioLayer: React.FC<AudioLayerProps> = ({ totalFrames }) => {
+interface AudioLayerProps {
+  totalFrames: number;
+  soundEvents: SoundEvent[];
+}
+
+export const AudioLayer: React.FC<AudioLayerProps> = ({ totalFrames, soundEvents }) => {
   const frame = useCurrentFrame();
 
   // Background Music Volume Envelope
@@ -18,33 +25,6 @@ export const AudioLayer: React.FC<AudioLayerProps> = ({ totalFrames }) => {
       : 1;
 
   const bgVolume = fadeIn * fadeOut;
-
-  // Sound Effect Triggers (frame numbers aligned with new timeline)
-  const soundEvents = [
-    // Theme toggle light
-    { frame: 240, src: 'audio/click.wav', volume: 0.65 },
-    { frame: 244, src: 'audio/whoosh.wav', volume: 0.35 },
-    // Combo select
-    { frame: 557, src: 'audio/click.wav', volume: 0.6 },
-    // Crossfilter
-    { frame: 909, src: 'audio/click.wav', volume: 0.65 },
-    { frame: 915, src: 'audio/tap.wav', volume: 0.4 },
-    // Preset
-    { frame: 1261, src: 'audio/click.wav', volume: 0.6 },
-    // Table sort & expand
-    { frame: 1553, src: 'audio/click.wav', volume: 0.6 },
-    { frame: 1725, src: 'audio/click.wav', volume: 0.6 },
-    // Clear filters & Theme toggle dark
-    { frame: 2005, src: 'audio/click.wav', volume: 0.6 },
-    { frame: 2165, src: 'audio/click.wav', volume: 0.65 },
-    { frame: 2168, src: 'audio/whoosh.wav', volume: 0.35 },
-    // Mobile entry & interactions
-    { frame: 2210, src: 'audio/whoosh.wav', volume: 0.4 },
-    { frame: 2270, src: 'audio/tap.wav', volume: 0.55 },
-    { frame: 2334, src: 'audio/click.wav', volume: 0.55 },
-    { frame: 2374, src: 'audio/tap.wav', volume: 0.55 },
-    { frame: 2540, src: 'audio/whoosh.wav', volume: 0.35 },
-  ];
 
   return (
     <>

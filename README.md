@@ -9,7 +9,7 @@ O projeto reúne duas entregas integradas:
 [![Demonstração do Dashboard e Análise](assets/overview.gif)](assets/overview.mp4)
 
 > 🎬 **Vídeos demonstrativos em alta definição (60 FPS):**
-> - 📺 [**Showcase Completo do Dashboard (`assets/showcase.mp4`)**](assets/showcase.mp4) — Tour interativo de 45s com filtragem cruzada em tempo real, rankings, presets analíticos, alternância de tema e experiência mobile.
+> - 📺 [**Showcase Completo do Dashboard (`assets/showcase.mp4`)**](assets/showcase.mp4) — Tour interativo de 62s com zoom e clique no gráfico mensal, filtro de período, filtragem cruzada em tempo real, rankings, presets analíticos, alternância de tema e experiência mobile.
 > - 📊 [**Visão Geral & Metodologia (`assets/overview.mp4`)**](assets/overview.mp4) — Resumo executivo dos desafios, arquitetura de dados e conclusões de negócio.
 
 ---

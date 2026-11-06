@@ -6,7 +6,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const CAPTURES_DIR = path.resolve(__dirname, '..', 'captures');
 
-const APP_URL = 'http://127.0.0.1:4321';
+const APP_URL = 'http://localhost:4321';
 
 async function recordDesktop() {
   console.log('\n======================================================');
@@ -55,7 +55,65 @@ async function recordDesktop() {
   await engine.record(2.0);
 
   // -----------------------------------------------------------------
-  // 3. combo: press('/'), hold 0.4s, type('Dark', 6 cps), hold 0.5s,
+  // 3. month: zoom da série mensal e clique que filtra o mês
+  // -----------------------------------------------------------------
+  engine.mark('month');
+  console.log('3. [month] Rolando até #chart-month...');
+  await engine.scrollTo('#chart-month', 1.15);
+  await engine.scrollTo(Math.max(0, engine.scrollY - 96), 0.4);
+  await engine.waitForMonthChart();
+
+  const monthTargets = await engine.getMonthChartTargets();
+  console.log(
+    `   Arrastando o zoom de (${monthTargets.handle.x.toFixed(0)}, ${monthTargets.handle.y.toFixed(0)}) até x=${monthTargets.dragTo.x.toFixed(0)}...`
+  );
+  await engine.moveCursor(monthTargets.handle, 0.9);
+  await engine.record(0.3);
+  await engine.dragCursor(monthTargets.dragTo, 1.15, 'zoom-drag');
+  const zoomAfterDrag = await engine.readMonthZoom();
+  console.log(`   Zoom após arraste: ${JSON.stringify(zoomAfterDrag)}`);
+  if (zoomAfterDrag && zoomAfterDrag.end > 90) {
+    console.warn('   Zoom não estreitou; tentando de novo a partir da alça.');
+    const retry = await engine.getMonthChartTargets();
+    await engine.moveCursor(retry.handle, 0.35);
+    await engine.dragCursor(retry.dragTo, 0.9, 'zoom-drag-retry');
+  }
+  console.log('   Hold de 0.85s no gráfico aproximado...');
+  await engine.record(0.85);
+
+  const monthPoint = await engine.getVisibleMonthPoint();
+  console.log(`   Hover no mês ${monthPoint.monthLabel} e clique para filtrar...`);
+  await engine.moveCursor(monthPoint, 0.85);
+  await engine.record(0.75);
+  await engine.click('month-line');
+  await engine.settle();
+  console.log('   Gravando 1.6s do recorte mensal...');
+  await engine.record(1.6);
+
+  // -----------------------------------------------------------------
+  // 4. dates: presets de período na sidebar, depois volta ao topo
+  // -----------------------------------------------------------------
+  engine.mark('dates');
+  console.log('4. [dates] Movendo até o preset 2019...');
+  await engine.moveCursor('[data-date-preset="2019"]', 1.05);
+  await engine.record(0.35);
+  await engine.click('date-preset-2019');
+  await engine.settle();
+  console.log('   Gravando 1.35s do preset anual...');
+  await engine.record(1.35);
+
+  console.log('   Voltando ao preset Tudo...');
+  await engine.moveCursor('[data-date-preset="all"]', 0.55);
+  await engine.record(0.25);
+  await engine.click('date-preset-all');
+  await engine.settle();
+  await engine.record(0.55);
+
+  console.log('   Rolando de volta ao topo antes da busca...');
+  await engine.scrollTo(0, 1.15);
+
+  // -----------------------------------------------------------------
+  // 5. combo: press('/'), hold 0.4s, type('Dark', 6 cps), hold 0.5s,
   //    cursor até opção Darkest Dungeon (1.2s), pausa 0.4s, click, settle, grava 1.8s
   // -----------------------------------------------------------------
   engine.mark('combo');
@@ -145,6 +203,19 @@ async function recordDesktop() {
   await engine.settle();
   console.log('   Gravando 1.2s...');
   await engine.record(1.2);
+
+  console.log('   Movendo até ordenação por horas...');
+  await engine.moveCursor('[data-sort-by="playtime_hours"]', 0.7);
+  await engine.record(0.3);
+  await engine.click('sort-playtime-hours');
+  await engine.settle();
+  console.log('   Gravando 0.7s da ordenação por horas...');
+  await engine.record(0.7);
+
+  console.log('   Rolando a tabela virtualizada...');
+  await engine.scrollElement('[data-reviews-virtual="true"]', 280, 0.85);
+  await engine.record(0.45);
+  await engine.scrollElement('[data-reviews-virtual="true"]', -280, 0.6);
 
   console.log('   Movendo cursor até a primeira linha da tabela em 1.2s...');
   await engine.moveCursor('#reviews-body tr.review-row:first-child', 1.2);
@@ -272,16 +343,21 @@ async function main() {
   console.log('🚀 RE-GRAVAÇÃO DETERMINÍSTICA: RITMO CALMO E TOOLTIP HOVER');
   console.log('======================================================');
 
+  const only = process.argv[2] ?? 'all';
   const startTotal = performance.now();
-  const desktopResult = await recordDesktop();
-  const mobileResult = await recordMobile();
+  const desktopResult = only === 'mobile' ? null : await recordDesktop();
+  const mobileResult = only === 'desktop' ? null : await recordMobile();
   const totalElapsed = (performance.now() - startTotal) / 1000;
 
   console.log('\n======================================================');
   console.log('🎉 RE-GRAVAÇÕES CONCLUÍDAS COM SUCESSO!');
   console.log(`Tempo total de execução: ${totalElapsed.toFixed(2)}s`);
-  console.log(`Desktop: ${desktopResult.mp4Path} (${desktopResult.totalFrames} frames, ${desktopResult.durationSeconds.toFixed(2)}s)`);
-  console.log(`Mobile:  ${mobileResult.mp4Path} (${mobileResult.totalFrames} frames, ${mobileResult.durationSeconds.toFixed(2)}s)`);
+  if (desktopResult) {
+    console.log(`Desktop: ${desktopResult.mp4Path} (${desktopResult.totalFrames} frames, ${desktopResult.durationSeconds.toFixed(2)}s)`);
+  }
+  if (mobileResult) {
+    console.log(`Mobile:  ${mobileResult.mp4Path} (${mobileResult.totalFrames} frames, ${mobileResult.durationSeconds.toFixed(2)}s)`);
+  }
   console.log('======================================================\n');
 }
 

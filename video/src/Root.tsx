@@ -1,6 +1,7 @@
 import React from 'react';
 import { Composition } from 'remotion';
 import { Showcase } from './Showcase';
+import { SHOWCASE_DURATION } from './showcaseTiming';
 import { Overview, OVERVIEW_DURATION } from './Overview';
 
 export const Root: React.FC = () => {
@@ -9,7 +10,7 @@ export const Root: React.FC = () => {
       <Composition
         id="Showcase"
         component={Showcase}
-        durationInFrames={2700}
+        durationInFrames={SHOWCASE_DURATION}
         fps={60}
         width={1920}
         height={1080}

@@ -518,6 +518,7 @@ export function DateRangeFilter() {
                     key={preset.label}
                     type="button"
                     className="preset-btn text-xs"
+                    data-date-preset={preset.from === null ? 'all' : preset.label}
                     aria-pressed={isActive ? 'true' : 'false'}
                     onClick={() => {
                       patchFilters({ dateFrom: preset.from, dateTo: preset.to });

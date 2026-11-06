@@ -13,81 +13,93 @@ import {
   useVideoConfig,
 } from 'remotion';
 
-import { TimelineData } from './types';
 import { BrowserFrame } from './components/BrowserFrame';
 import { Callout } from './components/Callout';
 import { TitleOverlay } from './components/TitleOverlay';
 import { PhoneFrame } from './components/PhoneFrame';
 import { EndCard } from './components/EndCard';
-import { AudioLayer } from './components/AudioLayer';
+import { AudioLayer, SoundEvent } from './components/AudioLayer';
+import {
+  desktopTimeline,
+  endCardStart,
+  frameOf,
+  splitStart,
+} from './showcaseTiming';
 
-import desktopTimelineRaw from '../public/desktop.timeline.json';
-
-const desktopTimeline = desktopTimelineRaw as unknown as TimelineData;
+const span = (from: number, until: number) => Math.max(90, until - from);
 
 export const Showcase: React.FC = () => {
   const frame = useCurrentFrame();
-  const { fps, width, height } = useVideoConfig();
+  const { fps, width, height, durationInFrames } = useVideoConfig();
 
-  // Desktop video frame index clamped to duration of recording (2349 frames)
   const desktopVideoFrame = Math.min(frame, desktopTimeline.totalFrames - 1);
-  const currentCursor = desktopTimeline.frames[desktopVideoFrame]?.cursor;
+  const desktopFrame = desktopTimeline.frames[desktopVideoFrame];
+  // Com a página rolada além da viewport, o quadro capturado fica deslocado
+  // em relação às coordenadas do mouse. 565px é o ajuste medido nessa tomada.
+  const currentCursor =
+    desktopFrame?.cursor && desktopFrame.scrollY >= 1700
+      ? { ...desktopFrame.cursor, y: desktopFrame.cursor.y - 565 }
+      : desktopFrame?.cursor;
 
-  // Browser dimensions
+  const theme = frameOf('theme');
+  const month = frameOf('month');
+  const monthClick = frameOf('month-line');
+  const dates = frameOf('dates');
+  const combo = frameOf('combo');
+  const cross = frameOf('crossfilter');
+  const preset = frameOf('preset');
+  const table = frameOf('table');
+  const reset = frameOf('reset');
+
   const browserW = 1600;
   const browserH = 938;
-  const initialLeft = (width - browserW) / 2; // 160
-  const initialTop = (height - browserH) / 2; // 71
+  const initialLeft = (width - browserW) / 2;
+  const initialTop = (height - browserH) / 2;
 
-  // -------------------------------------------------------------
-  // Camera Keyframe Targets
-  // (cx in 0..1600 content coords, cy in 0..900 content coords)
-  // -------------------------------------------------------------
   const cameraKeyframes = [
-    // 1. Initial overview (cards rise in dark theme)
     { frame: 0, zoom: 1.0, cx: 800, cy: 450, sx: 960, sy: 540 },
     { frame: 130, zoom: 1.0, cx: 800, cy: 450, sx: 960, sy: 540 },
 
-    // 2. Zoom in deep to #theme-toggle (1.62x)
-    { frame: 185, zoom: 1.62, cx: 160, cy: 150, sx: 700, sy: 460 },
-    { frame: 275, zoom: 1.62, cx: 160, cy: 150, sx: 700, sy: 460 },
+    { frame: theme + 53, zoom: 1.62, cx: 160, cy: 150, sx: 700, sy: 460 },
+    { frame: theme + 143, zoom: 1.62, cx: 160, cy: 150, sx: 700, sy: 460 },
 
-    // 3. Zoom into Combobox search (1.65x)
-    { frame: 350, zoom: 1.65, cx: 180, cy: 260, sx: 720, sy: 440 },
-    { frame: 640, zoom: 1.65, cx: 180, cy: 260, sx: 720, sy: 440 },
+    { frame: month + 90, zoom: 1.52, cx: 760, cy: 250, sx: 960, sy: 500 },
+    { frame: monthClick + 30, zoom: 1.52, cx: 760, cy: 250, sx: 960, sy: 500 },
 
-    // 4. Pan to Playtime Chart & KPIs for cross-filtering (1.50x)
-    { frame: 720, zoom: 1.50, cx: 620, cy: 560, sx: 900, sy: 520 },
-    { frame: 1140, zoom: 1.50, cx: 620, cy: 560, sx: 900, sy: 520 },
+    { frame: dates + 45, zoom: 1.7, cx: 168, cy: 450, sx: 690, sy: 470 },
+    { frame: combo - 20, zoom: 1.7, cx: 168, cy: 420, sx: 690, sy: 470 },
 
-    // 5. Pan to Presets bar (1.58x)
-    { frame: 1200, zoom: 1.58, cx: 580, cy: 130, sx: 880, sy: 480 },
-    { frame: 1350, zoom: 1.58, cx: 580, cy: 130, sx: 880, sy: 480 },
+    { frame: combo + 40, zoom: 1.65, cx: 180, cy: 260, sx: 720, sy: 440 },
+    { frame: cross - 30, zoom: 1.65, cx: 180, cy: 260, sx: 720, sy: 440 },
 
-    // 6. Scroll down to Reviews Table (1.12x - Full Browser Window, Header, Active Filters, and Sort/Expand)
-    { frame: 1450, zoom: 1.12, cx: 800, cy: 280, sx: 960, sy: 470 },
-    { frame: 1810, zoom: 1.12, cx: 800, cy: 280, sx: 960, sy: 470 },
+    { frame: cross + 50, zoom: 1.5, cx: 620, cy: 560, sx: 900, sy: 520 },
+    { frame: preset - 30, zoom: 1.5, cx: 620, cy: 560, sx: 900, sy: 520 },
 
-    // 7. Scroll up and ease back to unzoomed overview (1.0x)
-    { frame: 1910, zoom: 1.0, cx: 800, cy: 450, sx: 960, sy: 540 },
-    { frame: 2200, zoom: 1.0, cx: 800, cy: 450, sx: 960, sy: 540 },
-  ];
+    { frame: preset + 30, zoom: 1.58, cx: 580, cy: 130, sx: 880, sy: 480 },
+    { frame: table - 40, zoom: 1.58, cx: 580, cy: 130, sx: 880, sy: 480 },
 
-  // Helper to interpolate smoothly between camera keyframes
+    { frame: table + 90, zoom: 1.12, cx: 800, cy: 280, sx: 960, sy: 470 },
+    { frame: reset - 40, zoom: 1.12, cx: 800, cy: 280, sx: 960, sy: 470 },
+
+    { frame: reset + 80, zoom: 1.0, cx: 800, cy: 450, sx: 960, sy: 540 },
+    { frame: splitStart, zoom: 1.0, cx: 800, cy: 450, sx: 960, sy: 540 },
+  ].sort((a, b) => a.frame - b.frame);
+
   const getCameraState = (curFrame: number) => {
-    if (curFrame <= cameraKeyframes[0].frame) {
-      return cameraKeyframes[0];
+    const first = cameraKeyframes[0];
+    if (!first || curFrame <= first.frame) {
+      return first;
     }
     const last = cameraKeyframes[cameraKeyframes.length - 1];
-    if (curFrame >= last.frame) {
+    if (!last || curFrame >= last.frame) {
       return last;
     }
     for (let i = 0; i < cameraKeyframes.length - 1; i++) {
       const k1 = cameraKeyframes[i];
       const k2 = cameraKeyframes[i + 1];
+      if (!k1 || !k2) continue;
       if (curFrame >= k1.frame && curFrame <= k2.frame) {
-        const rawT = (curFrame - k1.frame) / (k2.frame - k1.frame);
-        // Smooth Hermite / S-curve easing
+        const rawT = (curFrame - k1.frame) / Math.max(1, k2.frame - k1.frame);
         const t = rawT * rawT * (3 - 2 * rawT);
         return {
           zoom: k1.zoom + (k2.zoom - k1.zoom) * t,
@@ -101,43 +113,67 @@ export const Showcase: React.FC = () => {
     return last;
   };
 
-  const { zoom, cx, cy, sx, sy } = getCameraState(frame);
+  const camera = getCameraState(frame);
+  const zoom = camera?.zoom ?? 1;
+  const cx = camera?.cx ?? 800;
+  const cy = camera?.cy ?? 450;
+  const sx = camera?.sx ?? 960;
+  const sy = camera?.sy ?? 540;
 
-  // Position of target in 1920x1080 canvas coordinates
   const targetCanvasX = initialLeft + cx;
   const targetCanvasY = initialTop + 38 + cy;
 
-  // Zoom transform (transformOrigin: 0 0)
   const cameraTx = sx - targetCanvasX * zoom;
   const cameraTy = sy - targetCanvasY * zoom;
 
-  // -------------------------------------------------------------
-  // Mobile Split Screen Transition (Frame 2200 to 2600)
-  // -------------------------------------------------------------
-  const isSplitPhase = frame >= 2200;
+  const isSplitPhase = frame >= splitStart;
   const splitEntrance = spring({
-    frame: Math.max(0, frame - 2200),
+    frame: Math.max(0, frame - splitStart),
     fps,
     config: { damping: 16, stiffness: 70 },
   });
 
-  const splitAmount = isSplitPhase
-    ? interpolate(splitEntrance, [0, 1], [0, 1])
-    : 0;
+  const splitAmount = isSplitPhase ? interpolate(splitEntrance, [0, 1], [0, 1]) : 0;
 
-  // Desktop container transform during normal vs split mode
   const finalScale = interpolate(splitAmount, [0, 1], [zoom, 0.62]);
   const finalTx = interpolate(splitAmount, [0, 1], [cameraTx, -230]);
   const finalTy = interpolate(splitAmount, [0, 1], [cameraTy, (height - browserH * 0.62) / 2]);
 
-  // Overall Desktop Opacity (fades out as EndCard arrives at frame 2565)
+  const fadeStart = endCardStart - 10;
   const desktopOpacity =
-    frame >= 2555
-      ? interpolate(frame, [2555, 2590], [1, 0], {
+    frame >= fadeStart
+      ? interpolate(frame, [fadeStart, fadeStart + 35], [1, 0], {
           extrapolateLeft: 'clamp',
           extrapolateRight: 'clamp',
         })
       : 1;
+
+  const themeLight = frameOf('theme-toggle-light');
+  const themeDark = frameOf('theme-toggle-dark');
+  const crossClick = frameOf('chart-bar-playtime-2-5h');
+  const soundEvents: SoundEvent[] = [
+    { frame: themeLight, src: 'audio/click.wav', volume: 0.65 },
+    { frame: themeLight + 4, src: 'audio/whoosh.wav', volume: 0.35 },
+    { frame: frameOf('zoom-drag'), src: 'audio/tap.wav', volume: 0.35 },
+    { frame: monthClick, src: 'audio/click.wav', volume: 0.65 },
+    { frame: frameOf('date-preset-2019'), src: 'audio/click.wav', volume: 0.6 },
+    { frame: frameOf('date-preset-all'), src: 'audio/click.wav', volume: 0.5 },
+    { frame: frameOf('combo-select-darkest-dungeon'), src: 'audio/click.wav', volume: 0.6 },
+    { frame: crossClick, src: 'audio/click.wav', volume: 0.65 },
+    { frame: crossClick + 6, src: 'audio/tap.wav', volume: 0.4 },
+    { frame: frameOf('preset-early'), src: 'audio/click.wav', volume: 0.6 },
+    { frame: frameOf('sort-votes-helpful'), src: 'audio/click.wav', volume: 0.6 },
+    { frame: frameOf('sort-playtime-hours'), src: 'audio/click.wav', volume: 0.55 },
+    { frame: frameOf('expand-first-review'), src: 'audio/click.wav', volume: 0.6 },
+    { frame: frameOf('clear-filters'), src: 'audio/click.wav', volume: 0.6 },
+    { frame: themeDark, src: 'audio/click.wav', volume: 0.65 },
+    { frame: themeDark + 3, src: 'audio/whoosh.wav', volume: 0.35 },
+    { frame: splitStart + 10, src: 'audio/whoosh.wav', volume: 0.4 },
+    { frame: splitStart + 70, src: 'audio/tap.wav', volume: 0.55 },
+    { frame: splitStart + 134, src: 'audio/click.wav', volume: 0.55 },
+    { frame: splitStart + 174, src: 'audio/tap.wav', volume: 0.55 },
+    { frame: splitStart + 340, src: 'audio/whoosh.wav', volume: 0.35 },
+  ];
 
   return (
     <AbsoluteFill
@@ -147,7 +183,6 @@ export const Showcase: React.FC = () => {
         fontFamily: '"IBM Plex Sans", sans-serif',
       }}
     >
-      {/* Subtle Ambient Radial Glow */}
       <div
         style={{
           position: 'absolute',
@@ -163,10 +198,8 @@ export const Showcase: React.FC = () => {
         }}
       />
 
-      {/* Audio Engine (Music + SFX) */}
-      <AudioLayer totalFrames={2700} />
+      <AudioLayer totalFrames={durationInFrames} soundEvents={soundEvents} />
 
-      {/* Camera / Desktop Browser Container */}
       <div
         style={{
           position: 'absolute',
@@ -183,77 +216,88 @@ export const Showcase: React.FC = () => {
             cursor={currentCursor}
             events={desktopTimeline.events}
             videoFrame={desktopVideoFrame}
+            freezeAt={Math.max(0, desktopTimeline.totalFrames - 10)}
           />
         </div>
       </div>
 
-      {/* Opening Title Overlay (Top-center clean banner, doesn't obstruct UI) */}
       <TitleOverlay durationInFrames={140} />
 
-      {/* Feature Callouts */}
-      {/* 1. Theme toggle */}
       <Callout
         title="Tema claro e escuro"
         subtitle="Revelação circular com CSS View Transitions"
-        startFrame={160}
-        durationInFrames={160}
+        startFrame={theme + 28}
+        durationInFrames={span(theme + 28, month - 10)}
       />
 
-      {/* 2. Combobox Search */}
+      <Callout
+        title="Zoom da série mensal"
+        subtitle="A barra aproxima o eixo sem filtrar o painel"
+        startFrame={month + 36}
+        durationInFrames={span(month + 36, monthClick - 20)}
+      />
+
+      <Callout
+        title="Clique filtrável no gráfico"
+        subtitle="O mês recorta KPIs, gráficos e a tabela"
+        startFrame={monthClick - 12}
+        durationInFrames={span(monthClick - 12, dates - 8)}
+      />
+
+      <Callout
+        title="Filtro de período na barra lateral"
+        subtitle="Presets de ano sincronizados com o gráfico"
+        startFrame={dates + 16}
+        durationInFrames={span(dates + 16, combo - 16)}
+      />
+
       <Callout
         title="Atalho '/' para busca rápida"
         subtitle="Combobox com filtragem instantânea de jogos"
-        startFrame={360}
-        durationInFrames={260}
+        startFrame={combo + 8}
+        durationInFrames={span(combo + 8, cross - 16)}
       />
 
-      {/* 3. Crossfilter */}
       <Callout
         title="Filtragem cruzada sincronizada"
         subtitle="Hover nos tooltips e atualização reativa de KPIs"
-        startFrame={680}
-        durationInFrames={440}
+        startFrame={cross + 16}
+        durationInFrames={span(cross + 16, preset - 16)}
       />
 
-      {/* 4. Analytical Presets */}
       <Callout
         title="Recortes guiados do estudo"
         subtitle="Acesso a hipóteses empíricas em um clique"
-        startFrame={1170}
-        durationInFrames={180}
+        startFrame={preset + 12}
+        durationInFrames={span(preset + 12, table - 16)}
       />
 
-      {/* 5. Reviews Table */}
       <Callout
-        title="Ordenação e inspeção de avaliações"
-        subtitle="Detalhamento e expansão de texto completo"
-        startFrame={1400}
-        durationInFrames={380}
+        title="Tabela virtualizada"
+        subtitle="Ordenação por votos e horas, rolagem interna e linha expansível"
+        startFrame={table + 24}
+        durationInFrames={span(table + 24, reset - 16)}
       />
 
-      {/* 6. Clear filters & Dark return */}
       <Callout
         title="Limpeza de filtros & Volta ao escuro"
         subtitle="Retorno ao estado global auditado"
-        startFrame={1880}
-        durationInFrames={280}
+        startFrame={reset + 16}
+        durationInFrames={span(reset + 16, splitStart - 12)}
       />
 
-      {/* 7. Mobile Responsive Experience */}
       <Callout
         title="Experiência mobile fluida"
         subtitle="Gaveta de filtros adaptável e interface responsiva"
-        startFrame={2210}
+        startFrame={splitStart + 10}
         durationInFrames={355}
       />
 
-      {/* Mobile Smartphone Mockup on Split Screen */}
-      <Sequence from={2200} durationInFrames={400} layout="none">
+      <Sequence from={splitStart} durationInFrames={400} layout="none">
         <PhoneFrame durationInFrames={400} />
       </Sequence>
 
-      {/* End Card (Portfolio & Author Info) */}
-      <EndCard startFrame={2565} />
+      <EndCard startFrame={endCardStart} />
     </AbsoluteFill>
   );
 };

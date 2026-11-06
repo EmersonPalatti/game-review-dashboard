@@ -582,6 +582,226 @@ export class CaptureEngine {
     this.currentScrollY = targetY;
   }
 
+  public get scrollY(): number {
+    return this.currentScrollY;
+  }
+
+  /**
+   * Rola um contêiner interno (tabela virtualizada) sem mover a janela.
+   */
+  public async scrollElement(
+    selector: string,
+    deltaY: number,
+    durationSec: number,
+    easing: (t: number) => number = easeInOutCubic
+  ): Promise<void> {
+    if (!this.page) throw new Error('Engine not started');
+
+    const startTop = await this.page.evaluate((sel) => {
+      const el = document.querySelector(sel);
+      if (!el) throw new Error(`Element not found for scrollElement: ${sel}`);
+      return el.scrollTop;
+    }, selector);
+
+    const steps = Math.max(1, Math.round(durationSec * this.fps));
+    for (let step = 1; step <= steps; step++) {
+      const t = step / steps;
+      const next = startTop + deltaY * easing(t);
+      await this.page.evaluate(
+        ({ sel, top }) => {
+          const el = document.querySelector(sel);
+          if (el) el.scrollTop = top;
+        },
+        { sel: selector, top: next }
+      );
+      await this.stepFrame();
+    }
+  }
+
+  /**
+   * Arrasta o cursor com o botão pressionado, gravando cada quadro.
+   */
+  public async dragCursor(
+    target: { x: number; y: number },
+    durationSec: number,
+    name = 'drag'
+  ): Promise<void> {
+    if (!this.page) throw new Error('Engine not started');
+
+    this.currentCursor.down = true;
+    this.currentCursor.pointer = 'mouse';
+    await this.page.mouse.down();
+    this.mark(name, 'click');
+
+    for (let i = 0; i < 4; i++) {
+      await this.stepFrame();
+    }
+
+    const startX = this.currentCursor.x;
+    const startY = this.currentCursor.y;
+    const steps = Math.max(1, Math.round(durationSec * this.fps));
+
+    for (let step = 1; step <= steps; step++) {
+      const t = step / steps;
+      const eased = easeInOutCubic(t);
+      const x = startX + (target.x - startX) * eased;
+      const y = startY + (target.y - startY) * eased;
+      await this.page.mouse.move(x, y);
+      this.currentCursor.x = x;
+      this.currentCursor.y = y;
+      await this.stepFrame();
+    }
+
+    this.currentCursor.down = false;
+    await this.page.mouse.up();
+  }
+
+  /**
+   * Espera o ECharts do gráfico mensal existir, sem gravar quadros.
+   */
+  public async waitForMonthChart(timeoutMs = 15000): Promise<void> {
+    if (!this.page) throw new Error('Engine not started');
+    const start = Date.now();
+    while (Date.now() - start < timeoutMs) {
+      const ready = await this.page.evaluate(async () => {
+        const el = document.querySelector('#chart-month');
+        if (!(el instanceof HTMLElement) || el.clientWidth < 20) return false;
+        const chartsTs = await fetch('/src/scripts/charts.ts').then((r) => r.text());
+        const match = chartsTs.match(/from\s+['"]([^'"]*echarts[^'"]*)['"]/);
+        if (!match) return false;
+        const echarts = await import(/* @vite-ignore */ match[1]);
+        const chart = echarts.getInstanceByDom(el);
+        if (!chart || typeof chart.getModel !== 'function') return false;
+        const model = chart.getModel();
+        return Boolean(model && model.getComponent('dataZoom', 0));
+      });
+      if (ready) return;
+      await this.page.clock.runFor(40);
+      await new Promise((resolve) => setTimeout(resolve, 40));
+    }
+    throw new Error('[CaptureEngine] Month chart was not ready');
+  }
+
+  /**
+   * Posições do slider de zoom e de um mês visível depois do arraste.
+   * Coordenadas em pixels CSS do viewport.
+   */
+  public async getMonthChartTargets(): Promise<{
+    handle: { x: number; y: number };
+    dragTo: { x: number; y: number };
+  }> {
+    if (!this.page) throw new Error('Engine not started');
+
+    return await this.page.evaluate(async () => {
+      const el = document.querySelector('#chart-month');
+      if (!(el instanceof HTMLElement)) throw new Error('Chart element not found: #chart-month');
+
+      const chartsTs = await fetch('/src/scripts/charts.ts').then((r) => r.text());
+      const match = chartsTs.match(/from\s+['"]([^'"]*echarts[^'"]*)['"]/);
+      if (!match) throw new Error('Could not find echarts import in charts.ts');
+
+      const echarts = await import(/* @vite-ignore */ match[1]);
+      const chart = echarts.getInstanceByDom(el);
+      if (!chart) throw new Error('getInstanceByDom returned null for #chart-month');
+
+      const opt = chart.getOption() as {
+        xAxis: Array<{ data: string[] }>;
+        series: Array<{ data: number[] }>;
+        dataZoom?: Array<{ start?: number; end?: number }>;
+      };
+      const labels = opt.xAxis[0]?.data ?? [];
+      if (labels.length < 3) throw new Error(`Month chart has too few points: ${labels.length}`);
+
+      const rect = el.getBoundingClientRect();
+      const model = chart.getModel().getComponent('dataZoom', 0);
+      const view = chart.getViewOfComponentModel(model) as {
+        _displayables?: {
+          handles?: Array<{
+            getBoundingRect: () => { x: number; y: number; width: number; height: number };
+            transformCoordToGlobal: (x: number, y: number) => number[];
+          }>;
+        };
+      };
+      const endHandle = view._displayables?.handles?.[1];
+      if (!endHandle) throw new Error('Month zoom handle was not found');
+      const box = endHandle.getBoundingRect();
+      const center = endHandle.transformCoordToGlobal(box.x + box.width / 2, box.y + box.height / 2);
+      const handle = { x: rect.left + center[0], y: rect.top + center[1] };
+      const dragToX = rect.left + 62 + (rect.width - 16 - 62) * 0.42;
+
+      return {
+        handle,
+        dragTo: { x: dragToX, y: handle.y },
+      };
+    });
+  }
+
+  /**
+   * Ponto de um mês no centro da janela de zoom atual, depois do arraste.
+   */
+  public async getVisibleMonthPoint(): Promise<{ x: number; y: number; monthLabel: string }> {
+    if (!this.page) throw new Error('Engine not started');
+
+    return await this.page.evaluate(async () => {
+      const el = document.querySelector('#chart-month');
+      if (!(el instanceof HTMLElement)) throw new Error('Chart element not found: #chart-month');
+
+      const chartsTs = await fetch('/src/scripts/charts.ts').then((r) => r.text());
+      const match = chartsTs.match(/from\s+['"]([^'"]*echarts[^'"]*)['"]/);
+      if (!match) throw new Error('Could not find echarts import in charts.ts');
+
+      const echarts = await import(/* @vite-ignore */ match[1]);
+      const chart = echarts.getInstanceByDom(el);
+      if (!chart) throw new Error('getInstanceByDom returned null for #chart-month');
+
+      const opt = chart.getOption() as {
+        xAxis: Array<{ data: string[] }>;
+        series: Array<{ data: Array<number | null> }>;
+        dataZoom?: Array<{ start?: number; end?: number }>;
+      };
+      const labels = opt.xAxis[0]?.data ?? [];
+      const values = opt.series[0]?.data ?? [];
+      if (labels.length === 0) throw new Error('Month chart has no points');
+
+      const zoom = opt.dataZoom?.[0];
+      const startPct = zoom?.start ?? 0;
+      const endPct = zoom?.end ?? 100;
+      const index = Math.min(
+        labels.length - 1,
+        Math.max(0, Math.round((((startPct + endPct) / 2) / 100) * (labels.length - 1)))
+      );
+      const raw = values[index];
+      const value = typeof raw === 'number' ? raw : 0;
+      const pixel = chart.convertToPixel({ seriesIndex: 0 }, [index, value]);
+      if (!pixel) throw new Error('convertToPixel returned null for month point');
+
+      const rect = el.getBoundingClientRect();
+      return {
+        x: rect.left + pixel[0],
+        y: rect.top + pixel[1],
+        monthLabel: labels[index] ?? '',
+      };
+    });
+  }
+
+  public async readMonthZoom(): Promise<{ start: number; end: number } | null> {
+    if (!this.page) throw new Error('Engine not started');
+    return await this.page.evaluate(async () => {
+      const el = document.querySelector('#chart-month');
+      if (!(el instanceof HTMLElement)) return null;
+      const chartsTs = await fetch('/src/scripts/charts.ts').then((r) => r.text());
+      const match = chartsTs.match(/from\s+['"]([^'"]*echarts[^'"]*)['"]/);
+      if (!match) return null;
+      const echarts = await import(/* @vite-ignore */ match[1]);
+      const chart = echarts.getInstanceByDom(el);
+      if (!chart) return null;
+      const opt = chart.getOption() as { dataZoom?: Array<{ start?: number; end?: number }> };
+      const zoom = opt.dataZoom?.[0];
+      if (!zoom) return null;
+      return { start: zoom.start ?? 0, end: zoom.end ?? 100 };
+    });
+  }
+
   /**
    * Executa um clique de mouse: down, 4 quadros pressionado, up.
    */

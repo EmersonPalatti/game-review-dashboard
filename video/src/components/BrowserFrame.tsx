@@ -7,9 +7,15 @@ interface BrowserFrameProps {
   cursor?: CursorState;
   events?: TimelineEvent[];
   videoFrame: number;
+  freezeAt: number;
 }
 
-export const BrowserFrame: React.FC<BrowserFrameProps> = ({ cursor, events, videoFrame }) => {
+export const BrowserFrame: React.FC<BrowserFrameProps> = ({
+  cursor,
+  events,
+  videoFrame,
+  freezeAt,
+}) => {
   // Browser window dimensions
   const browserWidth = 1600;
   const browserHeight = 938;
@@ -132,7 +138,7 @@ export const BrowserFrame: React.FC<BrowserFrameProps> = ({ cursor, events, vide
           backgroundColor: '#161513',
         }}
       >
-        <Freeze frame={2340} active={videoFrame >= 2340}>
+        <Freeze frame={freezeAt} active={videoFrame >= freezeAt}>
           <OffthreadVideo
             src={staticFile('desktop.mp4')}
             style={{
