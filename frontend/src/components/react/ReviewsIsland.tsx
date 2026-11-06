@@ -159,7 +159,7 @@ function ExcerptCell({
       <div className="excerpt-line">
         <button
           type="button"
-          className="excerpt-toggle inline-flex items-center justify-center p-0 m-0 border-0 bg-transparent text-inherit cursor-pointer flex-none"
+          className="excerpt-toggle"
           aria-expanded={isExpanded}
           aria-label={
             isExpanded

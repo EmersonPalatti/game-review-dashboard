@@ -1545,16 +1545,16 @@ section[data-fetch-region='reviews'][data-fetching='true'] .sheet-card::before {
 .excerpt-toggle {
   display: flex;
   align-items: center;
-  gap: 8px;
-  width: 100%;
-  min-width: 0;
+  justify-content: center;
+  flex: none;
+  width: 14px;
+  height: 14px;
   padding: 0;
   border: 0;
   border-radius: 4px;
   background: transparent;
   color: inherit;
   font: inherit;
-  text-align: left;
   cursor: pointer;
 }
 
@@ -1590,12 +1590,15 @@ section[data-fetch-region='reviews'][data-fetching='true'] .sheet-card::before {
 .sheet tbody tr.review-row.is-expanded .excerpt-chevron {
   transform: rotate(90deg);
   color: var(--accent);
-  margin-top: 3px;
 }
 
 .sheet tbody tr.review-row.is-expanded .excerpt-line,
 .sheet tbody tr.review-row.is-expanded .excerpt-toggle {
   align-items: flex-start;
+}
+
+.sheet tbody tr.review-row.is-expanded .excerpt-toggle {
+  margin-top: 3px;
 }
 
 .excerpt-text {
@@ -1604,13 +1607,14 @@ section[data-fetch-region='reviews'][data-fetching='true'] .sheet-card::before {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  overflow-wrap: break-word;
   color: var(--ink);
 }
 
 .sheet tbody tr.review-row.is-expanded .excerpt-text {
   white-space: normal;
-  overflow: visible;
-  text-overflow: clip;
+  overflow: hidden;
+  text-overflow: unset;
 }
 
 .review-badges {
