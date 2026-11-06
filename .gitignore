@@ -48,3 +48,6 @@ video/node_modules/
 video/.remotion/
 video/out/
 video/captures/
+
+# AI tooling artifacts
+.impeccable/
