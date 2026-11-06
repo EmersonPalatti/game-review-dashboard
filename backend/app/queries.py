@@ -309,7 +309,15 @@ def charts(session: Session, filters: ReviewFilters) -> ChartsResponse:
         if is_single_month
         else filters
     )
-    month_key = func.strftime("%Y-%m", Review.timestamp_created, "unixepoch").label("month")
+    dialect_name = session.bind.dialect.name if session.bind else "sqlite"
+    if dialect_name == "postgresql":
+        month_key = func.to_char(
+            func.to_timestamp(Review.timestamp_created), "YYYY-MM"
+        ).label("month")
+    else:
+        month_key = func.strftime(
+            "%Y-%m", Review.timestamp_created, "unixepoch"
+        ).label("month")
     month_count = func.count().label("review_count")
     month_rows = session.execute(
         apply_filters(
