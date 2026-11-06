@@ -149,11 +149,13 @@ function ChartsContent() {
     };
   }, []);
 
+  const dateFilterActive = currentFilters.dateFrom !== null || currentFilters.dateTo !== null;
+
   useEffect(() => {
     if (chartsData) {
-      renderCharts(chartsData, currentFilters.playtime, activeMonth);
+      renderCharts(chartsData, currentFilters.playtime, activeMonth, dateFilterActive);
     }
-  }, [chartsData, currentFilters.playtime, activeMonth]);
+  }, [chartsData, currentFilters.playtime, activeMonth, dateFilterActive]);
 
   useEffect(() => {
     const rankGames = document.getElementById('rank-games');

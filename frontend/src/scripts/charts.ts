@@ -13,9 +13,193 @@ const charts = new Map<string, ECharts>();
 let lastData: Charts | null = null;
 let lastActivePlaytime: PlaytimeBucket = 'all';
 let lastActiveMonth: string | null = null;
-let lastMonthZoom: { start: number; end: number } | null = null;
+type ZoomWindow = { start: number; end: number };
+
+const FOCUS_MONTH_SPAN = 24;
+const FOCUS_PAD_MONTHS = 2;
+const FOCUS_MS = 220;
+
+let lastMonthZoom: ZoomWindow | null = null;
+let monthZoomBeforeFocus: ZoomWindow | null | undefined;
+let pendingZoom: ZoomWindow | null | undefined;
+let intendedZoom: ZoomWindow | null | undefined;
+let focusAxisKey = '';
+let zoomAnimFrame = 0;
+let applyingZoom = false;
+let suppressZoomEvent = false;
+let lastAppliedZoom: ZoomWindow | null = null;
 let onSelectPlaytime: ((bucket: PlaytimeBucket) => void) | null = null;
 let onSelectMonth: ((month: string) => void) | null = null;
+
+function isFullWindow(zoom: ZoomWindow | null | undefined): boolean {
+  if (!zoom) return true;
+  return zoom.start <= 0.5 && zoom.end >= 99.5;
+}
+
+function storedZoom(zoom: ZoomWindow): ZoomWindow | null {
+  return isFullWindow(zoom) ? null : { start: zoom.start, end: zoom.end };
+}
+
+function sameZoom(a: ZoomWindow | null, b: ZoomWindow | null): boolean {
+  const left = a ?? { start: 0, end: 100 };
+  const right = b ?? { start: 0, end: 100 };
+  return Math.abs(left.start - right.start) < 0.4 && Math.abs(left.end - right.end) < 0.4;
+}
+
+function clampZoom(start: number, end: number): ZoomWindow {
+  if (end - start >= 100) return { start: 0, end: 100 };
+  let nextStart = start;
+  let nextEnd = end;
+  if (nextStart < 0) {
+    nextEnd -= nextStart;
+    nextStart = 0;
+  }
+  if (nextEnd > 100) {
+    nextStart -= nextEnd - 100;
+    nextEnd = 100;
+  }
+  return { start: Math.max(0, nextStart), end: Math.min(100, nextEnd) };
+}
+
+function axisKey(months: Array<{ month: string }>): string {
+  const first = months[0];
+  const last = months[months.length - 1];
+  if (!first || !last) return '';
+  return `${months.length}:${first.month}:${last.month}`;
+}
+
+function categoryCenter(index: number, count: number): number {
+  return ((index + 0.5) / count) * 100;
+}
+
+function categoryWindow(startIndex: number, endIndex: number, count: number): ZoomWindow {
+  return clampZoom((startIndex / count) * 100, ((endIndex + 1) / count) * 100);
+}
+
+function viewZoom(): ZoomWindow | null {
+  return intendedZoom !== undefined ? intendedZoom : lastMonthZoom;
+}
+
+function focusWindow(index: number, count: number, current: ZoomWindow | null): ZoomWindow | null {
+  if (count <= 12 || index < 0 || index >= count) return null;
+  if (isFullWindow(current)) {
+    const span = Math.min(FOCUS_MONTH_SPAN, count);
+    const extra = span - 1;
+    let startIndex = Math.round(index - extra / 2);
+    let endIndex = startIndex + extra;
+    if (startIndex < 0) {
+      endIndex -= startIndex;
+      startIndex = 0;
+    }
+    if (endIndex > count - 1) {
+      startIndex -= endIndex - (count - 1);
+      endIndex = count - 1;
+    }
+    const next = categoryWindow(Math.max(0, startIndex), endIndex, count);
+    return sameZoom(next, current) ? null : next;
+  }
+  if (!current) return null;
+  const start = current.start;
+  const end = current.end;
+  const center = categoryCenter(index, count);
+  if (center >= start && center <= end) return null;
+  const width = end - start;
+  const pad = Math.min((FOCUS_PAD_MONTHS / count) * 100, width / 2);
+  const next =
+    center < start
+      ? clampZoom(center - pad, center - pad + width)
+      : clampZoom(center + pad - width, center + pad);
+  return sameZoom(next, current) ? null : next;
+}
+
+function cancelZoomAnim(): void {
+  if (zoomAnimFrame) {
+    cancelAnimationFrame(zoomAnimFrame);
+    zoomAnimFrame = 0;
+  }
+}
+
+function applyZoom(window: ZoomWindow): void {
+  const instance = charts.get('chart-month');
+  if (!instance) return;
+  lastAppliedZoom = window;
+  applyingZoom = true;
+  instance.dispatchAction({
+    type: 'dataZoom',
+    dataZoomId: 'month-zoom',
+    dataZoomIndex: 0,
+    start: window.start,
+    end: window.end,
+  });
+  applyingZoom = false;
+}
+
+function animateZoom(target: ZoomWindow | null): void {
+  cancelZoomAnim();
+  intendedZoom = target;
+  const to = target ?? { start: 0, end: 100 };
+  const from = lastMonthZoom ?? { start: 0, end: 100 };
+  const reduced = prefersReducedMotion();
+  const started = performance.now();
+  const step = (now: number) => {
+    const progress = reduced ? 1 : Math.min(1, (now - started) / FOCUS_MS);
+    const eased = 1 - (1 - progress) ** 3;
+    const current = {
+      start: from.start + (to.start - from.start) * eased,
+      end: from.end + (to.end - from.end) * eased,
+    };
+    applyZoom(current);
+    lastMonthZoom = storedZoom(current);
+    if (progress < 1) {
+      zoomAnimFrame = requestAnimationFrame(step);
+      return;
+    }
+    zoomAnimFrame = 0;
+    intendedZoom = undefined;
+  };
+  zoomAnimFrame = requestAnimationFrame(step);
+}
+
+function queueZoom(target: ZoomWindow | null): void {
+  pendingZoom = target;
+}
+
+function rememberAndFocus(index: number, count: number): void {
+  if (!lastData) return;
+  const current = viewZoom();
+  const next = focusWindow(index, count, current);
+  if (!next) return;
+  if (monthZoomBeforeFocus === undefined) {
+    monthZoomBeforeFocus = current ? { start: current.start, end: current.end } : null;
+    focusAxisKey = axisKey(lastData.months);
+  }
+  queueZoom(next);
+}
+
+function restoreFocusZoom(): void {
+  if (monthZoomBeforeFocus === undefined) return;
+  queueZoom(monthZoomBeforeFocus);
+  monthZoomBeforeFocus = undefined;
+  focusAxisKey = '';
+}
+
+function releaseFocusZoom(): void {
+  monthZoomBeforeFocus = undefined;
+  pendingZoom = undefined;
+  intendedZoom = undefined;
+  focusAxisKey = '';
+  lastMonthZoom = null;
+  lastAppliedZoom = null;
+  cancelZoomAnim();
+}
+
+function echoesAppliedZoom(start: number, end: number): boolean {
+  if (!lastAppliedZoom) return false;
+  return (
+    Math.abs(start - lastAppliedZoom.start) < 0.75 &&
+    Math.abs(end - lastAppliedZoom.end) < 0.75
+  );
+}
 
 function prefersReducedMotion(): boolean {
   return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -109,6 +293,7 @@ export function initCharts(
   const monthChart = chart('chart-month');
   monthChart.off('datazoom');
   monthChart.on('datazoom', (params: unknown) => {
+    if (applyingZoom || suppressZoomEvent) return;
     const payload = params as {
       start?: number;
       end?: number;
@@ -116,6 +301,10 @@ export function initCharts(
     };
     const start = payload.batch?.[0]?.start ?? payload.start ?? 0;
     const end = payload.batch?.[0]?.end ?? payload.end ?? 100;
+    if (echoesAppliedZoom(start, end)) return;
+    cancelZoomAnim();
+    intendedZoom = undefined;
+    lastAppliedZoom = null;
     if (start <= 0.5 && end >= 99.5) {
       lastMonthZoom = null;
     } else {
@@ -147,6 +336,8 @@ export function initCharts(
     const dataIndex = Array.isArray(pointInGrid) ? Math.round(pointInGrid[0]) : -1;
     const point = lastData.months[dataIndex];
     if (!point) return;
+    if (lastActiveMonth === point.month) restoreFocusZoom();
+    else rememberAndFocus(dataIndex, lastData.months.length);
     onSelectMonth(point.month);
   });
   const playtimeChart = chart('chart-playtime');
@@ -177,7 +368,14 @@ export function renderCharts(
   data: Charts,
   activePlaytime: PlaytimeBucket = lastActivePlaytime,
   activeMonth: string | null = lastActiveMonth,
+  dateFilterActive = false,
 ): void {
+  const key = axisKey(data.months);
+  if (focusAxisKey && key !== focusAxisKey && monthZoomBeforeFocus !== undefined) {
+    releaseFocusZoom();
+  } else if (!dateFilterActive && lastActiveMonth !== null) {
+    restoreFocusZoom();
+  }
   lastData = data;
   lastActivePlaytime = activePlaytime;
   lastActiveMonth = activeMonth;
@@ -202,7 +400,7 @@ export function disposeCharts(): void {
   lastData = null;
   lastActivePlaytime = 'all';
   lastActiveMonth = null;
-  lastMonthZoom = null;
+  releaseFocusZoom();
   onSelectPlaytime = null;
   onSelectMonth = null;
 }
@@ -244,12 +442,19 @@ function paintMonth(data: Charts, colors: ReturnType<typeof palette>, animate: b
 
   if (data.months.length <= 12) {
     lastMonthZoom = null;
+    pendingZoom = undefined;
+    intendedZoom = undefined;
+    lastAppliedZoom = null;
+    cancelZoomAnim();
   }
 
   const zoomStart = lastMonthZoom ? lastMonthZoom.start : 0;
   const zoomEnd = lastMonthZoom ? lastMonthZoom.end : 100;
+  const monthChart = chart('chart-month');
 
-  chart('chart-month').setOption(
+  suppressZoomEvent = true;
+  try {
+  monthChart.setOption(
     {
       ...motionConfig(animate),
       backgroundColor: 'transparent',
@@ -410,6 +615,14 @@ function paintMonth(data: Charts, colors: ReturnType<typeof palette>, animate: b
     } satisfies EChartsOption,
     { notMerge: false, lazyUpdate: false },
   );
+  } finally {
+    suppressZoomEvent = false;
+  }
+  if (pendingZoom !== undefined) {
+    const target = pendingZoom;
+    pendingZoom = undefined;
+    animateZoom(target);
+  }
 }
 
 function paintPlaytime(data: Charts, colors: ReturnType<typeof palette>, animate: boolean): void {
