@@ -1,5 +1,8 @@
 # Steam Reviews Dashboard & Análise Exploratória (1M de Reviews)
 
+> 🚀 **Deploy em Produção (Live Demo):** **[game-review-dashboard-sage.vercel.app](https://game-review-dashboard-sage.vercel.app/)**  
+> ⚡ *Frontend estático global na **Vercel** (Astro + React Islands), API de agregação no **Render** (FastAPI com LRU Cache e Baseline em memória) e banco **PostgreSQL** gerenciado no **Supabase** (1.000.000 de avaliações).*
+
 Painel analítico interativo e estudo de dados sobre **1.000.000 de avaliações da Steam** (março de 2013 a janeiro de 2021), derivado do [Game Reviews Dataset no Kaggle](https://www.kaggle.com/datasets/sridharstreaks/game-reviews-dataset). A base cobre **59 jogos** e **912.553 autores únicos**.
 
 O projeto reúne duas entregas integradas:
@@ -466,11 +469,17 @@ npm run render:overview
 
 ### Backend & Dados
 - **[Python 3.14](https://www.python.org/)**
-- **[FastAPI](https://fastapi.tiangolo.com/)**: criação de APIs assíncronas com validação automática via **Pydantic**.
-- **[SQLAlchemy 2](https://www.sqlalchemy.org/)**: modelagem ORM e construção de consultas SQL agregadas.
-- **[SQLite](https://www.sqlite.org/)**: armazenamento local transacional e consultas indexadas (preparado para evolução para PostgreSQL/Supabase).
+- **[FastAPI](https://fastapi.tiangolo.com/)**: criação de APIs assíncronas de alta performance com validação automática via **Pydantic**.
+- **[SQLAlchemy 2](https://www.sqlalchemy.org/)**: modelagem ORM e construção de consultas SQL agregadas com suporte híbrido SQLite/PostgreSQL.
+- **[PostgreSQL / Supabase](https://supabase.com/)**: banco de dados em produção na nuvem com índices otimizados para 1.000.000 de avaliações.
+- **[SQLite](https://www.sqlite.org/)**: armazenamento local transacional e consultas indexadas para prototipação e testes.
 - **[uv](https://docs.astral.sh/uv/)**: gerenciamento moderno de dependências e ambientes virtuais.
-- **[Pytest](https://pytest.org/)**: testes de integração automatizados da API.
+- **[Pytest](https://pytest.org/)**: testes de integração automatizados da API (48 testes de validação contínua).
+
+### Infraestrutura & Deploy em Produção
+- **[Vercel](https://vercel.com/)**: hospedagem do frontend Astro estático com distribuição global via CDN Edge de baixa latência.
+- **[Render](https://render.com/)**: hospedagem do backend FastAPI em Web Service Python com cache LRU em memória e cabeçalhos HTTP `Cache-Control`.
+- **[Supabase](https://supabase.com/)**: instância gerenciada de PostgreSQL na nuvem com pooling de conexões e índices B-Tree dedicados.
 
 ### Análise Exploratória & Machine Learning
 - **[Pandas](https://pandas.pydata.org/) & [NumPy](https://numpy.org/)**: manipulação vetorial e cálculos estatísticos.
