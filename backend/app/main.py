@@ -1,3 +1,4 @@
+import os
 from contextlib import asynccontextmanager
 
 from fastapi import Depends, FastAPI, HTTPException, Query
@@ -23,13 +24,24 @@ async def lifespan(_app: FastAPI):
     yield
 
 
+cors_origins_env = os.getenv("CORS_ORIGINS")
+if cors_origins_env:
+    cors_origins = [origin.strip() for origin in cors_origins_env.split(",") if origin.strip()]
+else:
+    cors_origins = ["*"]
+
 app = FastAPI(title="Steam Reviews", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://127.0.0.1:4321", "http://localhost:4321"],
+    allow_origins=cors_origins,
     allow_methods=["GET"],
     allow_headers=["*"],
 )
+
+
+@app.get("/health")
+def health() -> dict[str, str]:
+    return {"status": "ok"}
 
 
 def _reject_unknown_bucket(playtime_bucket: str | None) -> None:

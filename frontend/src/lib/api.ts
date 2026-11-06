@@ -103,6 +103,8 @@ function appendFilters(params: URLSearchParams, current: Readonly<Filters>): voi
   }
 }
 
+export const API_BASE = import.meta.env.PUBLIC_API_URL?.replace(/\/$/, '') ?? '';
+
 async function requestJson<T>(url: string): Promise<T> {
   const response = await fetch(url, { cache: 'no-store' });
   if (!response.ok) {
@@ -115,14 +117,14 @@ export function fetchMetrics(current: Readonly<Filters>): Promise<Metrics> {
   const params = new URLSearchParams();
   appendFilters(params, current);
   const query = params.toString();
-  return requestJson<Metrics>(query ? `/api/summary?${query}` : '/api/summary');
+  return requestJson<Metrics>(query ? `${API_BASE}/api/summary?${query}` : `${API_BASE}/api/summary`);
 }
 
 export function fetchCharts(current: Readonly<Filters>): Promise<Charts> {
   const params = new URLSearchParams();
   appendFilters(params, current);
   const query = params.toString();
-  return requestJson<Charts>(query ? `/api/charts?${query}` : '/api/charts');
+  return requestJson<Charts>(query ? `${API_BASE}/api/charts?${query}` : `${API_BASE}/api/charts`);
 }
 
 export function fetchReviewWindow(
@@ -139,7 +141,7 @@ export function fetchReviewWindow(
     params.set('sort_by', sort.sortBy);
     params.set('sort_dir', sort.sortDir);
   }
-  return requestJson<ReviewsPage>(`/api/reviews?${params.toString()}`);
+  return requestJson<ReviewsPage>(`${API_BASE}/api/reviews?${params.toString()}`);
 }
 
 export function fetchReviews(

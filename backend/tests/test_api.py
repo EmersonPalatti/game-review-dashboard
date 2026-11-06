@@ -645,3 +645,10 @@ def test_apply_filters_invalid_date_raises_http_exception():
         apply_filters(select(Review), ReviewFilters(date_to="not-valid"))
     assert exc_info_to.value.status_code == 422
     assert exc_info_to.value.detail == "Data inválida. Use o formato AAAA-MM-DD."
+
+
+def test_health_endpoint(client):
+    response = client.get("/health")
+    assert response.status_code == 200
+    assert response.json() == {"status": "ok"}
+
