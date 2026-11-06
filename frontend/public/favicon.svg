@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" width="100%" height="100%">
+  <style>
+    path {
+      fill: #1c1915;
+    }
+    @media (prefers-color-scheme: dark) {
+      path {
+        fill: #efe9de;
+      }
+    }
+  </style>
+  <path d="M8 0 H18 A2 2 0 0 1 20 2 V12 A8 8 0 0 1 12 20 H2 A2 2 0 0 1 0 18 V8 A8 8 0 0 1 8 0 Z" />
+</svg>
