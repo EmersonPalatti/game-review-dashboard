@@ -24,11 +24,6 @@ logger = logging.getLogger(__name__)
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     init_db()
-    try:
-        with SessionLocal() as db:
-            warmup_caches(db)
-    except Exception as err:
-        logger.warning("Cache warmup skipped or failed: %s", err)
     yield
 
 

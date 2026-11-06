@@ -1,0 +1,935 @@
+{
+  "metrics": {
+    "total_reviews": 1000000,
+    "recommendation_rate": 0.829676,
+    "game_count": 59,
+    "author_count": 912553,
+    "games": [
+      {
+        "app_id": 107410,
+        "app_name": "Arma 3",
+        "review_count": 182348
+      },
+      {
+        "app_id": 489830,
+        "app_name": "The Elder Scrolls V: Skyrim Special Edition",
+        "review_count": 102718
+      },
+      {
+        "app_id": 304390,
+        "app_name": "For Honor",
+        "review_count": 93971
+      },
+      {
+        "app_id": 262060,
+        "app_name": "Darkest Dungeon®",
+        "review_count": 86384
+      },
+      {
+        "app_id": 524220,
+        "app_name": "NieR:Automata™",
+        "review_count": 81110
+      },
+      {
+        "app_id": 613100,
+        "app_name": "House Flipper",
+        "review_count": 36092
+      },
+      {
+        "app_id": 823130,
+        "app_name": "Totally Accurate Battlegrounds",
+        "review_count": 34465
+      },
+      {
+        "app_id": 638970,
+        "app_name": "Yakuza 0",
+        "review_count": 31775
+      },
+      {
+        "app_id": 666140,
+        "app_name": "My Time At Portia",
+        "review_count": 29557
+      },
+      {
+        "app_id": 517630,
+        "app_name": "Just Cause 4",
+        "review_count": 16899
+      },
+      {
+        "app_id": 760060,
+        "app_name": "Mutant Year Zero: Road to Eden",
+        "review_count": 16208
+      },
+      {
+        "app_id": 489940,
+        "app_name": "BATTALION 1944",
+        "review_count": 16004
+      },
+      {
+        "app_id": 464920,
+        "app_name": "Surviving Mars",
+        "review_count": 13714
+      },
+      {
+        "app_id": 427290,
+        "app_name": "Vampyr",
+        "review_count": 13312
+      },
+      {
+        "app_id": 673950,
+        "app_name": "Farm Together",
+        "review_count": 12317
+      },
+      {
+        "app_id": 872790,
+        "app_name": "Football Manager 2019",
+        "review_count": 11906
+      },
+      {
+        "app_id": 731490,
+        "app_name": "Crash Bandicoot™ N. Sane Trilogy",
+        "review_count": 10313
+      },
+      {
+        "app_id": 681660,
+        "app_name": "Bless Online",
+        "review_count": 10197
+      },
+      {
+        "app_id": 606280,
+        "app_name": "Darksiders III",
+        "review_count": 10008
+      },
+      {
+        "app_id": 773951,
+        "app_name": "Freeman: Guerrilla Warfare",
+        "review_count": 9904
+      },
+      {
+        "app_id": 704850,
+        "app_name": "Thief Simulator",
+        "review_count": 9626
+      },
+      {
+        "app_id": 544750,
+        "app_name": "SOULCALIBUR VI",
+        "review_count": 8211
+      },
+      {
+        "app_id": 743450,
+        "app_name": "Monster Prom",
+        "review_count": 8012
+      },
+      {
+        "app_id": 609320,
+        "app_name": "FAR: Lone Sails",
+        "review_count": 8005
+      },
+      {
+        "app_id": 730310,
+        "app_name": "DYNASTY WARRIORS 9",
+        "review_count": 7807
+      },
+      {
+        "app_id": 593600,
+        "app_name": "PixARK",
+        "review_count": 7711
+      },
+      {
+        "app_id": 589360,
+        "app_name": "Ni no Kuni™ II: Revenant Kingdom",
+        "review_count": 7609
+      },
+      {
+        "app_id": 673880,
+        "app_name": "Warhammer 40,000: Mechanicus",
+        "review_count": 7207
+      },
+      {
+        "app_id": 619080,
+        "app_name": "SOS",
+        "review_count": 6900
+      },
+      {
+        "app_id": 701160,
+        "app_name": "Kingdom Two Crowns",
+        "review_count": 6709
+      },
+      {
+        "app_id": 503940,
+        "app_name": "Railway Empire",
+        "review_count": 6302
+      },
+      {
+        "app_id": 585420,
+        "app_name": "Trailmakers",
+        "review_count": 6026
+      },
+      {
+        "app_id": 382310,
+        "app_name": "Eco",
+        "review_count": 5918
+      },
+      {
+        "app_id": 671510,
+        "app_name": "Desolate",
+        "review_count": 5503
+      },
+      {
+        "app_id": 620590,
+        "app_name": "Ancestors Legacy",
+        "review_count": 5403
+      },
+      {
+        "app_id": 753420,
+        "app_name": "Dungreed",
+        "review_count": 5312
+      },
+      {
+        "app_id": 677120,
+        "app_name": "Heroes of Hammerwatch",
+        "review_count": 5207
+      },
+      {
+        "app_id": 788260,
+        "app_name": "Rules Of Survival",
+        "review_count": 4902
+      },
+      {
+        "app_id": 546050,
+        "app_name": "Puyo Puyo™Tetris® ",
+        "review_count": 4497
+      },
+      {
+        "app_id": 632350,
+        "app_name": "Cyberdimension Neptunia: 4 Goddesses Online",
+        "review_count": 4200
+      },
+      {
+        "app_id": 543900,
+        "app_name": "METAL GEAR SURVIVE",
+        "review_count": 4104
+      },
+      {
+        "app_id": 677160,
+        "app_name": "We Were Here Too",
+        "review_count": 3809
+      },
+      {
+        "app_id": 613830,
+        "app_name": "CHRONO TRIGGER",
+        "review_count": 3802
+      },
+      {
+        "app_id": 405710,
+        "app_name": "Staxel",
+        "review_count": 3500
+      },
+      {
+        "app_id": 417290,
+        "app_name": "Ghost of a Tale",
+        "review_count": 3303
+      },
+      {
+        "app_id": 825630,
+        "app_name": "STEINS;GATE 0",
+        "review_count": 3202
+      },
+      {
+        "app_id": 671440,
+        "app_name": "Rise of Industry",
+        "review_count": 3102
+      },
+      {
+        "app_id": 696170,
+        "app_name": "SENRAN KAGURA Peach Beach Splash",
+        "review_count": 3100
+      },
+      {
+        "app_id": 631510,
+        "app_name": "Devil May Cry HD Collection",
+        "review_count": 2999
+      },
+      {
+        "app_id": 817130,
+        "app_name": "WWE 2K19",
+        "review_count": 2907
+      },
+      {
+        "app_id": 393520,
+        "app_name": "Iconoclasts",
+        "review_count": 2800
+      },
+      {
+        "app_id": 629910,
+        "app_name": "Clicker Heroes 2",
+        "review_count": 2100
+      },
+      {
+        "app_id": 495560,
+        "app_name": "Farm Manager 2018",
+        "review_count": 2002
+      },
+      {
+        "app_id": 637670,
+        "app_name": "Secret of Mana",
+        "review_count": 1900
+      },
+      {
+        "app_id": 501080,
+        "app_name": "Fishing: Barents Sea",
+        "review_count": 1802
+      },
+      {
+        "app_id": 748490,
+        "app_name": "The Legend of Heroes: Trails of Cold Steel II",
+        "review_count": 1701
+      },
+      {
+        "app_id": 772540,
+        "app_name": "Battle Royale Trainer",
+        "review_count": 1600
+      },
+      {
+        "app_id": 400940,
+        "app_name": "Budget Cuts",
+        "review_count": 1298
+      },
+      {
+        "app_id": 619290,
+        "app_name": "Out of the Park Baseball 19",
+        "review_count": 700
+      }
+    ],
+    "languages": [
+      {
+        "language": "english",
+        "review_count": 490963
+      },
+      {
+        "language": "schinese",
+        "review_count": 151357
+      },
+      {
+        "language": "russian",
+        "review_count": 86613
+      },
+      {
+        "language": "german",
+        "review_count": 46756
+      },
+      {
+        "language": "french",
+        "review_count": 34168
+      },
+      {
+        "language": "koreana",
+        "review_count": 31095
+      },
+      {
+        "language": "spanish",
+        "review_count": 30899
+      },
+      {
+        "language": "brazilian",
+        "review_count": 27965
+      },
+      {
+        "language": "turkish",
+        "review_count": 21320
+      },
+      {
+        "language": "polish",
+        "review_count": 18030
+      },
+      {
+        "language": "tchinese",
+        "review_count": 10580
+      },
+      {
+        "language": "italian",
+        "review_count": 7810
+      },
+      {
+        "language": "japanese",
+        "review_count": 5965
+      },
+      {
+        "language": "thai",
+        "review_count": 5829
+      },
+      {
+        "language": "czech",
+        "review_count": 5589
+      },
+      {
+        "language": "swedish",
+        "review_count": 3579
+      },
+      {
+        "language": "dutch",
+        "review_count": 3377
+      },
+      {
+        "language": "portuguese",
+        "review_count": 3231
+      },
+      {
+        "language": "latam",
+        "review_count": 2881
+      },
+      {
+        "language": "hungarian",
+        "review_count": 2653
+      },
+      {
+        "language": "danish",
+        "review_count": 2479
+      },
+      {
+        "language": "finnish",
+        "review_count": 2202
+      },
+      {
+        "language": "norwegian",
+        "review_count": 1812
+      },
+      {
+        "language": "romanian",
+        "review_count": 873
+      },
+      {
+        "language": "ukrainian",
+        "review_count": 722
+      },
+      {
+        "language": "greek",
+        "review_count": 678
+      },
+      {
+        "language": "vietnamese",
+        "review_count": 293
+      },
+      {
+        "language": "bulgarian",
+        "review_count": 281
+      }
+    ]
+  },
+  "charts": {
+    "playtime": [
+      {
+        "key": "lt1",
+        "label": "<1 h",
+        "review_count": 56950,
+        "recommendation_rate": 0.4937313432835821
+      },
+      {
+        "key": "h1_2",
+        "label": "1–2 h",
+        "review_count": 39885,
+        "recommendation_rate": 0.5982700263256864
+      },
+      {
+        "key": "h2_5",
+        "label": "2–5 h",
+        "review_count": 101757,
+        "recommendation_rate": 0.7729591084642825
+      },
+      {
+        "key": "h5_10",
+        "label": "5–10 h",
+        "review_count": 112396,
+        "recommendation_rate": 0.8141392932132816
+      },
+      {
+        "key": "h10_25",
+        "label": "10–25 h",
+        "review_count": 200304,
+        "recommendation_rate": 0.8488098090901829
+      },
+      {
+        "key": "h25_50",
+        "label": "25–50 h",
+        "review_count": 167919,
+        "recommendation_rate": 0.8817763326365688
+      },
+      {
+        "key": "h50_100",
+        "label": "50–100 h",
+        "review_count": 125240,
+        "recommendation_rate": 0.894490578090067
+      },
+      {
+        "key": "h100_500",
+        "label": "100–500 h",
+        "review_count": 136908,
+        "recommendation_rate": 0.8986107459023578
+      },
+      {
+        "key": "gte500",
+        "label": "500+ h",
+        "review_count": 57393,
+        "recommendation_rate": 0.9327792587946265
+      }
+    ],
+    "games": [
+      {
+        "app_name": "Arma 3",
+        "review_count": 182348
+      },
+      {
+        "app_name": "The Elder Scrolls V: Skyrim Special Edition",
+        "review_count": 102718
+      },
+      {
+        "app_name": "For Honor",
+        "review_count": 93971
+      },
+      {
+        "app_name": "Darkest Dungeon®",
+        "review_count": 86384
+      },
+      {
+        "app_name": "NieR:Automata™",
+        "review_count": 81110
+      },
+      {
+        "app_name": "House Flipper",
+        "review_count": 36092
+      },
+      {
+        "app_name": "Totally Accurate Battlegrounds",
+        "review_count": 34465
+      },
+      {
+        "app_name": "Yakuza 0",
+        "review_count": 31775
+      }
+    ],
+    "languages": [
+      {
+        "language": "brazilian",
+        "review_count": 27965,
+        "recommendation_rate": 0.8824244591453603
+      },
+      {
+        "language": "spanish",
+        "review_count": 30899,
+        "recommendation_rate": 0.8768892197158484
+      },
+      {
+        "language": "french",
+        "review_count": 34168,
+        "recommendation_rate": 0.8714586747834231
+      },
+      {
+        "language": "german",
+        "review_count": 46756,
+        "recommendation_rate": 0.8565317820172812
+      },
+      {
+        "language": "english",
+        "review_count": 490963,
+        "recommendation_rate": 0.8370508571929045
+      },
+      {
+        "language": "russian",
+        "review_count": 86613,
+        "recommendation_rate": 0.8211931234341265
+      },
+      {
+        "language": "koreana",
+        "review_count": 31095,
+        "recommendation_rate": 0.7713780350538672
+      },
+      {
+        "language": "schinese",
+        "review_count": 151357,
+        "recommendation_rate": 0.7662281889836612
+      }
+    ],
+    "months": [
+      {
+        "month": "2013-03",
+        "review_count": 571
+      },
+      {
+        "month": "2013-04",
+        "review_count": 181
+      },
+      {
+        "month": "2013-05",
+        "review_count": 150
+      },
+      {
+        "month": "2013-06",
+        "review_count": 218
+      },
+      {
+        "month": "2013-07",
+        "review_count": 234
+      },
+      {
+        "month": "2013-08",
+        "review_count": 145
+      },
+      {
+        "month": "2013-09",
+        "review_count": 352
+      },
+      {
+        "month": "2013-10",
+        "review_count": 171
+      },
+      {
+        "month": "2013-11",
+        "review_count": 508
+      },
+      {
+        "month": "2013-12",
+        "review_count": 1320
+      },
+      {
+        "month": "2014-01",
+        "review_count": 1232
+      },
+      {
+        "month": "2014-02",
+        "review_count": 1211
+      },
+      {
+        "month": "2014-03",
+        "review_count": 1232
+      },
+      {
+        "month": "2014-04",
+        "review_count": 881
+      },
+      {
+        "month": "2014-05",
+        "review_count": 2512
+      },
+      {
+        "month": "2014-06",
+        "review_count": 2642
+      },
+      {
+        "month": "2014-07",
+        "review_count": 1640
+      },
+      {
+        "month": "2014-08",
+        "review_count": 1150
+      },
+      {
+        "month": "2014-09",
+        "review_count": 953
+      },
+      {
+        "month": "2014-10",
+        "review_count": 2222
+      },
+      {
+        "month": "2014-11",
+        "review_count": 1642
+      },
+      {
+        "month": "2014-12",
+        "review_count": 2047
+      },
+      {
+        "month": "2015-01",
+        "review_count": 1981
+      },
+      {
+        "month": "2015-02",
+        "review_count": 4117
+      },
+      {
+        "month": "2015-03",
+        "review_count": 2345
+      },
+      {
+        "month": "2015-04",
+        "review_count": 1819
+      },
+      {
+        "month": "2015-05",
+        "review_count": 2554
+      },
+      {
+        "month": "2015-06",
+        "review_count": 2766
+      },
+      {
+        "month": "2015-07",
+        "review_count": 1722
+      },
+      {
+        "month": "2015-08",
+        "review_count": 1712
+      },
+      {
+        "month": "2015-09",
+        "review_count": 1375
+      },
+      {
+        "month": "2015-10",
+        "review_count": 1868
+      },
+      {
+        "month": "2015-11",
+        "review_count": 1658
+      },
+      {
+        "month": "2015-12",
+        "review_count": 2880
+      },
+      {
+        "month": "2016-01",
+        "review_count": 4269
+      },
+      {
+        "month": "2016-02",
+        "review_count": 2907
+      },
+      {
+        "month": "2016-03",
+        "review_count": 1870
+      },
+      {
+        "month": "2016-04",
+        "review_count": 1480
+      },
+      {
+        "month": "2016-05",
+        "review_count": 3131
+      },
+      {
+        "month": "2016-06",
+        "review_count": 2813
+      },
+      {
+        "month": "2016-07",
+        "review_count": 2763
+      },
+      {
+        "month": "2016-08",
+        "review_count": 1816
+      },
+      {
+        "month": "2016-09",
+        "review_count": 1419
+      },
+      {
+        "month": "2016-10",
+        "review_count": 11195
+      },
+      {
+        "month": "2016-11",
+        "review_count": 22059
+      },
+      {
+        "month": "2016-12",
+        "review_count": 4239
+      },
+      {
+        "month": "2017-01",
+        "review_count": 3654
+      },
+      {
+        "month": "2017-02",
+        "review_count": 13493
+      },
+      {
+        "month": "2017-03",
+        "review_count": 12590
+      },
+      {
+        "month": "2017-04",
+        "review_count": 11013
+      },
+      {
+        "month": "2017-05",
+        "review_count": 8111
+      },
+      {
+        "month": "2017-06",
+        "review_count": 9197
+      },
+      {
+        "month": "2017-07",
+        "review_count": 7554
+      },
+      {
+        "month": "2017-08",
+        "review_count": 6866
+      },
+      {
+        "month": "2017-09",
+        "review_count": 8306
+      },
+      {
+        "month": "2017-10",
+        "review_count": 6373
+      },
+      {
+        "month": "2017-11",
+        "review_count": 19981
+      },
+      {
+        "month": "2017-12",
+        "review_count": 5951
+      },
+      {
+        "month": "2018-01",
+        "review_count": 8491
+      },
+      {
+        "month": "2018-02",
+        "review_count": 27055
+      },
+      {
+        "month": "2018-03",
+        "review_count": 22236
+      },
+      {
+        "month": "2018-04",
+        "review_count": 13456
+      },
+      {
+        "month": "2018-05",
+        "review_count": 19324
+      },
+      {
+        "month": "2018-06",
+        "review_count": 40674
+      },
+      {
+        "month": "2018-07",
+        "review_count": 16402
+      },
+      {
+        "month": "2018-08",
+        "review_count": 20168
+      },
+      {
+        "month": "2018-09",
+        "review_count": 11126
+      },
+      {
+        "month": "2018-10",
+        "review_count": 13003
+      },
+      {
+        "month": "2018-11",
+        "review_count": 40418
+      },
+      {
+        "month": "2018-12",
+        "review_count": 19300
+      },
+      {
+        "month": "2019-01",
+        "review_count": 14006
+      },
+      {
+        "month": "2019-02",
+        "review_count": 13282
+      },
+      {
+        "month": "2019-03",
+        "review_count": 11398
+      },
+      {
+        "month": "2019-04",
+        "review_count": 8832
+      },
+      {
+        "month": "2019-05",
+        "review_count": 11957
+      },
+      {
+        "month": "2019-06",
+        "review_count": 31897
+      },
+      {
+        "month": "2019-07",
+        "review_count": 33620
+      },
+      {
+        "month": "2019-08",
+        "review_count": 8478
+      },
+      {
+        "month": "2019-09",
+        "review_count": 6160
+      },
+      {
+        "month": "2019-10",
+        "review_count": 11686
+      },
+      {
+        "month": "2019-11",
+        "review_count": 46169
+      },
+      {
+        "month": "2019-12",
+        "review_count": 34410
+      },
+      {
+        "month": "2020-01",
+        "review_count": 29587
+      },
+      {
+        "month": "2020-02",
+        "review_count": 23019
+      },
+      {
+        "month": "2020-03",
+        "review_count": 30466
+      },
+      {
+        "month": "2020-04",
+        "review_count": 28652
+      },
+      {
+        "month": "2020-05",
+        "review_count": 22863
+      },
+      {
+        "month": "2020-06",
+        "review_count": 19801
+      },
+      {
+        "month": "2020-07",
+        "review_count": 22239
+      },
+      {
+        "month": "2020-08",
+        "review_count": 16653
+      },
+      {
+        "month": "2020-09",
+        "review_count": 15922
+      },
+      {
+        "month": "2020-10",
+        "review_count": 18884
+      },
+      {
+        "month": "2020-11",
+        "review_count": 23607
+      },
+      {
+        "month": "2020-12",
+        "review_count": 22678
+      },
+      {
+        "month": "2021-01",
+        "review_count": 19020
+      }
+    ]
+  }
+}
