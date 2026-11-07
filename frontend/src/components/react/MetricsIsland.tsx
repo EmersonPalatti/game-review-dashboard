@@ -5,23 +5,27 @@ import {
   useRef,
   type ReactNode,
 } from 'react';
-import { fetchMetrics } from '../../lib/api';
+import { fetchMetrics, type Metrics } from '../../lib/api';
 import { useDelayedFlag } from '../../lib/fetchFeedback';
 import {
   BASELINE_AUTHORS,
   BASELINE_GAMES,
-  BASELINE_PERIOD_SHORT,
   BASELINE_RATE,
   BASELINE_REVIEWS,
   METRIC_CARDS_CONFIG,
   PLACEHOLDER,
-  activePresetNote,
 } from '../../lib/constants';
 import { formatInteger, formatPercent } from '../../lib/format';
 import { useFilters } from '../../lib/useNanostore';
 import { activeFilterCount, type Filters } from '../../stores/filters';
 import { latestMetrics } from '../../stores/metrics';
 import { QueryRoot } from './QueryRoot';
+
+/** Último resultado definitivo e os filtros que o produziram. */
+type SettledMetrics = {
+  metrics: Metrics;
+  filters: Filters;
+};
 
 function ease(amount: number): number {
   let t = amount;
@@ -61,6 +65,8 @@ function AnimatedFigure({
     if (!element) return;
 
     if (value === undefined) {
+      // Sem valor não há origem para contar: o próximo número aparece direto, sem animar a partir do travessão.
+      storedValueRef.current = null;
       element.textContent = PLACEHOLDER;
       return;
     }
@@ -88,13 +94,18 @@ function AnimatedFigure({
   }, [value, format]);
 
   return (
-    <p
-      ref={elementRef}
-      id={`metric-${id}`}
-      className={accent ? 'figure is-accent' : 'figure'}
-    >
-      {PLACEHOLDER}
-    </p>
+    <>
+      {/* A contagem animada é decorativa; leitores de tela recebem o valor final no sr-only. */}
+      <p
+        ref={elementRef}
+        id={`metric-${id}`}
+        className={accent ? 'figure metric-figure is-accent' : 'figure metric-figure'}
+        aria-hidden="true"
+      >
+        {PLACEHOLDER}
+      </p>
+      <span className="sr-only">{value === undefined ? PLACEHOLDER : format(value)}</span>
+    </>
   );
 }
 
@@ -118,7 +129,7 @@ function MetricCardBody({
   );
 
   return (
-    <article className="card flex flex-col gap-3">
+    <article className="card metric-card flex flex-col gap-3">
       <p className="meta">{label}</p>
       {accent ? (
         <div className="relative">
@@ -128,7 +139,7 @@ function MetricCardBody({
       ) : (
         figure
       )}
-      <p id={`metric-${id}-sub`} className="meta">
+      <p id={`metric-${id}-sub`} className="meta metric-sub">
         {sublabel}
       </p>
     </article>
@@ -144,7 +155,7 @@ function MetricsContent() {
   const baselineGames = useRef(BASELINE_GAMES);
   const baselineAuthors = useRef(BASELINE_AUTHORS);
 
-  const { data, error, isPending, isFetching, isPlaceholderData, refetch } = useQuery({
+  const { data, error, isFetching, isPlaceholderData, refetch } = useQuery({
     queryKey,
     queryFn: () => fetchMetrics(currentFilters),
     placeholderData: keepPreviousData,
@@ -157,59 +168,72 @@ function MetricsContent() {
     if (data) latestMetrics.set(data);
   }, [data]);
 
-  const metrics = data;
-  if (metrics && !isPlaceholderData && activeFilterCount(currentFilters) === 0) {
-    baselineReviews.current = metrics.total_reviews;
-    baselineRate.current = metrics.recommendation_rate;
-    baselineGames.current = metrics.game_count;
-    baselineAuthors.current = metrics.author_count;
+  // Enquanto um recorte novo carrega, `data` ainda é o anterior (keepPreviousData).
+  // Os subtítulos e a legenda precisam descrever os filtros que produziram esses números,
+  // por isso guardamos o último resultado definitivo junto com seus filtros.
+  const settledRef = useRef<SettledMetrics | null>(null);
+  if (data && !isPlaceholderData) {
+    settledRef.current = { metrics: data, filters: currentFilters };
+  }
+  const settled = settledRef.current;
+
+  // Se a busca do recorte novo falhar sem dados, os números exibidos são os do último recorte carregado.
+  const metrics: Metrics | undefined = data ?? settled?.metrics;
+  const shownFilters: Filters = settled?.filters ?? currentFilters;
+  const shownFiltered = activeFilterCount(shownFilters) > 0;
+  const numbersStale = showUpdating || (data === undefined && metrics !== undefined);
+
+  if (data && !isPlaceholderData && activeFilterCount(currentFilters) === 0) {
+    baselineReviews.current = data.total_reviews;
+    baselineRate.current = data.recommendation_rate;
+    baselineGames.current = data.game_count;
+    baselineAuthors.current = data.author_count;
   }
 
-  useEffect(() => {
-    const subtitle = document.getElementById('context-subtitle');
-    if (!subtitle) return;
-
-    if (showUpdating) {
-      subtitle.textContent = 'Atualizando…';
-      return;
-    }
-
-    if (isPlaceholderData) return;
-
-    if (!data) return;
-
-    const presetNote = activePresetNote(currentFilters);
-    subtitle.textContent = presetNote
-      ? `${formatInteger(data.total_reviews)} avaliações · ${formatInteger(data.game_count)} jogos · ${presetNote}`
-      : `${formatInteger(data.total_reviews)} avaliações · ${formatInteger(data.game_count)} jogos · ${BASELINE_PERIOD_SHORT}`;
-  }, [data, currentFilters, isPlaceholderData, showUpdating]);
-
-  const filtered = activeFilterCount(currentFilters) > 0;
 
   const sublabels: Record<string, string> = useMemo(() => {
     if (!metrics) {
       return Object.fromEntries(METRIC_CARDS_CONFIG.map((c) => [c.id, c.defaultSub]));
     }
 
-    const reviewsSub = !filtered
-      ? '100% da base\u00a0auditada'
-      : `${formatPercent(baselineReviews.current > 0 ? metrics.total_reviews / baselineReviews.current : 0)} de\u00a0${formatInteger(baselineReviews.current)}`;
+    const empty = metrics.total_reviews === 0;
 
-    let recommendationSub: string;
-    if (!filtered) {
-      recommendationSub = 'média global da\u00a0base';
+    let reviewsSub: string;
+    if (empty) {
+      reviewsSub = 'nenhuma avaliação neste recorte';
+    } else if (!shownFiltered) {
+      reviewsSub = '100% da base auditada';
     } else {
-      const diffPp = (metrics.recommendation_rate - baselineRate.current) * 100;
-      recommendationSub = `${ppFormat.format(diffPp)} p.p. vs. base\u00a0(${formatPercent(baselineRate.current)})`;
+      reviewsSub = `${formatPercent(baselineReviews.current > 0 ? metrics.total_reviews / baselineReviews.current : 0)} de ${formatInteger(baselineReviews.current)}`;
     }
 
-    const gamesSub = !filtered
-      ? 'no catálogo\u00a0analisado'
-      : `de ${formatInteger(baselineGames.current)} no\u00a0catálogo`;
+    let recommendationSub: string;
+    if (empty) {
+      recommendationSub = 'sem avaliações neste recorte';
+    } else if (!shownFiltered) {
+      recommendationSub = 'média global da base';
+    } else {
+      const diffPp = (metrics.recommendation_rate - baselineRate.current) * 100;
+      recommendationSub = `${ppFormat.format(diffPp)} p.p. vs. base (${formatPercent(baselineRate.current)})`;
+    }
 
-    const authorsSub = !filtered
-      ? 'contas distintas na\u00a0base'
-      : `${formatPercent(baselineAuthors.current > 0 ? metrics.author_count / baselineAuthors.current : 0)} de ${formatInteger(baselineAuthors.current)}\u00a0contas`;
+    let gamesSub: string;
+    if (empty) {
+      gamesSub = 'nenhum jogo neste recorte';
+    } else if (!shownFiltered) {
+      gamesSub = 'no catálogo analisado';
+    } else {
+      gamesSub = `de ${formatInteger(baselineGames.current)} no catálogo`;
+    }
+
+    let authorsSub: string;
+    if (empty) {
+      authorsSub = 'nenhuma conta neste recorte';
+    } else if (!shownFiltered) {
+      authorsSub = 'contas distintas na base';
+    } else {
+      authorsSub = `${formatPercent(baselineAuthors.current > 0 ? metrics.author_count / baselineAuthors.current : 0)} de ${formatInteger(baselineAuthors.current)} contas`;
+    }
 
     return {
       reviews: reviewsSub,
@@ -217,7 +241,7 @@ function MetricsContent() {
       games: gamesSub,
       authors: authorsSub,
     };
-  }, [metrics, filtered, currentFilters]);
+  }, [metrics, shownFiltered]);
 
   const formatters: Record<string, (n: number) => string> = useMemo(
     () => ({
@@ -234,7 +258,8 @@ function MetricsContent() {
       metrics
         ? {
             reviews: metrics.total_reviews,
-            recommendation: metrics.recommendation_rate,
+            // Sem avaliações não existe taxa: o cartão mostra o travessão, sem contagem.
+            recommendation: metrics.total_reviews > 0 ? metrics.recommendation_rate : undefined,
             games: metrics.game_count,
             authors: metrics.author_count,
           }
@@ -247,11 +272,26 @@ function MetricsContent() {
     [metrics],
   );
 
+  // Texto único e estável para leitores de tela. Enquanto a busca está pendente, `metrics`
+  // é o recorte anterior, então o texto não muda e nada é anunciado de novo.
+  const liveSummary = useMemo(() => {
+    if (!metrics) return '';
+    const parts = METRIC_CARDS_CONFIG.map((card) => {
+      const value = values[card.id];
+      const text =
+        value === undefined ? 'sem avaliações neste recorte' : (formatters[card.id] ?? formatInteger)(value);
+      return `${card.label} ${text}`;
+    });
+    return `${parts.join('; ')}.`;
+  }, [metrics, values, formatters]);
+
   let errorBlock: ReactNode = null;
   if (error && metrics !== undefined) {
     errorBlock = (
-      <div className="flex flex-wrap items-center gap-3 sm:col-span-2 xl:col-span-4" role="alert">
-        <p className="meta">Não foi possível atualizar os indicadores (verifique a API em 127.0.0.1:8000).</p>
+      <div className="flex flex-wrap items-center gap-3 col-span-2 xl:col-span-4" role="alert">
+        <p className="meta">
+          Não foi possível atualizar os indicadores. Os números abaixo são do último recorte carregado.
+        </p>
         <button type="button" className="btn btn-secondary btn-small" onClick={() => void refetch()}>
           Tentar de novo
         </button>
@@ -261,9 +301,10 @@ function MetricsContent() {
 
   return (
     <section
-      className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4"
+      className="grid grid-cols-2 gap-4 xl:grid-cols-4"
       aria-label="Indicadores"
       data-fetching={showBusy ? 'true' : 'false'}
+      data-stale={numbersStale ? 'true' : 'false'}
       aria-busy={showBusy}
     >
       {errorBlock}
@@ -274,10 +315,13 @@ function MetricsContent() {
           label={card.label}
           sublabel={sublabels[card.id] ?? card.defaultSub}
           accent={card.accent}
-          value={isPending && !metrics ? undefined : values[card.id]}
+          value={values[card.id]}
           format={formatters[card.id] ?? formatInteger}
         />
       ))}
+      <p className="sr-only" aria-live="polite">
+        {liveSummary}
+      </p>
     </section>
   );
 }

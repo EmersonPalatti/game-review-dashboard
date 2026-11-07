@@ -46,10 +46,21 @@ const DATE_PRESETS = [
 const MIN_DATE = '2013-03-05';
 const MAX_DATE = '2021-01-23';
 
+function clampDateStr(dateStr: string): string {
+  if (dateStr < MIN_DATE) return MIN_DATE;
+  if (dateStr > MAX_DATE) return MAX_DATE;
+  return dateStr;
+}
+
+function getDaysInMonth(year: number, monthIndex: number): number {
+  return new Date(Date.UTC(year, monthIndex + 1, 0)).getUTCDate();
+}
+
 export function DateRangeFilter() {
   const currentFilters = useFilters();
   const [activeField, setActiveField] = useState<'from' | 'to' | null>(null);
   const [hoveredDate, setHoveredDate] = useState<string | null>(null);
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
   const [viewYear, setViewYear] = useState<number>(2020);
   const [viewMonth, setViewMonth] = useState<number>(0);
@@ -59,16 +70,40 @@ export function DateRangeFilter() {
   const fromTriggerRef = useRef<HTMLButtonElement>(null);
   const toTriggerRef = useRef<HTMLButtonElement>(null);
   const lastFieldRef = useRef<'from' | 'to'>('from');
+  const pendingFocusDateRef = useRef<string | null>(null);
 
   const closePopover = (restoreFocusTo?: 'from' | 'to') => {
     setActiveField(null);
     setHoveredDate(null);
+    setStatusMessage(null);
     if (restoreFocusTo === 'from') {
       fromTriggerRef.current?.focus();
     } else if (restoreFocusTo === 'to') {
       toTriggerRef.current?.focus();
     }
   };
+
+  // Focus day after keyboard navigation crosses month boundaries
+  useEffect(() => {
+    if (!pendingFocusDateRef.current) return;
+    const dateToFocus = pendingFocusDateRef.current;
+    pendingFocusDateRef.current = null;
+
+    const btn = popoverRef.current?.querySelector<HTMLButtonElement>(
+      `button.date-cell[data-date="${dateToFocus}"]:not(:disabled)`
+    );
+    if (btn) {
+      btn.focus();
+    } else {
+      const raf = requestAnimationFrame(() => {
+        const retryBtn = popoverRef.current?.querySelector<HTMLButtonElement>(
+          `button.date-cell[data-date="${dateToFocus}"]:not(:disabled)`
+        );
+        retryBtn?.focus();
+      });
+      return () => cancelAnimationFrame(raf);
+    }
+  }, [viewYear, viewMonth]);
 
   // Sync calendar view month/year and manage focus when popover opens or active field changes
   useEffect(() => {
@@ -134,7 +169,7 @@ export function DateRangeFilter() {
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === 'Escape') {
         event.preventDefault();
-        closePopover(activeField);
+        closePopover(activeField ?? undefined);
       }
     }
 
@@ -151,10 +186,12 @@ export function DateRangeFilter() {
     setActiveField((prev) => {
       if (prev === field) {
         setHoveredDate(null);
+        setStatusMessage(null);
         return null;
       }
       lastFieldRef.current = field;
       setHoveredDate(null);
+      setStatusMessage(null);
       return field;
     });
   };
@@ -162,29 +199,39 @@ export function DateRangeFilter() {
   const handleSelectDay = (dateStr: string) => {
     setHoveredDate(null);
     if (activeField === 'from') {
-      if (!currentFilters.dateTo || dateStr > currentFilters.dateTo) {
-        patchFilters({
-          dateFrom: dateStr,
-          dateTo: currentFilters.dateTo && dateStr > currentFilters.dateTo ? null : currentFilters.dateTo,
-        });
+      if (!currentFilters.dateTo) {
+        patchFilters({ dateFrom: dateStr });
+        setStatusMessage(null);
         lastFieldRef.current = 'to';
         setActiveField('to');
         return;
       }
+      if (dateStr > currentFilters.dateTo) {
+        patchFilters({
+          dateFrom: currentFilters.dateTo,
+          dateTo: dateStr,
+        });
+        setStatusMessage(`Fim ajustado para ${formatDate(dateStr)}`);
+        return;
+      }
       patchFilters({ dateFrom: dateStr });
+      setStatusMessage(null);
       closePopover('from');
     } else if (activeField === 'to') {
       if (currentFilters.dateFrom && dateStr < currentFilters.dateFrom) {
         patchFilters({ dateFrom: dateStr, dateTo: currentFilters.dateFrom });
-      } else {
-        patchFilters({ dateTo: dateStr });
+        setStatusMessage(`Início ajustado para ${formatDate(dateStr)}`);
+        return;
       }
+      patchFilters({ dateTo: dateStr });
+      setStatusMessage(null);
       closePopover('to');
     }
   };
 
   const handleClearCurrent = () => {
     const fieldToRestore = activeField;
+    setStatusMessage(null);
     if (activeField === 'from') {
       patchFilters({ dateFrom: null });
     } else if (activeField === 'to') {
@@ -214,30 +261,87 @@ export function DateRangeFilter() {
   };
 
   const handleGridKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
-    let delta = 0;
-    if (event.key === 'ArrowLeft') delta = -1;
-    else if (event.key === 'ArrowRight') delta = 1;
-    else if (event.key === 'ArrowUp') delta = -7;
-    else if (event.key === 'ArrowDown') delta = 7;
-    else return;
-
-    if (!popoverRef.current) return;
-    const enabledButtons = Array.from(
-      popoverRef.current.querySelectorAll<HTMLButtonElement>('.date-cell:not(:disabled)')
-    );
-    if (enabledButtons.length === 0) return;
-
-    const currentIndex = enabledButtons.findIndex((btn) => btn === document.activeElement);
-    event.preventDefault();
-
-    if (currentIndex === -1) {
-      const selectedBtn = enabledButtons.find((btn) => btn.classList.contains('is-selected'));
-      (selectedBtn ?? enabledButtons[0]).focus();
+    const key = event.key;
+    if (
+      key !== 'ArrowLeft' &&
+      key !== 'ArrowRight' &&
+      key !== 'ArrowUp' &&
+      key !== 'ArrowDown' &&
+      key !== 'PageUp' &&
+      key !== 'PageDown' &&
+      key !== 'Home' &&
+      key !== 'End'
+    ) {
       return;
     }
 
-    const targetIndex = Math.min(Math.max(currentIndex + delta, 0), enabledButtons.length - 1);
-    enabledButtons[targetIndex]?.focus();
+    if (!popoverRef.current) return;
+    event.preventDefault();
+
+    const activeEl = document.activeElement as HTMLElement | null;
+    let currentDateStr = activeEl?.getAttribute('data-date');
+
+    if (!currentDateStr) {
+      const fallbackBtn =
+        popoverRef.current.querySelector<HTMLButtonElement>('.date-cell.is-selected:not(:disabled)') ??
+        popoverRef.current.querySelector<HTMLButtonElement>('.date-cell:not(:disabled)');
+      if (fallbackBtn) {
+        fallbackBtn.focus();
+      }
+      return;
+    }
+
+    const [currentY, currentM, currentD] = currentDateStr.split('-').map(Number);
+    let targetDateStr: string;
+
+    if (key === 'ArrowLeft' || key === 'ArrowRight' || key === 'ArrowUp' || key === 'ArrowDown') {
+      const delta = key === 'ArrowLeft' ? -1 : key === 'ArrowRight' ? 1 : key === 'ArrowUp' ? -7 : 7;
+      const curUtc = new Date(Date.UTC(currentY, currentM - 1, currentD + delta));
+      targetDateStr = clampDateStr(curUtc.toISOString().slice(0, 10));
+    } else if (key === 'PageUp') {
+      const targetM = currentM - 1;
+      const targetYear = targetM < 1 ? currentY - 1 : currentY;
+      const targetMonthIndex = targetM < 1 ? 11 : targetM - 1;
+      const maxDays = getDaysInMonth(targetYear, targetMonthIndex);
+      const targetDay = Math.min(currentD, maxDays);
+      const rawDateStr = `${targetYear}-${String(targetMonthIndex + 1).padStart(2, '0')}-${String(targetDay).padStart(2, '0')}`;
+      targetDateStr = clampDateStr(rawDateStr);
+    } else if (key === 'PageDown') {
+      const targetM = currentM + 1;
+      const targetYear = targetM > 12 ? currentY + 1 : currentY;
+      const targetMonthIndex = targetM > 12 ? 0 : targetM - 1;
+      const maxDays = getDaysInMonth(targetYear, targetMonthIndex);
+      const targetDay = Math.min(currentD, maxDays);
+      const rawDateStr = `${targetYear}-${String(targetMonthIndex + 1).padStart(2, '0')}-${String(targetDay).padStart(2, '0')}`;
+      targetDateStr = clampDateStr(rawDateStr);
+    } else if (key === 'Home') {
+      const rawDateStr = `${viewYear}-${String(viewMonth + 1).padStart(2, '0')}-01`;
+      targetDateStr = clampDateStr(rawDateStr);
+    } else {
+      // End
+      const lastDay = getDaysInMonth(viewYear, viewMonth);
+      const rawDateStr = `${viewYear}-${String(viewMonth + 1).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+      targetDateStr = clampDateStr(rawDateStr);
+    }
+
+    if (targetDateStr === currentDateStr) {
+      return;
+    }
+
+    const [tY, tM] = targetDateStr.split('-').map(Number);
+    const targetYear = tY;
+    const targetMonthIndex = tM - 1;
+
+    if (targetYear === viewYear && targetMonthIndex === viewMonth) {
+      const targetBtn = popoverRef.current.querySelector<HTMLButtonElement>(
+        `button.date-cell[data-date="${targetDateStr}"]:not(:disabled)`
+      );
+      targetBtn?.focus();
+    } else {
+      pendingFocusDateRef.current = targetDateStr;
+      setViewYear(targetYear);
+      setViewMonth(targetMonthIndex);
+    }
   };
 
   const hasActiveDate = currentFilters.dateFrom !== null || currentFilters.dateTo !== null;
@@ -329,7 +433,7 @@ export function DateRangeFilter() {
               className={`date-popover${activeField ? ' is-open' : ''}`}
             >
               {/* Contextual header strip */}
-              <div className="date-popover-status">
+              <div className="date-popover-status" aria-live="polite">
                 <span className="date-popover-status-badge">
                   <span className="date-popover-status-dot" aria-hidden="true" />
                   {(activeField ?? lastFieldRef.current) === 'to' ? 'Data final' : 'Data inicial'}
@@ -339,6 +443,11 @@ export function DateRangeFilter() {
                     currentFilters.dateTo ? formatDate(currentFilters.dateTo) : '...'
                   }`}
                 </span>
+                {statusMessage && (
+                  <span className="date-popover-status-msg">
+                    {statusMessage}
+                  </span>
+                )}
               </div>
 
               {/* Header: Month / Year Selects & Navigation Buttons */}
@@ -471,6 +580,7 @@ export function DateRangeFilter() {
                     <button
                       key={dateStr}
                       type="button"
+                      data-date={dateStr}
                       disabled={isOutOfRange}
                       aria-label={`${day} de ${MONTHS[viewMonth].toLowerCase()} de ${viewYear}`}
                       aria-pressed={isSelected}

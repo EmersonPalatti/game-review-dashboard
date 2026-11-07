@@ -13,10 +13,13 @@ from sqlalchemy.orm import Session
 from backend.app.models import Review
 from backend.app.schemas import (
     ChartsResponse,
+    FacetsResponse,
     GameBar,
     GameFacet,
+    GameFacetCount,
     LanguageBar,
     LanguageFacet,
+    LanguageFacetCount,
     MetricsResponse,
     MonthPoint,
     PlaytimePoint,
@@ -109,6 +112,7 @@ class LRUCache(Generic[T]):
 
 _metrics_cache: LRUCache[MetricsResponse] = LRUCache[MetricsResponse](maxsize=256)
 _charts_cache: LRUCache[ChartsResponse] = LRUCache[ChartsResponse](maxsize=256)
+_facets_cache: LRUCache[FacetsResponse] = LRUCache[FacetsResponse](maxsize=256)
 
 
 def _filter_cache_key(filters: ReviewFilters) -> tuple:
@@ -163,12 +167,14 @@ def clear_cache() -> None:
     _facets = None
     _metrics_cache.clear()
     _charts_cache.clear()
+    _facets_cache.clear()
 
 
 def warmup_caches(session: Session) -> None:
     default_filters = ReviewFilters()
     metrics(session, default_filters)
     charts(session, default_filters)
+    facets(session, default_filters)
 
 
 _facets: tuple[list[GameFacet], list[LanguageFacet]] | None = None
@@ -393,6 +399,7 @@ def charts(session: Session, filters: ReviewFilters) -> ChartsResponse:
         )
     ).all()
 
+    language_filters = filters.model_copy(update={"language": None})
     language_count = func.count().label("review_count")
     language_positive = func.coalesce(
         func.sum(case((Review.recommended.is_(True), 1), else_=0)),
@@ -404,7 +411,7 @@ def charts(session: Session, filters: ReviewFilters) -> ChartsResponse:
             .group_by(Review.language)
             .order_by(language_count.desc(), Review.language.asc())
             .limit(8),
-            filters,
+            language_filters,
         )
     ).all()
     languages = [
@@ -415,9 +422,27 @@ def charts(session: Session, filters: ReviewFilters) -> ChartsResponse:
         )
         for row in language_rows
     ]
+    if filters.language is not None and not any(item.language == filters.language for item in languages):
+        extra_row = session.execute(
+            apply_filters(
+                select(language_count, language_positive).select_from(Review),
+                filters,
+            )
+        ).one_or_none()
+        extra_count = int(extra_row.review_count or 0) if extra_row else 0
+        extra_positive = int(extra_row.positive or 0) if extra_row else 0
+        languages.append(
+            LanguageBar(
+                language=filters.language,
+                review_count=extra_count,
+                recommendation_rate=_rate(extra_positive, extra_count),
+            )
+        )
+
     languages.sort(
         key=lambda item: (
-            -1 if item.recommendation_rate is None else -item.recommendation_rate,
+            item.recommendation_rate is None,
+            -item.recommendation_rate if item.recommendation_rate is not None else 0,
             item.language,
         )
     )
@@ -468,4 +493,67 @@ def charts(session: Session, filters: ReviewFilters) -> ChartsResponse:
         ],
     )
     _charts_cache.set(cache_key, result)
+    return result
+
+
+def facets(session: Session, filters: ReviewFilters) -> FacetsResponse:
+    """Contagens dos combos Jogo e Idioma no recorte atual.
+
+    Cada faceta ignora o próprio filtro (semântica de facetas): a lista de jogos
+    respeita o idioma e os demais filtros, e vice-versa. Só entram valores com
+    contagem > 0; quem não aparece deve ser lido como zero.
+    """
+    cache_key = _filter_cache_key(filters)
+    cached = _facets_cache.get(cache_key)
+    if cached is not None:
+        return cached
+
+    if is_empty_filters(filters):
+        global_games, global_languages = _global_facets(session)
+        result = FacetsResponse(
+            games=[
+                GameFacetCount(app_id=game.app_id, review_count=game.review_count)
+                for game in global_games
+            ],
+            languages=[
+                LanguageFacetCount(language=entry.language, review_count=entry.review_count)
+                for entry in global_languages
+            ],
+        )
+        _facets_cache.set(cache_key, result)
+        return result
+
+    game_filters = filters.model_copy(update={"app_id": None})
+    game_count = func.count().label("review_count")
+    game_rows = session.execute(
+        apply_filters(
+            select(Review.app_id, game_count)
+            .group_by(Review.app_id)
+            .order_by(game_count.desc(), Review.app_id.asc()),
+            game_filters,
+        )
+    ).all()
+
+    language_filters = filters.model_copy(update={"language": None})
+    language_count = func.count().label("review_count")
+    language_rows = session.execute(
+        apply_filters(
+            select(Review.language, language_count)
+            .group_by(Review.language)
+            .order_by(language_count.desc(), Review.language.asc()),
+            language_filters,
+        )
+    ).all()
+
+    result = FacetsResponse(
+        games=[
+            GameFacetCount(app_id=row.app_id, review_count=int(row.review_count))
+            for row in game_rows
+        ],
+        languages=[
+            LanguageFacetCount(language=row.language, review_count=int(row.review_count))
+            for row in language_rows
+        ],
+    )
+    _facets_cache.set(cache_key, result)
     return result

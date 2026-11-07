@@ -1,0 +1,234 @@
+/* sidebar: overrides layered after global.css. Plain CSS, tokens from global.css. */
+
+/* Cabeçalho mobile: nome e período empilhados. */
+.mobile-title {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.mobile-period {
+  white-space: nowrap;
+  line-height: 16px;
+}
+
+/* Corpo da barra: cresce até a altura da janela para o rodapé ficar embaixo. */
+.sidebar-inner {
+  flex: 1 0 auto;
+}
+
+.sidebar-body {
+  flex: 1 0 auto;
+}
+
+.filters-panel {
+  display: flex;
+  flex: 1 0 auto;
+  flex-direction: column;
+}
+
+.filters-panel > form {
+  margin-bottom: 16px;
+}
+
+/* Jogo e Idioma: o valor escolhido quebra em até duas linhas. O <input> fica
+   sobre o espelho (.combo-mirror), que mostra o nome completo fora da digitação. */
+.combo {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.combo > .field-control,
+.combo > .combo-mirror {
+  grid-area: 1 / 1;
+  align-self: stretch;
+}
+
+.combo:not(.is-editing) > .field-control {
+  color: transparent;
+}
+
+.combo-mirror {
+  /* Vem antes do <input> no DOM; sem isto o fundo opaco do campo cobre o texto. */
+  position: relative;
+  z-index: 1;
+  display: -webkit-box;
+  box-sizing: border-box;
+  min-height: 44px;
+  padding: 11px 44px 11px 12px;
+  border: 1px solid transparent;
+  overflow: hidden;
+  font: inherit;
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  pointer-events: none;
+}
+
+.combo.is-editing > .combo-mirror {
+  display: none;
+}
+
+.combo-option-label {
+  display: -webkit-box;
+  overflow: hidden;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  line-height: 20px;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+/* Zero na fatia atual: texto esmaecido com cor do tema (não opacity), para
+   manter contraste. A opção segue selecionável. */
+.combo-option.is-zero .combo-option-label,
+.combo-option.is-zero .combo-option-count {
+  color: var(--muted);
+}
+
+/* Disclosure "Mais filtros" */
+.disclosure {
+  margin-top: 6px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.disclosure-toggle {
+  min-height: 44px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.disclosure-toggle:hover .disclosure-label {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.disclosure-label {
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--ink);
+}
+
+.disclosure-count {
+  margin-left: 4px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 20px;
+  font-variant-numeric: tabular-nums;
+  color: var(--secondary);
+}
+
+.disclosure-chevron {
+  transition: transform var(--menu) var(--ease);
+}
+
+.disclosure-chevron.is-open {
+  transform: rotate(180deg);
+}
+
+.disclosure-region {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: 0fr;
+  transition: grid-template-rows var(--menu) var(--ease);
+}
+
+.disclosure-region.is-open {
+  grid-template-rows: 1fr;
+}
+
+.disclosure-inner {
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* O anel de foco do seg-btn fica dentro do recorte do disclosure. */
+.disclosure-region .seg-btn:focus-visible {
+  outline-offset: -2px;
+}
+
+/* Rodapé fixo: limpar, contagem e atalhos. Sticky no fim da barra rolável. */
+.filters-footer {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: auto -20px 0;
+  padding: 12px 20px 16px;
+  border-top: 1px solid var(--line);
+  background: var(--sidebar);
+}
+
+.clear-row:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
+.clear-row:disabled:hover,
+.clear-row:disabled:active {
+  background-color: var(--surface);
+  transform: none;
+}
+
+.filters-footer .sidebar-summary {
+  margin: 0;
+}
+
+.filters-keys {
+  margin: 0;
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--muted);
+}
+
+.filters-keys kbd {
+  display: inline-flex;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--paper);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1;
+  color: var(--secondary);
+  vertical-align: 1px;
+}
+
+@media (min-width: 768px) {
+  #apply-filters-mobile {
+    display: none;
+  }
+}
+
+@media (max-width: 767px) {
+  .filters-footer {
+    margin: auto -24px 0;
+    padding: 12px 24px 20px;
+    background: var(--surface);
+  }
+
+  .filters-keys {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .disclosure-region,
+  .disclosure-chevron {
+    transition: none;
+  }
+}

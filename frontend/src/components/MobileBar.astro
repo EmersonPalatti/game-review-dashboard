@@ -1,10 +1,14 @@
 ---
 import { Menu } from 'lucide';
+import { BASELINE_PERIOD_SHORT } from '../lib/constants';
 import RailIcon from './RailIcon.astro';
 ---
 
 <div class="sidebar-mobile-bar">
-  <span class="mobile-wordmark">Reviews da Steam</span>
+  <div class="mobile-title">
+    <span class="mobile-wordmark">Reviews da Steam</span>
+    <span class="meta mobile-period">{BASELINE_PERIOD_SHORT}</span>
+  </div>
   <button
     id="sidebar-open"
     type="button"

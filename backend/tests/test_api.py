@@ -801,7 +801,9 @@ def test_post_chat_missing_api_key(client, monkeypatch):
     monkeypatch.delenv("OPENROUTER_API_KEY", raising=False)
     response = client.post("/api/chat", json={"message": "Olá robô gamer!"})
     assert response.status_code == 503
-    assert "OPENROUTER_API_KEY" in response.json()["detail"]
+    detail = response.json()["detail"]
+    assert "chave de IA não configurada" in detail
+    assert "OPENROUTER" not in detail
 
 
 def test_post_chat_empty_message(client):
@@ -893,7 +895,8 @@ def test_post_chat_api_rate_limit_error(client, monkeypatch):
 
     response = client.post("/api/chat", json={"message": "Olá"})
     assert response.status_code == 503
-    assert "Limite de requisições" in response.json()["detail"]
+    assert "limite de consultas por minuto" in response.json()["detail"]
+    assert "OpenRouter" not in response.json()["detail"]
 
 
 def test_post_chat_api_auth_error(client, monkeypatch):
@@ -914,7 +917,7 @@ def test_post_chat_api_auth_error(client, monkeypatch):
 
     response = client.post("/api/chat", json={"message": "Olá"})
     assert response.status_code == 502
-    assert "não autorizada" in response.json()["detail"]
+    assert "chave de IA não configurada" in response.json()["detail"]
 
 
 def test_post_chat_custom_model_and_openrouter_prefix(client, monkeypatch):
@@ -972,5 +975,208 @@ def test_post_chat_empty_llm_response_fallback(client, monkeypatch):
     assert "Consulta concluída no acervo da Steam" in response.json()["reply"]
 
 
+def test_facets_unfiltered_matches_global_counts(client):
+    response = client.get("/api/facets")
+    assert response.status_code == 200
+    body = response.json()
+    assert body["games"] == [
+        {"app_id": ALPHA, "review_count": 2},
+        {"app_id": BETA, "review_count": 2},
+    ]
+    assert body["languages"] == [
+        {"language": "english", "review_count": 3},
+        {"language": "brazilian", "review_count": 1},
+    ]
+
+    summary = client.get("/api/summary").json()
+    assert body["games"] == [
+        {"app_id": game["app_id"], "review_count": game["review_count"]}
+        for game in summary["games"]
+    ]
+    assert body["languages"] == summary["languages"]
 
 
+def test_facets_exclude_own_dimension(client):
+    # Com Alpha escolhido, a lista de jogos continua completa,
+    # mas a de idiomas passa a contar só as avaliações de Alpha.
+    scoped_to_game = client.get("/api/facets", params={"app_id": ALPHA})
+    assert scoped_to_game.status_code == 200
+    body = scoped_to_game.json()
+    assert body["games"] == [
+        {"app_id": ALPHA, "review_count": 2},
+        {"app_id": BETA, "review_count": 2},
+    ]
+    assert body["languages"] == [
+        {"language": "brazilian", "review_count": 1},
+        {"language": "english", "review_count": 1},
+    ]
+
+    # Com o idioma brasileiro escolhido, a lista de idiomas volta a ser completa,
+    # mas a de jogos respeita o idioma.
+    scoped_to_language = client.get("/api/facets", params={"language": "brazilian"})
+    assert scoped_to_language.status_code == 200
+    body = scoped_to_language.json()
+    assert body["games"] == [{"app_id": ALPHA, "review_count": 1}]
+    assert body["languages"] == [
+        {"language": "english", "review_count": 3},
+        {"language": "brazilian", "review_count": 1},
+    ]
+
+
+def test_facets_recommended_false_shrinks_both(client):
+    response = client.get("/api/facets", params={"recommended": "false"})
+    assert response.status_code == 200
+    body = response.json()
+    assert body["games"] == [
+        {"app_id": ALPHA, "review_count": 1},
+        {"app_id": BETA, "review_count": 1},
+    ]
+    assert body["languages"] == [
+        {"language": "brazilian", "review_count": 1},
+        {"language": "english", "review_count": 1},
+    ]
+
+    combined = client.get("/api/facets", params={"recommended": "false", "app_id": ALPHA})
+    assert combined.status_code == 200
+    combined_body = combined.json()
+    assert combined_body["games"] == [
+        {"app_id": ALPHA, "review_count": 1},
+        {"app_id": BETA, "review_count": 1},
+    ]
+    assert combined_body["languages"] == [{"language": "brazilian", "review_count": 1}]
+
+
+def test_facets_invalid_playtime_bucket_matches_summary_status(client):
+    summary = client.get("/api/summary", params={"playtime_bucket": "nope"})
+    facets_response = client.get("/api/facets", params={"playtime_bucket": "nope"})
+    assert summary.status_code == 422
+    assert facets_response.status_code == summary.status_code
+    assert "nope" in facets_response.text
+    assert "playtime_bucket" in facets_response.text
+
+
+def test_facets_cache_reuses_result_until_cleared():
+    from backend.app.queries import _facets_cache, clear_cache, facets
+    from backend.app.schemas import ReviewFilters
+
+    test_engine = create_engine("sqlite://", poolclass=StaticPool)
+    Base.metadata.create_all(test_engine)
+    TestSession = sessionmaker(bind=test_engine)
+
+    with TestSession() as session:
+        session.add_all(_sample_reviews())
+        session.commit()
+
+        clear_cache()
+        filters = ReviewFilters(recommended=False)
+        first = facets(session, filters)
+        assert facets(session, filters) is first
+        assert len(_facets_cache._cache) == 1
+
+        clear_cache()
+        assert len(_facets_cache._cache) == 0
+
+
+def test_charts_language_disjunctive_facet_returns_multiple_languages(client):
+    response = client.get("/api/charts", params={"language": "brazilian"})
+    assert response.status_code == 200
+    languages = response.json()["languages"]
+    assert len(languages) > 1
+    languages_by_name = {item["language"]: item for item in languages}
+    assert "brazilian" in languages_by_name
+    assert "english" in languages_by_name
+    assert languages_by_name["brazilian"]["review_count"] == 1
+    assert languages_by_name["brazilian"]["recommendation_rate"] == 0.0
+    assert languages_by_name["english"]["review_count"] == 3
+    assert languages_by_name["english"]["recommendation_rate"] == pytest.approx(2 / 3)
+
+
+def test_charts_language_with_other_filter_applies_other_filter_to_language_counts(client):
+    base_response = client.get("/api/charts", params={"app_id": ALPHA})
+    assert base_response.status_code == 200
+    expected_languages = base_response.json()["languages"]
+
+    response = client.get(
+        "/api/charts",
+        params={"app_id": ALPHA, "language": "brazilian"},
+    )
+    assert response.status_code == 200
+    languages = response.json()["languages"]
+
+    assert languages == expected_languages
+    by_name = {item["language"]: item for item in languages}
+    assert by_name["english"]["review_count"] == 1
+    assert by_name["english"]["recommendation_rate"] == 1.0
+    assert by_name["brazilian"]["review_count"] == 1
+    assert by_name["brazilian"]["recommendation_rate"] == 0.0
+
+
+def test_charts_language_zero_reviews_in_slice_has_null_rate(client):
+    res_nonexistent = client.get("/api/charts", params={"language": "german"})
+    assert res_nonexistent.status_code == 200
+    languages = res_nonexistent.json()["languages"]
+    by_name = {item["language"]: item for item in languages}
+    assert "german" in by_name
+    assert by_name["german"]["review_count"] == 0
+    assert by_name["german"]["recommendation_rate"] is None
+    assert languages[-1]["language"] == "german"
+
+    res_zero_slice = client.get(
+        "/api/charts",
+        params={"app_id": BETA, "language": "brazilian"},
+    )
+    assert res_zero_slice.status_code == 200
+    beta_languages = res_zero_slice.json()["languages"]
+    beta_by_name = {item["language"]: item for item in beta_languages}
+    assert "brazilian" in beta_by_name
+    assert beta_by_name["brazilian"]["review_count"] == 0
+    assert beta_by_name["brazilian"]["recommendation_rate"] is None
+    assert beta_languages[-1]["language"] == "brazilian"
+
+
+def test_charts_language_appends_when_beyond_top_8():
+    from backend.app.queries import charts
+    from backend.app.schemas import ReviewFilters
+
+    test_engine = create_engine("sqlite://", poolclass=StaticPool)
+    Base.metadata.create_all(test_engine)
+    TestSession = sessionmaker(bind=test_engine)
+
+    reviews = []
+    for i in range(10):
+        lang = f"lang_{i:02d}"
+        for j in range(10 - i):
+            reviews.append(
+                Review(
+                    review_id=10_000 + i * 100 + j,
+                    app_id=1,
+                    app_name="App",
+                    language=lang,
+                    recommended=True,
+                    votes_helpful=0,
+                    votes_funny=0,
+                    comment_count=0,
+                    weighted_vote_score=0.0,
+                    timestamp_created=1700000000,
+                    timestamp_updated=1700000000,
+                    author_steamid=20000 + i * 100 + j,
+                    playtime_at_review=60,
+                    playtime_forever=60,
+                    steam_purchase=True,
+                    received_for_free=False,
+                    early_access=False,
+                    excerpt="test",
+                )
+            )
+
+    with TestSession() as session:
+        session.add_all(reviews)
+        session.commit()
+
+        res = charts(session, ReviewFilters(language="lang_09"))
+        lang_names = [item.language for item in res.languages]
+        assert "lang_09" in lang_names
+        assert len(res.languages) == 9
+        lang_09_bar = next(item for item in res.languages if item.language == "lang_09")
+        assert lang_09_bar.review_count == 1
+        assert lang_09_bar.recommendation_rate == 1.0

@@ -2,6 +2,7 @@ import { queryClient } from '../lib/queryClient';
 import {
   filters,
   readFiltersFromSearch,
+  resetFilters,
   reviewSort,
   writeFiltersToSearch,
 } from '../stores/filters';
@@ -120,6 +121,11 @@ function bindControls(): void {
       if (appInput instanceof HTMLInputElement) {
         appInput.focus();
       }
+      return;
+    }
+    if (event.shiftKey && event.key.toLowerCase() === 'x') {
+      event.preventDefault();
+      resetFilters();
     }
   });
 }

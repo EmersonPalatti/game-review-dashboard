@@ -17,6 +17,9 @@ export class SearchCombo {
   private readonly root: HTMLElement;
   private readonly toggle: HTMLButtonElement;
   private readonly icon: SVGSVGElement;
+  // Espelho visível do valor confirmado: permite quebrar o nome em duas linhas,
+  // coisa que um <input> não faz. Fica oculto enquanto o usuário digita.
+  private readonly mirror: HTMLElement | null;
   private readonly onReflow = () => {
     if (this.open) this.placeMenu();
   };
@@ -39,6 +42,8 @@ export class SearchCombo {
     }
     this.toggle = toggle;
     this.icon = icon;
+    const mirror = root.querySelector(':scope > .combo-mirror');
+    this.mirror = mirror instanceof HTMLElement ? mirror : null;
     this.toggle.setAttribute('aria-controls', menu.id);
 
     this.committed = emptyOption.value;
@@ -46,18 +51,21 @@ export class SearchCombo {
     input.addEventListener('focus', () => {
       this.navigated = false;
       this.query = '';
+      this.root.classList.add('is-editing');
       this.input.select();
       this.openMenu(true);
     });
     input.addEventListener('input', () => {
       this.navigated = true;
       this.query = this.input.value;
+      this.syncMirror(this.input.value);
       this.openMenu(true);
     });
     input.addEventListener('keydown', (event) => {
       this.onKey(event);
     });
     input.addEventListener('blur', () => {
+      this.root.classList.remove('is-editing');
       this.blurTimer = window.setTimeout(() => this.finishEditing(), 150);
     });
     this.toggle.addEventListener('pointerdown', (event) => {
@@ -114,10 +122,19 @@ export class SearchCombo {
   private showCommitted(): void {
     if (this.committed === this.emptyOption.value) {
       this.input.value = '';
+      this.input.title = '';
+      this.syncMirror('');
       return;
     }
     const match = this.options.find((item) => item.value === this.committed);
-    this.input.value = match?.label ?? '';
+    const label = match?.label ?? '';
+    this.input.value = label;
+    this.input.title = label;
+    this.syncMirror(label);
+  }
+
+  private syncMirror(text: string): void {
+    if (this.mirror) this.mirror.textContent = text;
   }
 
   private placeMenu(): void {
@@ -213,6 +230,8 @@ export class SearchCombo {
       option.setAttribute('role', 'option');
       option.setAttribute('aria-selected', item.value === this.committed ? 'true' : 'false');
       option.title = item.label;
+      // Zero na fatia atual: aparece esmaecido, mas continua selecionável.
+      if (item.count === 0) option.classList.add('is-zero');
 
       const labelSpan = document.createElement('span');
       labelSpan.className = 'combo-option-label';

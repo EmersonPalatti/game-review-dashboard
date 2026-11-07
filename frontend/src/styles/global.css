@@ -396,17 +396,6 @@ html.dark {
   gap: 12px;
 }
 
-.preset-bar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
-}
-
-.context-top .preset-bar {
-  flex-basis: 100%;
-}
-
 .preset-btn {
   display: inline-flex;
   align-items: center;
@@ -1066,9 +1055,10 @@ html.dark .when-dark {
 
 .date-popover-status {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 6px;
+  gap: 4px 6px;
   margin: -10px -10px 8px;
   padding: 6px 10px;
   border-bottom: 1px solid var(--line);
@@ -1076,6 +1066,13 @@ html.dark .when-dark {
   background: var(--paper);
   font-size: 11px;
   line-height: 14px;
+  color: var(--secondary);
+}
+
+.date-popover-status-msg {
+  flex-basis: 100%;
+  font-size: 12px;
+  line-height: 16px;
   color: var(--secondary);
 }
 
@@ -1189,8 +1186,7 @@ html.dark .when-dark {
     background-color var(--fast) var(--ease),
     color var(--fast) var(--ease),
     border-color var(--fast) var(--ease),
-    transform var(--fast) var(--ease),
-    box-shadow var(--fast) var(--ease);
+    transform var(--fast) var(--ease);
 }
 
 .date-cell:hover:not(:disabled):not(.is-selected) {
@@ -1222,7 +1218,6 @@ html.dark .when-dark {
   color: var(--paper);
   border-color: var(--accent);
   font-weight: 500;
-  box-shadow: 0 2px 6px color-mix(in srgb, var(--accent) 32%, transparent);
 }
 
 .date-cell.is-selected:hover:not(:disabled) {
@@ -1865,7 +1860,7 @@ html[data-theme-reveal='active']::view-transition-new(root) {
 }
 
 .chat-status-dot-pop {
-  animation: chat-status-dot-pop 400ms cubic-bezier(0.34, 1.36, 0.64, 1);
+  animation: chat-status-dot-pop 400ms var(--ease);
 }
 
 .chat-fab-label {
@@ -2606,7 +2601,7 @@ html.dark .chat-bubble-user {
   border-color: var(--accent);
   color: var(--accent);
   font-weight: 500;
-  animation: chat-chip-pop 220ms cubic-bezier(0.34, 1.36, 0.64, 1);
+  animation: chat-chip-pop 220ms var(--ease);
 }
 
 @keyframes chat-chip-pop {

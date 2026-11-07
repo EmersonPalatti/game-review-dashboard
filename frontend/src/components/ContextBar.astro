@@ -1,13 +1,25 @@
 ---
+import { ArrowUpRight } from 'lucide';
 import { BASELINE_PERIOD_SHORT } from '../lib/constants';
+import RailIcon from './RailIcon.astro';
 import { ContextIsland } from './react/ContextIsland';
 ---
 
 <header id="context-bar" class="context-bar" aria-label="Recorte ativo">
   <div class="context-top">
     <div class="context-heading">
-      <h2 class="title">Painel de avaliações</h2>
-      <p id="context-subtitle" class="meta" aria-live="polite">1.000.000 de avaliações · 59 jogos · {BASELINE_PERIOD_SHORT}</p>
+      <h2 class="title">1 milhão de reviews da Steam, auditadas</h2>
+      <p id="context-subtitle" class="meta">{BASELINE_PERIOD_SHORT} · dataset do Kaggle, 4 partições conciliadas 1:1</p>
+      <a
+        class="context-audit-link"
+        href="https://github.com/EmersonPalatti/game-review#readme"
+        target="_blank"
+        rel="noopener"
+      >
+        Como a base foi auditada
+        <RailIcon icon={ArrowUpRight} class="context-audit-icon" />
+        <span class="sr-only">(abre em nova aba)</span>
+      </a>
     </div>
     <ContextIsland client:load />
   </div>

@@ -4,6 +4,10 @@ export type FilterChip = {
   clear: () => void;
 };
 
+// Rastreia as chaves dos chips da renderização anterior para animar apenas novos filtros.
+const previousChipKeys = new Set<string>();
+let isInitialRender = true;
+
 export function renderFilterChips(
   container: HTMLElement,
   chips: FilterChip[],
@@ -11,7 +15,11 @@ export function renderFilterChips(
 ): void {
   container.replaceChildren();
 
+  const currentKeys = new Set<string>();
+
   if (chips.length === 0) {
+    previousChipKeys.clear();
+    isInitialRender = false;
     const empty = document.createElement('span');
     empty.className = 'meta';
     empty.textContent = 'Base completa · nenhum filtro ativo';
@@ -19,11 +27,31 @@ export function renderFilterChips(
     return;
   }
 
+  // Na primeira renderização (ex: carga com filtros da URL), não anima.
+  const isFirstRender = isInitialRender;
+  isInitialRender = false;
+
   for (const chip of chips) {
+    const key = `${chip.label}:${chip.value}`;
+    currentKeys.add(key);
+
+    const isEntering = !isFirstRender && !previousChipKeys.has(key);
+
     const btn = document.createElement('button');
     btn.type = 'button';
-    btn.className = 'filter-chip';
+    btn.className = isEntering ? 'filter-chip is-entering' : 'filter-chip';
     btn.setAttribute('aria-label', `Remover filtro ${chip.label}: ${chip.value}`);
+
+    if (isEntering) {
+      // Remove a classe ao término da animação para não repetir.
+      btn.addEventListener(
+        'animationend',
+        () => {
+          btn.classList.remove('is-entering');
+        },
+        { once: true },
+      );
+    }
 
     const labelSpan = document.createElement('span');
     labelSpan.className = 'filter-chip-label';
@@ -43,6 +71,12 @@ export function renderFilterChips(
       chip.clear();
     });
     container.append(btn);
+  }
+
+  // Atualiza o conjunto de chaves ativas para a próxima execução.
+  previousChipKeys.clear();
+  for (const key of currentKeys) {
+    previousChipKeys.add(key);
   }
 
   if (chips.length >= 2) {

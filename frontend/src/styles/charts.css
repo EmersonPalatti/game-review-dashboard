@@ -1,0 +1,82 @@
+/* charts: overrides layered after global.css. Plain CSS, tokens from global.css. */
+
+.chart-frame {
+  border-radius: 8px;
+}
+
+.chart-frame:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+}
+
+.playtime-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 16px;
+}
+
+.playtime-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 4px 10px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--secondary);
+  font-size: 12px;
+  line-height: 16px;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color var(--fast) var(--ease),
+    border-color var(--fast) var(--ease),
+    color var(--fast) var(--ease);
+}
+
+.playtime-chip:hover {
+  background: var(--raised);
+  border-color: var(--line);
+  color: var(--ink);
+}
+
+.playtime-chip:focus-visible {
+  background: var(--raised);
+  border-color: var(--line);
+  color: var(--ink);
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.playtime-chip[aria-pressed='true'] {
+  background: var(--raised);
+  border-color: var(--accent);
+  color: var(--ink);
+}
+
+.playtime-chip[aria-pressed='true']:hover,
+.playtime-chip[aria-pressed='true']:focus-visible {
+  border-color: var(--accent);
+}
+
+.playtime-chip-value {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  color: inherit;
+}
+
+.playtime-chip-dot {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--negative);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .playtime-chip {
+    transition: none;
+  }
+}

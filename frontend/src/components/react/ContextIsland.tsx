@@ -1,6 +1,14 @@
-import { useEffect, useMemo, useRef } from 'react';
-import { PRESETS, THESIS_PRESETS, isPresetActive, type PresetKey } from '../../lib/constants';
-import { formatDate, languageLabel } from '../../lib/format';
+import { useQuery } from '@tanstack/react-query';
+import { useEffect, useMemo, useRef, type ReactNode } from 'react';
+import { fetchMetrics } from '../../lib/api';
+import {
+  PLACEHOLDER,
+  PRESETS,
+  THESIS_PRESETS,
+  isPresetActive,
+  type PresetKey,
+} from '../../lib/constants';
+import { formatDate, formatPercent, languageLabel } from '../../lib/format';
 import { useFilters, useLatestMetrics } from '../../lib/useNanostore';
 import { renderFilterChips, type FilterChip } from '../../scripts/renderers';
 import {
@@ -12,6 +20,41 @@ import {
   type Filters,
 } from '../../stores/filters';
 import { suppressUrlSyncDuring } from '../../stores/urlSync';
+import { QueryRoot } from './QueryRoot';
+
+const BASE_FILTERS: Filters = {
+  appId: null,
+  language: null,
+  dateFrom: null,
+  dateTo: null,
+  recommended: 'all',
+  steamPurchase: 'all',
+  receivedForFree: 'all',
+  earlyAccess: 'all',
+  playtime: 'all',
+};
+
+type ProbeKey = 'refundShort' | 'refundLong' | 'earlyYes' | 'earlyNo';
+
+// Recortes consultados para os números dos achados. A chave ['metrics', filtros] é
+// a mesma usada por MetricsIsland, então o cache é compartilhado quando o recorte coincide.
+const PRESET_FILTERS: Record<ProbeKey, Filters> = {
+  refundShort: PRESETS.refund,
+  refundLong: { ...BASE_FILTERS, playtime: 'gte500' },
+  earlyYes: PRESETS.early,
+  earlyNo: { ...BASE_FILTERS, earlyAccess: 'no' },
+};
+
+const gapFormat = new Intl.NumberFormat('pt-BR', {
+  minimumFractionDigits: 1,
+  maximumFractionDigits: 1,
+});
+
+type FindingCopy = {
+  claim: string;
+  figure: ReactNode;
+  source: string;
+};
 
 function patchFilters(patch: Partial<Filters>): void {
   filters.set({ ...filters.get(), ...patch });
@@ -110,7 +153,117 @@ function applyPreset(preset: PresetKey): void {
   filters.set({ ...PRESETS[preset] });
 }
 
-export function ContextIsland() {
+function useRecommendationRate(probe: ProbeKey): number | undefined {
+  const probeFilters = PRESET_FILTERS[probe];
+  const { data } = useQuery({
+    queryKey: ['metrics', probeFilters],
+    queryFn: () => fetchMetrics(probeFilters),
+  });
+  return data?.recommendation_rate;
+}
+
+function FindingsStrip({ currentFilters }: { currentFilters: Filters }) {
+  const refundShort = useRecommendationRate('refundShort');
+  const refundLong = useRecommendationRate('refundLong');
+  const earlyYes = useRecommendationRate('earlyYes');
+  const earlyNo = useRecommendationRate('earlyNo');
+
+  // Só os números usam a fonte mono; o conector (→, vs.) fica na fonte do texto para caber no tile.
+  const refundFigure: ReactNode =
+    refundShort !== undefined && refundLong !== undefined ? (
+      <>
+        {formatPercent(refundShort)}
+        <span className="finding-figure-sep"> → </span>
+        {formatPercent(refundLong)}
+      </>
+    ) : (
+      PLACEHOLDER
+    );
+
+  const earlyFigure: ReactNode =
+    earlyYes !== undefined && earlyNo !== undefined ? (
+      <>
+        {formatPercent(earlyYes)}
+        <span className="finding-figure-sep"> vs. </span>
+        {formatPercent(earlyNo)}
+      </>
+    ) : (
+      PLACEHOLDER
+    );
+
+  const earlyGap =
+    earlyYes !== undefined && earlyNo !== undefined
+      ? gapFormat.format((earlyNo - earlyYes) * 100)
+      : PLACEHOLDER;
+
+  const copy: Record<PresetKey, FindingCopy> = {
+    refund: {
+      claim: 'Na primeira hora, metade recomenda',
+      figure: refundFigure,
+      source: '< 1 h vs. 500 h+ · janela de reembolso de 2 h',
+    },
+    early: {
+      claim: `Acesso antecipado custa ${earlyGap} p.p.`,
+      figure: earlyFigure,
+      source: 'taxa de recomendação · em acesso antecipado vs. fora dele',
+    },
+    dissatisfaction: {
+      claim: 'Reviews negativas pesam mais',
+      figure: '2,8×',
+      source: 'votos úteis por avaliação negativa · fonte: analysis.ipynb',
+    },
+  };
+
+  const hasActiveFilters =
+    currentFilters.appId !== null ||
+    currentFilters.language !== null ||
+    currentFilters.dateFrom !== null ||
+    currentFilters.dateTo !== null ||
+    currentFilters.recommended !== 'all' ||
+    currentFilters.steamPurchase !== 'all' ||
+    currentFilters.receivedForFree !== 'all' ||
+    currentFilters.earlyAccess !== 'all' ||
+    currentFilters.playtime !== 'all';
+
+  return (
+    <div
+      id="thesis-presets"
+      className="findings-strip"
+      role="group"
+      aria-label={
+        hasActiveFilters
+          ? 'Achados do estudo · Achados da base completa · não seguem o filtro'
+          : 'Achados do estudo'
+      }
+    >
+      {hasActiveFilters && (
+        <p className="findings-scope-note">Achados da base completa · não seguem o filtro</p>
+      )}
+      <div className="findings-grid">
+        {THESIS_PRESETS.map((preset) => {
+          const tile = copy[preset.key];
+          return (
+            <button
+              key={preset.key}
+              type="button"
+              className="finding-tile"
+              data-preset={preset.key}
+              aria-pressed={isPresetActive(currentFilters, preset.key) ? 'true' : 'false'}
+              title={preset.title}
+              onClick={() => applyPreset(preset.key)}
+            >
+              <span className="finding-claim">{tile.claim}</span>
+              <span className="finding-figure">{tile.figure}</span>
+              <span className="finding-source">{tile.source}</span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function ContextContent() {
   const currentFilters = useFilters();
   const metrics = useLatestMetrics();
   const chipsRef = useRef<HTMLDivElement>(null);
@@ -137,22 +290,15 @@ export function ContextIsland() {
   return (
     <>
       <div ref={chipsRef} id="active-chips" className="active-chips" aria-live="polite" />
-      <div id="thesis-presets" className="preset-bar" role="group" aria-label="Recortes guiados da análise">
-        <span className="meta">Recortes do estudo:</span>
-        {THESIS_PRESETS.map((preset) => (
-          <button
-            key={preset.key}
-            type="button"
-            className="preset-btn"
-            data-preset={preset.key}
-            aria-pressed={isPresetActive(currentFilters, preset.key) ? 'true' : 'false'}
-            title={preset.title}
-            onClick={() => applyPreset(preset.key)}
-          >
-            {preset.label}
-          </button>
-        ))}
-      </div>
+      <FindingsStrip currentFilters={currentFilters} />
     </>
+  );
+}
+
+export function ContextIsland() {
+  return (
+    <QueryRoot>
+      <ContextContent />
+    </QueryRoot>
   );
 }

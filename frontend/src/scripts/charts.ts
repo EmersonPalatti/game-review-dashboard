@@ -1,6 +1,6 @@
 import * as echarts from 'echarts';
 import type { ECharts, EChartsOption } from 'echarts';
-import type { Charts } from '../lib/api';
+import type { Charts, MonthPoint } from '../lib/api';
 import { BASELINE_RATE, REFUND_BUCKETS } from '../lib/constants';
 import { formatInteger, formatPercent } from '../lib/format';
 import type { PlaytimeBucket } from '../stores/filters';
@@ -11,6 +11,8 @@ const MONTHS = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', '
 
 const charts = new Map<string, ECharts>();
 let lastData: Charts | null = null;
+let monthElement: HTMLElement | null = null;
+let keyboardMonthIndex: number | null = null;
 let lastActivePlaytime: PlaytimeBucket = 'all';
 let lastActiveMonth: string | null = null;
 type ZoomWindow = { start: number; end: number };
@@ -234,7 +236,7 @@ function palette() {
   };
 }
 
-function formatMonth(value: string): string {
+export function formatMonth(value: string): string {
   const [year, month] = value.split('-');
   const name = MONTHS[Number(month) - 1] ?? month;
   return `${name}/${year.slice(2)}`;
@@ -334,12 +336,9 @@ export function initCharts(
     if (!monthChart.containPixel('grid', pointInPixel)) return;
     const pointInGrid = monthChart.convertFromPixel({ seriesIndex: 0 }, pointInPixel);
     const dataIndex = Array.isArray(pointInGrid) ? Math.round(pointInGrid[0]) : -1;
-    const point = lastData.months[dataIndex];
-    if (!point) return;
-    if (lastActiveMonth === point.month) restoreFocusZoom();
-    else rememberAndFocus(dataIndex, lastData.months.length);
-    onSelectMonth(point.month);
+    applyMonthAt(dataIndex);
   });
+  attachMonthKeyboard(monthChart.getDom());
   const playtimeChart = chart('chart-playtime');
   playtimeChart.off('click');
   playtimeChart.on('click', (params: { dataIndex?: number }) => {
@@ -351,17 +350,153 @@ export function initCharts(
   window.addEventListener('resize', resizeCharts);
 }
 
+function announce(message: string): void {
+  const region = document.getElementById('chart-month-live');
+  if (region) region.textContent = message;
+}
+
+function peakMonthIndex(months: MonthPoint[]): number {
+  let peak = 0;
+  for (let index = 1; index < months.length; index += 1) {
+    const current = months[index];
+    const best = months[peak];
+    if (current && best && current.review_count > best.review_count) peak = index;
+  }
+  return peak;
+}
+
+function defaultMonthIndex(): number {
+  if (!lastData) return 0;
+  const months = lastData.months;
+  const activeIndex =
+    lastActiveMonth === null ? -1 : months.findIndex((point) => point.month === lastActiveMonth);
+  return activeIndex >= 0 ? activeIndex : peakMonthIndex(months);
+}
+
+function applyMonthAt(index: number): void {
+  if (!lastData || !onSelectMonth) return;
+  const point = lastData.months[index];
+  if (!point) return;
+  const removing = lastActiveMonth === point.month;
+  if (removing) restoreFocusZoom();
+  else rememberAndFocus(index, lastData.months.length);
+  announce(removing ? 'Filtro de mês removido.' : `Filtro aplicado: ${formatMonth(point.month)}.`);
+  onSelectMonth(point.month);
+}
+
+function highlightMonth(index: number | null): void {
+  const instance = charts.get('chart-month');
+  if (!instance) return;
+  instance.dispatchAction({ type: 'downplay', seriesIndex: 0 });
+  if (index === null) {
+    instance.dispatchAction({ type: 'hideTip' });
+    return;
+  }
+  instance.dispatchAction({ type: 'highlight', seriesIndex: 0, dataIndex: index });
+  instance.dispatchAction({ type: 'showTip', seriesIndex: 0, dataIndex: index });
+}
+
+function panToMonth(index: number): void {
+  if (!lastData) return;
+  const current = viewZoom();
+  if (isFullWindow(current)) return;
+  const next = focusWindow(index, lastData.months.length, current);
+  if (next) animateZoom(next);
+}
+
+function setMonthCursor(index: number): void {
+  if (!lastData || lastData.months.length === 0) return;
+  const count = lastData.months.length;
+  const next = Math.min(count - 1, Math.max(0, index));
+  keyboardMonthIndex = next;
+  panToMonth(next);
+  highlightMonth(next);
+  const point = lastData.months[next];
+  if (!point) return;
+  const active = point.month === lastActiveMonth ? ', filtro ativo' : '';
+  announce(
+    `${formatMonth(point.month)}: ${formatInteger(point.review_count)} avaliações${active}. Mês ${next + 1} de ${count}.`,
+  );
+}
+
+function onMonthFocus(): void {
+  if (!lastData || lastData.months.length === 0) return;
+  setMonthCursor(keyboardMonthIndex ?? defaultMonthIndex());
+}
+
+function onMonthBlur(): void {
+  keyboardMonthIndex = null;
+  highlightMonth(null);
+  announce('');
+}
+
+function onMonthKeydown(event: KeyboardEvent): void {
+  if (!lastData || lastData.months.length === 0) return;
+  const cursor = keyboardMonthIndex ?? defaultMonthIndex();
+  switch (event.key) {
+    case 'ArrowRight':
+      event.preventDefault();
+      setMonthCursor(cursor + 1);
+      return;
+    case 'ArrowLeft':
+      event.preventDefault();
+      setMonthCursor(cursor - 1);
+      return;
+    case 'PageDown':
+      event.preventDefault();
+      setMonthCursor(cursor + 12);
+      return;
+    case 'PageUp':
+      event.preventDefault();
+      setMonthCursor(cursor - 12);
+      return;
+    case 'Home':
+      event.preventDefault();
+      setMonthCursor(0);
+      return;
+    case 'End':
+      event.preventDefault();
+      setMonthCursor(lastData.months.length - 1);
+      return;
+    case 'Enter':
+    case ' ':
+      event.preventDefault();
+      applyMonthAt(cursor);
+      return;
+    case 'Escape': {
+      if (lastActiveMonth === null) return;
+      event.preventDefault();
+      const index = lastData.months.findIndex((point) => point.month === lastActiveMonth);
+      if (index >= 0) applyMonthAt(index);
+      return;
+    }
+    default:
+      return;
+  }
+}
+
+function attachMonthKeyboard(element: HTMLElement): void {
+  detachMonthKeyboard();
+  monthElement = element;
+  element.addEventListener('focus', onMonthFocus);
+  element.addEventListener('blur', onMonthBlur);
+  element.addEventListener('keydown', onMonthKeydown);
+}
+
+function detachMonthKeyboard(): void {
+  if (monthElement) {
+    monthElement.removeEventListener('focus', onMonthFocus);
+    monthElement.removeEventListener('blur', onMonthBlur);
+    monthElement.removeEventListener('keydown', onMonthKeydown);
+  }
+  monthElement = null;
+  keyboardMonthIndex = null;
+}
+
 function chart(id: string): ECharts {
   const instance = charts.get(id);
   if (!instance) throw new Error(`Gráfico não iniciado: ${id}`);
   return instance;
-}
-
-function setChartVisible(id: string, emptyId: string, visible: boolean): void {
-  const element = document.getElementById(id);
-  const empty = document.getElementById(emptyId);
-  if (element) element.hidden = !visible;
-  if (empty) empty.hidden = visible;
 }
 
 export function renderCharts(
@@ -390,6 +525,8 @@ export function disposeCharts(): void {
   window.removeEventListener('resize', resizeCharts);
   chartObserver?.disconnect();
   chartObserver = null;
+  detachMonthKeyboard();
+  announce('');
   for (const id of CHART_IDS) {
     const instance = charts.get(id);
     if (instance) {
@@ -413,31 +550,21 @@ function paint(data: Charts, animate = true): void {
 }
 
 function paintMonth(data: Charts, colors: ReturnType<typeof palette>, animate: boolean): void {
-  const visible = data.months.length > 0;
-  setChartVisible('chart-month', 'chart-month-empty', visible);
-  if (!visible) return;
+  if (data.months.length === 0) return;
 
-  let peakIndex = 0;
-  for (let index = 1; index < data.months.length; index += 1) {
-    const current = data.months[index];
-    const best = data.months[peakIndex];
-    if (current && best && current.review_count > best.review_count) peakIndex = index;
-  }
+  const peakIndex = peakMonthIndex(data.months);
   const best = data.months[peakIndex];
   const activeIndex =
     lastActiveMonth !== null
       ? data.months.findIndex((point) => point.month === lastActiveMonth)
       : -1;
 
-  const monthElement = document.getElementById('chart-month');
-  if (monthElement) {
-    monthElement.setAttribute('role', 'img');
-    if (best) {
-      monthElement.setAttribute(
-        'aria-label',
-        `Avaliações por mês: ${data.months.length} meses no recorte, pico em ${formatMonth(best.month)} com ${formatInteger(best.review_count)} avaliações.`,
-      );
-    }
+  const monthNode = document.getElementById('chart-month');
+  if (monthNode && best) {
+    monthNode.setAttribute(
+      'aria-label',
+      `Avaliações por mês: ${data.months.length} meses no recorte, pico em ${formatMonth(best.month)} com ${formatInteger(best.review_count)} avaliações. Use as setas ou PageUp/PageDown para percorrer os meses.`,
+    );
   }
 
   if (data.months.length <= 12) {
@@ -623,25 +750,33 @@ function paintMonth(data: Charts, colors: ReturnType<typeof palette>, animate: b
     pendingZoom = undefined;
     animateZoom(target);
   }
+  if (monthElement && document.activeElement === monthElement) {
+    if (keyboardMonthIndex === null || keyboardMonthIndex >= data.months.length) {
+      keyboardMonthIndex = defaultMonthIndex();
+    }
+    highlightMonth(keyboardMonthIndex);
+  }
+}
+
+function hasPlaytimeReviews(data: Charts): boolean {
+  return data.playtime.some((point) => point.review_count > 0);
+}
+
+function playtimeAriaLabel(data: Charts): string {
+  const rates = data.playtime
+    .map((point) =>
+      point.recommendation_rate === null
+        ? `${point.label} sem dados`
+        : `${point.label} ${formatPercent(point.recommendation_rate)}`,
+    )
+    .join(', ');
+  return `Recomendação por tempo de jogo: ${rates}. Faixas até 2 h marcadas como janela de reembolso.`;
 }
 
 function paintPlaytime(data: Charts, colors: ReturnType<typeof palette>, animate: boolean): void {
-  const visible = data.playtime.some((point) => point.review_count > 0);
-  setChartVisible('chart-playtime', 'chart-playtime-empty', visible);
-  if (!visible) return;
+  if (!hasPlaytimeReviews(data)) return;
 
-  const playtimeElement = document.getElementById('chart-playtime');
-  if (playtimeElement) {
-    playtimeElement.setAttribute('role', 'img');
-    const totalReviews = data.playtime.reduce((sum, point) => sum + point.review_count, 0);
-    const refundReviews = data.playtime
-      .filter((point) => REFUND_BUCKETS.includes(point.key as PlaytimeBucket))
-      .reduce((sum, point) => sum + point.review_count, 0);
-    playtimeElement.setAttribute(
-      'aria-label',
-      `Distribuição por tempo de jogo: ${formatInteger(totalReviews)} avaliações no total, sendo ${formatInteger(refundReviews)} na janela de reembolso Steam (< 2 h).`,
-    );
-  }
+  document.getElementById('chart-playtime')?.setAttribute('aria-label', playtimeAriaLabel(data));
 
   chart('chart-playtime').setOption(
     {
@@ -754,7 +889,7 @@ function paintPlaytime(data: Charts, colors: ReturnType<typeof palette>, animate
                   show: true,
                   position: 'insideEndTop',
                   distance: [0, 4],
-                  formatter: 'Base 83,0%',
+                  formatter: `Base ${formatPercent(BASELINE_RATE)}`,
                   color: colors.accent,
                   backgroundColor: colors.surface,
                   borderColor: colors.accent,

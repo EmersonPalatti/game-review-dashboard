@@ -8,11 +8,12 @@ from sqlalchemy.orm import Session
 
 from backend.app.chat import run_chat_agent
 from backend.app.database import SessionLocal, get_db, init_db
-from backend.app.queries import charts, list_reviews, metrics, warmup_caches
+from backend.app.queries import charts, facets, list_reviews, metrics, warmup_caches
 from backend.app.schemas import (
     ChartsResponse,
     ChatRequest,
     ChatResponse,
+    FacetsResponse,
     MetricsResponse,
     ReviewFilters,
     ReviewListResponse,
@@ -112,6 +113,18 @@ def get_charts(
         "public, max-age=3600, s-maxage=86400, stale-while-revalidate=86400"
     )
     return charts(db, filters)
+
+
+@app.get("/api/facets", response_model=FacetsResponse)
+def get_facets(
+    response: Response,
+    filters: ReviewFilters = Depends(parse_filters),
+    db: Session = Depends(get_db),
+) -> FacetsResponse:
+    response.headers["Cache-Control"] = (
+        "public, max-age=3600, s-maxage=86400, stale-while-revalidate=86400"
+    )
+    return facets(db, filters)
 
 
 @app.get("/api/reviews", response_model=ReviewListResponse)

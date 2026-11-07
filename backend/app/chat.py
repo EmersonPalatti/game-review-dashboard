@@ -65,10 +65,22 @@ def get_config_var(name: str, default: str = "") -> str:
 DEFAULT_OPENROUTER_MODEL = "nvidia/nemotron-3-ultra-550b-a55b:free"
 OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
 
+# Mensagens exibidas ao usuário: sem nome de fornecedor nem de variável de ambiente.
+# Espelhadas em frontend/src/components/react/ChatIsland.tsx (CHAT_ERROR_COPY); manter iguais.
+USER_MSG_UNAVAILABLE = (
+    "O SteamBot está indisponível nesta instalação (chave de IA não configurada). "
+    "O painel continua funcionando normalmente."
+)
+USER_MSG_RATE_LIMIT = (
+    "O SteamBot atingiu o limite de consultas por minuto. "
+    "Aguarde alguns segundos e tente de novo."
+)
+USER_MSG_CONNECTION = "Não foi possível falar com o modelo de IA agora. Tente de novo em instantes."
+
 SYSTEM_PROMPT = """Você é o SteamBot-9000, o analista de dados veterano do acervo de avaliações da Steam: rigoroso com números, veterano de milhares de horas jogadas e com um humor ácido e espirituoso sobre a cultura gamer.
 
 ### Sua Personalidade e Tom:
-- Analista veterano da Steam: você combina precisão estatística com observações bem-humoradas sobre os paradoxos dos jogadores — como cravar 2.000 horas em Skyrim ou Arma 3 para deixar uma review negativa dizendo "não recomendo, nada pra fazer", acumular dezenas de jogos na Summer Sale que nunca serão instalados no backlog, o drama do Acesso Antecipado eterno e a corrida contra o relógio nos 119 minutos da janela de reembolso da Valve.
+- Analista veterano da Steam: você combina precisão estatística com observações bem-humoradas sobre os paradoxos da comunidade (reembolsos, Acesso Antecipado, promoções), sempre ancoradas nos números consultados. Nunca invente casos, anedotas, horas jogadas ou reviews para dar graça à resposta.
 - Sem caricatura de robô: NUNCA use expressões como "Olá, humano!", ruídos mecânicos ou jargões promocionais. Fale como um engenheiro/analista de dados sênior que conhece a fundo tanto SQL quanto a comunidade da Steam.
 - Formatação limpa em Português (pt-BR):
   - Responda SEMPRE em português do Brasil (pt-BR), de forma concisa, direta e escaneável.
@@ -288,6 +300,9 @@ def build_chat_tools(session: Session, default_filters: ReviewFilters) -> list[B
             "playtime": [p.model_dump() for p in res.playtime],
             "games": [g.model_dump() for g in res.games[:10]],
             "languages": [l.model_dump() for l in res.languages[:10]],
+            "languages_note": (
+                "languages ignora o filtro de idioma: compara os idiomas sob os demais filtros"
+            ),
             "months": compact_months,
             "applied_filters": effective_filters.model_dump(exclude_none=True),
         }
@@ -387,13 +402,7 @@ def run_chat_agent(
     if llm is None:
         api_key = get_config_var("OPENROUTER_API_KEY")
         if not api_key:
-            raise HTTPException(
-                status_code=503,
-                detail=(
-                    "A variável de ambiente OPENROUTER_API_KEY não está configurada no servidor. "
-                    "Configure sua chave gratuita do OpenRouter para conversar com o robô!"
-                ),
-            )
+            raise HTTPException(status_code=503, detail=USER_MSG_UNAVAILABLE)
         llm = ChatOpenAI(
             base_url=OPENROUTER_BASE_URL,
             api_key=api_key,
@@ -460,41 +469,29 @@ def run_chat_agent(
 
     except openai.AuthenticationError as err:
         logger.error("Erro de autenticação OpenRouter: %s", err)
-        raise HTTPException(
-            status_code=502,
-            detail="Chave de API do OpenRouter inválida ou não autorizada. Verifique a chave OPENROUTER_API_KEY.",
-        ) from err
+        raise HTTPException(status_code=502, detail=USER_MSG_UNAVAILABLE) from err
     except openai.RateLimitError as err:
         logger.warning("Limite de requisições OpenRouter atingido: %s", err)
-        raise HTTPException(
-            status_code=503,
-            detail="Limite de requisições da OpenRouter atingido. Por favor, aguarde alguns instantes e tente novamente.",
-        ) from err
+        raise HTTPException(status_code=503, detail=USER_MSG_RATE_LIMIT) from err
     except openai.APIConnectionError as err:
         logger.error("Falha de conexão com OpenRouter: %s", err)
-        raise HTTPException(
-            status_code=502,
-            detail="Não foi possível conectar aos servidores da OpenRouter. Verifique sua conexão com a internet.",
-        ) from err
+        raise HTTPException(status_code=502, detail=USER_MSG_CONNECTION) from err
     except openai.BadRequestError as err:
         logger.error("Requisição inválida para OpenRouter: %s", err)
         raise HTTPException(
             status_code=502,
-            detail=f"Requisição não aceita pelo provedor do modelo: {err}",
+            detail="O modelo de IA não aceitou esta consulta. Reformule a pergunta e tente de novo.",
         ) from err
     except openai.OpenAIError as err:
         logger.error("Erro na API OpenRouter: %s", err)
-        raise HTTPException(
-            status_code=502,
-            detail=f"Erro no serviço de inteligência artificial: {err}",
-        ) from err
+        raise HTTPException(status_code=502, detail=USER_MSG_CONNECTION) from err
     except HTTPException:
         raise
     except Exception as err:
         logger.exception("Erro inesperado no agente de chat: %s", err)
         raise HTTPException(
             status_code=500,
-            detail=f"Erro interno ao processar a conversa: {err}",
+            detail="Não foi possível processar a conversa agora. Tente de novo em instantes.",
         ) from err
 
     if not reply.strip():

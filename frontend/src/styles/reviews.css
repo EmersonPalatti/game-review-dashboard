@@ -1,0 +1,77 @@
+/* reviews: overrides layered after global.css. Plain CSS, tokens from global.css. */
+
+/* Recomendação: mesmo tratamento para Sim e Não (ícone + texto). */
+.rec-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 400;
+}
+
+.rec-cell.is-yes {
+  color: var(--accent);
+}
+
+.rec-cell.is-no {
+  color: var(--negative);
+}
+
+.rec-icon {
+  flex: none;
+  width: 14px;
+  height: 14px;
+}
+
+/* Nota de rodapé: --secondary (≥ 4.5:1 nos dois temas), medida até 75ch. */
+.reviews-note {
+  max-width: 75ch;
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 400;
+  letter-spacing: 0.01em;
+  color: var(--secondary);
+  text-wrap: pretty;
+}
+
+/* Trecho da avaliação: cursor de texto para facilitar seleção sem alternar linha */
+.sheet tbody tr.review-row .excerpt-text {
+  cursor: text;
+}
+
+/* Chevron de expansão: rotação suave de 200ms com centro como origem */
+.excerpt-chevron {
+  transform-origin: center;
+  transition:
+    transform 200ms var(--ease),
+    color var(--fast) var(--ease);
+}
+
+/* Revelação suave do conteúdo novo ao expandir a linha */
+@keyframes review-detail-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.sheet tbody tr.review-row.is-expanded .review-badge.is-detail,
+.sheet tbody tr.review-row.is-expanded .review-badge-detail {
+  animation: review-detail-reveal var(--menu) var(--ease) both;
+}
+
+/* Respeito à preferência de movimento reduzido */
+@media (prefers-reduced-motion: reduce) {
+  .excerpt-chevron {
+    transition: none;
+  }
+
+  .sheet tbody tr.review-row.is-expanded .review-badge.is-detail,
+  .sheet tbody tr.review-row.is-expanded .review-badge-detail {
+    animation: none;
+  }
+}
+

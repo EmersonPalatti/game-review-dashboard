@@ -7,20 +7,18 @@ import RailIcon from './RailIcon.astro';
   id="theme-toggle"
   type="button"
   class="sidebar-row theme-toggle"
-  aria-pressed="false"
-  aria-label="Alternar tema claro e escuro"
-  title="Alternar tema"
+  aria-label="Mudar para tema escuro"
 >
   <span class="when-light">
-    <RailIcon icon={Sun} />
+    <RailIcon icon={Moon} />
   </span>
   <span class="when-dark">
-    <RailIcon icon={Moon} />
+    <RailIcon icon={Sun} />
   </span>
   <span class="sidebar-reveal">
     <span class="sidebar-reveal-inner">
-      <span class="when-light">Escuro</span>
-      <span class="when-dark">Claro</span>
+      <span class="when-light">Tema escuro</span>
+      <span class="when-dark">Tema claro</span>
     </span>
   </span>
 </button>

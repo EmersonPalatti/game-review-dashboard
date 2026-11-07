@@ -76,6 +76,22 @@ export type Charts = {
   months: MonthPoint[];
 };
 
+/** Contagem de um valor de faceta no recorte atual. Valores ausentes equivalem a zero. */
+export type GameFacetCount = {
+  app_id: number;
+  review_count: number;
+};
+
+export type LanguageFacetCount = {
+  language: string;
+  review_count: number;
+};
+
+export type FacetsResponse = {
+  games: GameFacetCount[];
+  languages: LanguageFacetCount[];
+};
+
 function setTri(params: URLSearchParams, key: string, value: Tri): void {
   if (value === 'yes') params.set(key, 'true');
   if (value === 'no') params.set(key, 'false');
@@ -127,6 +143,13 @@ export function fetchCharts(current: Readonly<Filters>): Promise<Charts> {
   return requestJson<Charts>(query ? `${API_BASE}/api/charts?${query}` : `${API_BASE}/api/charts`);
 }
 
+export function fetchFacets(current: Readonly<Filters>): Promise<FacetsResponse> {
+  const params = new URLSearchParams();
+  appendFilters(params, current);
+  const query = params.toString();
+  return requestJson<FacetsResponse>(query ? `${API_BASE}/api/facets?${query}` : `${API_BASE}/api/facets`);
+}
+
 export function fetchReviewWindow(
   current: Readonly<Filters>,
   offset: number,
@@ -137,10 +160,9 @@ export function fetchReviewWindow(
   appendFilters(params, current);
   params.set('limit', String(limit));
   params.set('offset', String(offset));
-  if (sort.sortBy !== DEFAULT_SORT.sortBy || sort.sortDir !== DEFAULT_SORT.sortDir) {
-    params.set('sort_by', sort.sortBy);
-    params.set('sort_dir', sort.sortDir);
-  }
+  // Sempre explícito: o padrão do backend (created_at) difere do DEFAULT_SORT do frontend.
+  params.set('sort_by', sort.sortBy);
+  params.set('sort_dir', sort.sortDir);
   return requestJson<ReviewsPage>(`${API_BASE}/api/reviews?${params.toString()}`);
 }
 

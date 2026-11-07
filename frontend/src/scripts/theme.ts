@@ -11,9 +11,17 @@ export function applyTheme(
 ): void {
   document.documentElement.classList.toggle('dark', theme === 'dark');
   document.documentElement.style.colorScheme = theme;
-  localStorage.setItem(THEME_KEY, theme);
+  try {
+    localStorage.setItem(THEME_KEY, theme);
+  } catch {
+    /* armazenamento bloqueado: o tema vale só nesta página */
+  }
   if (themeToggle) {
-    themeToggle.setAttribute('aria-pressed', theme === 'dark' ? 'true' : 'false');
+    // O botão é uma ação: o nome descreve o tema que ele vai aplicar.
+    themeToggle.setAttribute(
+      'aria-label',
+      theme === 'dark' ? 'Mudar para tema claro' : 'Mudar para tema escuro',
+    );
   }
   if (onRepaintCharts) {
     onRepaintCharts();
@@ -21,6 +29,14 @@ export function applyTheme(
 }
 
 let themeReveal: Animation | null = null;
+
+function clearRevealState(root: HTMLElement): void {
+  delete root.dataset.themeReveal;
+  root.style.removeProperty('--theme-reveal-duration');
+  root.style.removeProperty('--theme-reveal-clip');
+  themeReveal?.cancel();
+  themeReveal = null;
+}
 
 export function themeOrigin(themeToggle: HTMLButtonElement): { x: number; y: number } {
   const icons = themeToggle.querySelectorAll('.when-light, .when-dark');
@@ -59,7 +75,13 @@ export function revealTheme(
   if (root.dataset.themeReveal === 'active') return;
 
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if (reduced || typeof document.startViewTransition !== 'function') {
+  // Com a aba oculta o navegador pode nunca concluir a transição: troca direta.
+  if (
+    reduced ||
+    document.visibilityState !== 'visible' ||
+    typeof document.startViewTransition !== 'function'
+  ) {
+    clearRevealState(root);
     applyTheme(next, themeToggle, onRepaintCharts);
     return;
   }
@@ -78,11 +100,7 @@ export function revealTheme(
   root.style.setProperty('--theme-reveal-clip', clipPath[0]);
 
   const cleanup = (): void => {
-    delete root.dataset.themeReveal;
-    root.style.removeProperty('--theme-reveal-duration');
-    root.style.removeProperty('--theme-reveal-clip');
-    themeReveal?.cancel();
-    themeReveal = null;
+    clearRevealState(root);
   };
 
   let transition: ViewTransition;
@@ -97,8 +115,16 @@ export function revealTheme(
     return;
   }
 
+  // Rede de segurança: se a transição nunca terminar (aba oculta, animação
+  // descartada pelo navegador), pula para o estado final e libera o botão.
+  const fallback = window.setTimeout(() => {
+    cleanup();
+    transition.skipTransition();
+  }, THEME_REVEAL_MS + 1500);
+
   transition.finished
     .finally(() => {
+      window.clearTimeout(fallback);
       cleanup();
       delete (window as unknown as { __themeTransition?: unknown }).__themeTransition;
     })

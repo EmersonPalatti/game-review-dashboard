@@ -92,6 +92,21 @@ class ChartsResponse(BaseModel):
     months: list[MonthPoint]
 
 
+class GameFacetCount(BaseModel):
+    app_id: int
+    review_count: int
+
+
+class LanguageFacetCount(BaseModel):
+    language: str
+    review_count: int
+
+
+class FacetsResponse(BaseModel):
+    games: list[GameFacetCount]
+    languages: list[LanguageFacetCount]
+
+
 ChatRole = Literal["user", "assistant"]
 
 

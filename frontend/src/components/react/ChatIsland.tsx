@@ -15,10 +15,11 @@ import {
   Trash2,
   X,
 } from 'lucide';
-import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import {
   sendChatMessage,
   type ChatHistoryItem,
+  type Metrics,
 } from '../../lib/api';
 import { formatDate, formatInteger, languageLabel } from '../../lib/format';
 import { useFilters, useLatestMetrics } from '../../lib/useNanostore';
@@ -37,17 +38,19 @@ export type TeaserItem = {
   prompt: string;
 };
 
+// Dicas do balão. Uma é sorteada por visita; nenhuma cicla (WCAG 2.2.2).
+// Números conferidos com PRODUCT.md e README (base inteira, não o recorte ativo).
 export const TEASER_ITEMS: readonly TeaserItem[] = [
   {
     text: 'Sabia que reviews negativas recebem 2,8x mais votos úteis? Veja o porquê.',
     prompt: 'Por que as reviews negativas recebem mais votos úteis neste recorte?',
   },
   {
-    text: 'A janela de reembolso de 2h da Valve muda tudo na aprovação. Quer ver os números?',
+    text: 'A janela de reembolso de 2h da Valve marca uma virada na aprovação. Quer ver os números?',
     prompt: 'O que acontece com a aprovação nas primeiras 2 horas (janela de reembolso)?',
   },
   {
-    text: 'Jogos em Early Access perdem 14 p.p. de aprovação média. Consulte o impacto real.',
+    text: 'Avaliações em Acesso Antecipado têm 69,8% de aprovação, contra 83,8% fora dele.',
     prompt: 'Qual o impacto do Early Access na taxa de aprovação deste recorte?',
   },
   {
@@ -60,14 +63,55 @@ export const TEASER_ITEMS: readonly TeaserItem[] = [
   },
 ];
 
-export const TEASERS: readonly string[] = TEASER_ITEMS.map((item) => item.text);
-
 export const SUGGESTED_QUESTIONS: readonly string[] = [
   'Qual o resumo e taxa de aprovação do recorte atual?',
   'O que acontece nas primeiras 2 horas (janela de reembolso)?',
   'Por que as reviews negativas recebem mais votos úteis?',
   'Mostre exemplos das reviews mais úteis deste recorte',
 ];
+
+type ChatErrorKind = 'rateLimit' | 'unavailable' | 'connection' | 'network' | 'generic';
+
+// Textos que o usuário lê. Os três primeiros são idênticos aos `detail` de backend/app/chat.py:
+// a classificação do erro compara a mensagem exata. Não citam fornecedor nem variáveis de ambiente.
+const CHAT_ERROR_COPY: Record<Exclude<ChatErrorKind, 'generic'>, string> = {
+  rateLimit:
+    'O SteamBot atingiu o limite de consultas por minuto. Aguarde alguns segundos e tente de novo.',
+  unavailable:
+    'O SteamBot está indisponível nesta instalação (chave de IA não configurada). O painel continua funcionando normalmente.',
+  connection: 'Não foi possível falar com o modelo de IA agora. Tente de novo em instantes.',
+  network: 'Não foi possível falar com o servidor agora. Tente de novo em instantes.',
+};
+
+const GENERIC_ERROR_COPY = 'Não foi possível consultar o SteamBot agora. Tente de novo em instantes.';
+
+const ERROR_TITLE: Record<ChatErrorKind, string> = {
+  rateLimit: 'Limite de consultas atingido',
+  unavailable: 'SteamBot indisponível',
+  connection: 'Não foi possível consultar o SteamBot',
+  network: 'Não foi possível consultar o SteamBot',
+  generic: 'Não foi possível consultar o SteamBot',
+};
+
+type ChatError = {
+  kind: ChatErrorKind;
+  message: string;
+};
+
+function classifyChatError(err: unknown): ChatError {
+  if (err instanceof TypeError) {
+    // Falha do fetch: o servidor do painel não respondeu.
+    return { kind: 'network', message: CHAT_ERROR_COPY.network };
+  }
+  const raw = err instanceof Error ? err.message : '';
+  if (!raw || raw.includes('[object Object]')) {
+    return { kind: 'generic', message: GENERIC_ERROR_COPY };
+  }
+  const kind = (Object.keys(CHAT_ERROR_COPY) as Exclude<ChatErrorKind, 'generic'>[]).find(
+    (key) => CHAT_ERROR_COPY[key] === raw,
+  );
+  return kind ? { kind, message: raw } : { kind: 'generic', message: raw };
+}
 
 type MessageItem = {
   id: string;
@@ -76,13 +120,33 @@ type MessageItem = {
   tools_used?: string[];
   context_label?: string;
   isError?: boolean;
+  errorKind?: ChatErrorKind;
 };
 
 const WELCOME_MESSAGE: MessageItem = {
   id: 'welcome',
   role: 'assistant',
   content:
-    'Sou o **SteamBot-9000**, co-piloto analítico deste estudo. Consulto diretamente o banco SQLite com **1.000.000 de avaliações** (de quem reembolsou aos 119 minutos a quem escreveu tese negativa após 2.000 horas de *Skyrim*).\n\nMinhas respostas usam automaticamente o **recorte filtrado ativo** no seu painel. Escolha uma investigação abaixo ou digite sua pergunta.',
+    'Sou o **SteamBot-9000**, co-piloto analítico deste estudo. Consulto o banco SQLite com **1.000.000 de avaliações** da Steam (de março de 2013 a janeiro de 2021, cobrindo **59 jogos**).\n\nMinhas respostas usam automaticamente o **recorte filtrado ativo** no painel. Escolha uma investigação abaixo ou digite sua pergunta.',
+};
+
+const BASE_REVIEW_TOTAL = 1_000_000;
+
+// Faixas de tempo em minutos, espelhando PLAYTIME_BUCKETS em backend/app/transform.py.
+// Usadas só para o texto da consulta exibida no painel.
+const PLAYTIME_MINUTE_BOUNDS: Record<
+  Exclude<PlaytimeBucket, 'all'>,
+  readonly [number | null, number | null]
+> = {
+  lt1: [null, 60],
+  h1_2: [60, 120],
+  h2_5: [120, 300],
+  h5_10: [300, 600],
+  h10_25: [600, 1500],
+  h25_50: [1500, 3000],
+  h50_100: [3000, 6000],
+  h100_500: [6000, 30000],
+  gte500: [30000, null],
 };
 
 const TOOL_LABELS: Record<string, string> = {
@@ -90,6 +154,43 @@ const TOOL_LABELS: Record<string, string> = {
   get_charts: 'Séries & Playtime (/api/charts)',
   get_reviews_sample: 'Amostra de Reviews (/api/reviews)',
 };
+
+const TEASER_STORAGE_KEY = 'reviews-da-steam:steambot-teaser';
+const TEASER_DELAY_MS = 4000;
+
+function readTeaserSeen(): boolean {
+  try {
+    return window.localStorage.getItem(TEASER_STORAGE_KEY) === 'seen';
+  } catch {
+    return false;
+  }
+}
+
+function writeTeaserSeen(): void {
+  try {
+    window.localStorage.setItem(TEASER_STORAGE_KEY, 'seen');
+  } catch {
+    // Armazenamento indisponível (janela privada, bloqueio do navegador): a dica pode voltar, sem erro.
+  }
+}
+
+const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)';
+
+function subscribeReducedMotion(onChange: () => void): () => void {
+  const query = window.matchMedia(REDUCED_MOTION_QUERY);
+  query.addEventListener('change', onChange);
+  return () => query.removeEventListener('change', onChange);
+}
+
+function getReducedMotionSnapshot(): boolean {
+  return window.matchMedia(REDUCED_MOTION_QUERY).matches;
+}
+
+function getReducedMotionServerSnapshot(): boolean {
+  return false;
+}
+
+const FOCUSABLE_SELECTOR = 'button, textarea, input, select, a[href], [tabindex]';
 
 type FilterAction = {
   id: string;
@@ -569,13 +670,35 @@ function renderMessageContent(content: string, animateBlocks = false): React.Rea
   );
 }
 
-function buildContextSummary(filters: Filters, metrics: ReturnType<typeof useLatestMetrics>): string {
+function formatReviewCount(total: number): string {
+  if (total === 1) return '1 avaliação';
+  const millionsSuffix = total >= 1_000_000 ? ' de' : '';
+  return `${formatInteger(total)}${millionsSuffix} avaliações`;
+}
+
+function formatRowCount(total: number): string {
+  return total === 1 ? '1 linha' : `${formatInteger(total)} linhas`;
+}
+
+function formatFilterCount(count: number): string {
+  return `${count} ${count === 1 ? 'filtro' : 'filtros'}`;
+}
+
+function buildChatSubtitle(isFiltered: boolean, total: number | null): string {
+  if (isFiltered) {
+    return total === null
+      ? 'Recorte ativo · SQLite'
+      : `${formatReviewCount(total)} no recorte · SQLite`;
+  }
+  return `${formatReviewCount(total ?? BASE_REVIEW_TOTAL)} · SQLite`;
+}
+
+function buildContextSummary(filters: Filters, metrics: Metrics | null): string {
   const count = activeFilterCount(filters);
-  const totalReviews = metrics?.total_reviews;
-  const totalFormatted = totalReviews !== undefined ? `${formatInteger(totalReviews)} reviews` : '1M reviews';
+  const total = metrics?.total_reviews ?? null;
 
   if (count === 0) {
-    return `Visão global (${totalFormatted})`;
+    return `Visão global (${formatReviewCount(total ?? BASE_REVIEW_TOTAL)})`;
   }
 
   const parts: string[] = [];
@@ -611,39 +734,51 @@ function buildContextSummary(filters: Filters, metrics: ReturnType<typeof useLat
     }
   }
 
-  return `${parts.join(' • ')} (${totalFormatted})`;
+  const totalLabel = total !== null ? ` (${formatReviewCount(total)})` : '';
+  return `${parts.join(' • ')}${totalLabel}`;
 }
 
-function buildSqlTickerLines(filters: Filters): string[] {
-  const whereConditions: string[] = [];
+// Texto da consulta exibida: o número de linhas vem do recorte ativo (latestMetrics), não de uma constante.
+function buildSqlTickerLines(filters: Filters, sliceTotal: number | null): string[] {
+  const conditions: string[] = [];
   if (filters.appId !== null) {
-    whereConditions.push(`app_id = ${filters.appId}`);
+    conditions.push(`app_id = ${filters.appId}`);
   }
   if (filters.language) {
-    whereConditions.push(`language = '${filters.language}'`);
+    conditions.push(`language = '${filters.language}'`);
   }
   if (filters.recommended !== 'all') {
-    whereConditions.push(`recommended = ${filters.recommended === 'yes' ? 1 : 0}`);
+    conditions.push(`recommended = ${filters.recommended === 'yes' ? 1 : 0}`);
   }
   if (filters.playtime !== 'all') {
-    whereConditions.push(`playtime_bucket = '${filters.playtime}'`);
+    const [low, high] = PLAYTIME_MINUTE_BOUNDS[filters.playtime];
+    conditions.push('playtime_at_review IS NOT NULL');
+    if (low !== null) conditions.push(`playtime_at_review >= ${low}`);
+    if (high !== null) conditions.push(`playtime_at_review < ${high}`);
   }
   if (filters.earlyAccess !== 'all') {
-    whereConditions.push(`early_access = ${filters.earlyAccess === 'yes' ? 1 : 0}`);
+    conditions.push(`early_access = ${filters.earlyAccess === 'yes' ? 1 : 0}`);
   }
   if (filters.steamPurchase !== 'all') {
-    whereConditions.push(`steam_purchase = ${filters.steamPurchase === 'yes' ? 1 : 0}`);
+    conditions.push(`steam_purchase = ${filters.steamPurchase === 'yes' ? 1 : 0}`);
   }
   if (filters.receivedForFree !== 'all') {
-    whereConditions.push(`received_for_free = ${filters.receivedForFree === 'yes' ? 1 : 0}`);
+    conditions.push(`received_for_free = ${filters.receivedForFree === 'yes' ? 1 : 0}`);
   }
-  const whereClause = whereConditions.length > 0 ? whereConditions.join(' AND ') : '1=1';
+  if (filters.dateFrom) {
+    conditions.push(`timestamp_created >= strftime('%s', '${filters.dateFrom}')`);
+  }
+  if (filters.dateTo) {
+    conditions.push(`timestamp_created <= strftime('%s', '${filters.dateTo} 23:59:59')`);
+  }
+  const whereClause = conditions.length > 0 ? conditions.join(' AND ') : '1=1';
+  const rowsComment = sliceTotal !== null ? ` -- ${formatRowCount(sliceTotal)}` : '';
 
   return [
     'SELECT COUNT(*), AVG(recommended) FROM reviews',
-    `WHERE ${whereClause} -- 1M rows`,
-    'GROUP BY playtime_bucket, language -- agregando métricas',
-    'ORDER BY votes_up DESC -- sintetizando mediana e assimetria',
+    `WHERE ${whereClause}${rowsComment}`,
+    'GROUP BY language -- ranking por idioma',
+    'ORDER BY votes_helpful DESC -- votos úteis',
   ];
 }
 
@@ -651,14 +786,17 @@ export function ChatIsland() {
   const filters = useFilters();
   const metrics = useLatestMetrics();
   const titleId = useId();
+  const reducedMotion = useSyncExternalStore(
+    subscribeReducedMotion,
+    getReducedMotionSnapshot,
+    getReducedMotionServerSnapshot,
+  );
 
   const [isOpen, setIsOpen] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [copiedMsgId, setCopiedMsgId] = useState<string | null>(null);
-  const [teaserDismissed, setTeaserDismissed] = useState(false);
-  const [teaserPaused, setTeaserPaused] = useState(false);
-  const [teaserIndex, setTeaserIndex] = useState(0);
+  const [teaser, setTeaser] = useState<TeaserItem | null>(null);
   const [messages, setMessages] = useState<MessageItem[]>([WELCOME_MESSAGE]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -670,7 +808,9 @@ export function ChatIsland() {
   const [freshBotMsgId, setFreshBotMsgId] = useState<string | null>(null);
   const [contextPulse, setContextPulse] = useState(false);
   const [isComposerShaking, setIsComposerShaking] = useState(false);
+  const [announcement, setAnnouncement] = useState('');
 
+  const dialogRef = useRef<HTMLElement | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const lastBotMsgRef = useRef<HTMLDivElement | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
@@ -679,7 +819,13 @@ export function ChatIsland() {
   const confirmClearTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const composerShakeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const teaserTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const teaserRetiredRef = useRef(false);
+  const announceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const restoreFocusRef = useRef(false);
   const isFirstMount = useRef(true);
+
+  const sliceTotal = metrics?.total_reviews ?? null;
 
   const contextSummary = useMemo(
     () => buildContextSummary(filters, metrics),
@@ -688,17 +834,45 @@ export function ChatIsland() {
 
   const activeFiltersCount = useMemo(() => activeFilterCount(filters), [filters]);
 
+  const headerSubtitle = buildChatSubtitle(activeFiltersCount > 0, sliceTotal);
+
+  // Região viva única: anuncia início da consulta, resposta ou erro. Texto repetido é limpo antes para ser lido de novo.
+  const announce = useCallback((text: string) => {
+    if (announceTimerRef.current !== null) clearTimeout(announceTimerRef.current);
+    setAnnouncement('');
+    announceTimerRef.current = setTimeout(() => {
+      announceTimerRef.current = null;
+      setAnnouncement(text);
+    }, 60);
+  }, []);
+
+  // Balão: some para sempre nesta visita e fica salvo se foi dispensado ou usado.
+  const retireTeaser = useCallback(() => {
+    teaserRetiredRef.current = true;
+    if (teaserTimerRef.current !== null) {
+      clearTimeout(teaserTimerRef.current);
+      teaserTimerRef.current = null;
+    }
+    writeTeaserSeen();
+    setTeaser(null);
+  }, []);
+
   const openDrawer = useCallback(() => {
+    retireTeaser();
     if (closeTimerRef.current) {
       clearTimeout(closeTimerRef.current);
       closeTimerRef.current = null;
     }
     setIsClosing(false);
     setIsOpen(true);
-  }, []);
+  }, [retireTeaser]);
 
   const closeDrawer = useCallback(() => {
     if (!isOpen || isClosing) return;
+    // Só devolve o foco ao botão se ele estava no painel (ou sem foco definido).
+    const active = document.activeElement;
+    restoreFocusRef.current =
+      !active || active === document.body || (dialogRef.current?.contains(active) ?? false);
     setIsClosing(true);
     closeTimerRef.current = setTimeout(() => {
       setIsOpen(false);
@@ -707,7 +881,12 @@ export function ChatIsland() {
     }, 220);
   }, [isOpen, isClosing]);
 
-  // Detecção de viewport mobile para aria-modal condicional
+  const dismissTeaser = useCallback(() => {
+    retireTeaser();
+    fabRef.current?.focus();
+  }, [retireTeaser]);
+
+  // Detecção de viewport mobile para modal (aria-modal, fundo inerte e foco preso)
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const mq = window.matchMedia('(max-width: 640px)');
@@ -715,6 +894,25 @@ export function ChatIsland() {
     const handler = (e: MediaQueryListEvent) => setIsMobileViewport(e.matches);
     mq.addEventListener('change', handler);
     return () => mq.removeEventListener('change', handler);
+  }, []);
+
+  // Balão de dica: uma entrada por visita, após o carregamento assentar. Sem rotação.
+  useEffect(() => {
+    if (readTeaserSeen()) {
+      teaserRetiredRef.current = true;
+      return;
+    }
+    teaserTimerRef.current = setTimeout(() => {
+      teaserTimerRef.current = null;
+      if (teaserRetiredRef.current) return;
+      setTeaser(TEASER_ITEMS[Math.floor(Math.random() * TEASER_ITEMS.length)] ?? TEASER_ITEMS[0]);
+    }, TEASER_DELAY_MS);
+    return () => {
+      if (teaserTimerRef.current !== null) {
+        clearTimeout(teaserTimerRef.current);
+        teaserTimerRef.current = null;
+      }
+    };
   }, []);
 
   // Atalho global de teclado (Ctrl+K / ⌘K) para abrir/fechar o assistente
@@ -726,22 +924,12 @@ export function ChatIsland() {
           closeDrawer();
         } else {
           openDrawer();
-          setTimeout(() => textareaRef.current?.focus(), 100);
         }
       }
     }
     window.addEventListener('keydown', handleGlobalKeyDown);
     return () => window.removeEventListener('keydown', handleGlobalKeyDown);
   }, [isOpen, isClosing, openDrawer, closeDrawer]);
-
-  // Rotação periódica de teasers a cada 7 segundos (pausa quando drawer está aberto, dispensado ou no hover)
-  useEffect(() => {
-    if (isOpen || teaserDismissed || teaserPaused) return;
-    const timer = setInterval(() => {
-      setTeaserIndex((prev) => (prev + 1) % TEASER_ITEMS.length);
-    }, 7000);
-    return () => clearInterval(timer);
-  }, [isOpen, teaserDismissed, teaserPaused]);
 
   // Telemetria com cronômetro decorrido durante loading (atualiza a cada 200ms)
   useEffect(() => {
@@ -768,33 +956,96 @@ export function ChatIsland() {
       if (composerShakeTimerRef.current) {
         clearTimeout(composerShakeTimerRef.current);
       }
+      if (teaserTimerRef.current !== null) {
+        clearTimeout(teaserTimerRef.current);
+      }
+      if (announceTimerRef.current !== null) {
+        clearTimeout(announceTimerRef.current);
+      }
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
       }
     };
   }, []);
 
-  // Fechar com tecla Escape e foco no input ao abrir
+  // Foco: ao abrir vai para o campo de mensagem; ao fechar volta ao botão que abriu o painel.
+  useEffect(() => {
+    if (isOpen) {
+      textareaRef.current?.focus();
+      return;
+    }
+    if (restoreFocusRef.current) {
+      restoreFocusRef.current = false;
+      fabRef.current?.focus();
+    }
+  }, [isOpen]);
+
+  // Esc fecha quando o foco está no painel (ou no corpo da página), sem roubar o foco de outros controles.
   useEffect(() => {
     if (!isOpen) return;
 
     function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === 'Escape') {
+      if (event.key !== 'Escape') return;
+      const active = document.activeElement;
+      if (dialogRef.current?.contains(active) || active === document.body) {
         closeDrawer();
-        fabRef.current?.focus();
       }
     }
 
     window.addEventListener('keydown', handleKeyDown);
-    const focusTimer = setTimeout(() => {
-      textareaRef.current?.focus();
-    }, 100);
-
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-      clearTimeout(focusTimer);
-    };
+    return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, closeDrawer]);
+
+  // Modal só no mobile: fundo inerte e Tab preso no diálogo. No desktop o painel é não modal.
+  useEffect(() => {
+    if (!isOpen || !isMobileViewport) return;
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+
+    const inerted: HTMLElement[] = [];
+    let node: HTMLElement = dialog;
+    while (node.parentElement) {
+      for (const sibling of Array.from(node.parentElement.children)) {
+        if (
+          sibling !== node &&
+          sibling instanceof HTMLElement &&
+          !sibling.hasAttribute('data-chat-live') &&
+          !sibling.inert
+        ) {
+          sibling.inert = true;
+          inerted.push(sibling);
+        }
+      }
+      node = node.parentElement;
+    }
+
+    const trapFocus = (event: KeyboardEvent) => {
+      if (event.key !== 'Tab') return;
+      const focusable = Array.from(dialog.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)).filter(
+        (el) => el.tabIndex >= 0 && !el.hasAttribute('disabled'),
+      );
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (!first || !last) return;
+      const active = document.activeElement;
+      const insideDialog = dialog.contains(active);
+      if (event.shiftKey && (!insideDialog || active === first)) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && (!insideDialog || active === last)) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    window.addEventListener('keydown', trapFocus);
+    return () => {
+      window.removeEventListener('keydown', trapFocus);
+      for (const el of inerted) {
+        el.inert = false;
+      }
+    };
+  }, [isOpen, isMobileViewport]);
 
   // Pulso da barra de contexto ao alterar filtros com drawer aberto
   useEffect(() => {
@@ -821,6 +1072,15 @@ export function ChatIsland() {
     }
   }, [isOpen, messages, isLoading]);
 
+  // O campo fica desabilitado durante a consulta e o foco se perde; ao terminar, volta para ele.
+  useEffect(() => {
+    if (!isOpen || isLoading) return;
+    const active = document.activeElement;
+    if (!active || active === document.body) {
+      textareaRef.current?.focus();
+    }
+  }, [isLoading, isOpen]);
+
   const handleStopGeneration = useCallback(() => {
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
@@ -845,6 +1105,7 @@ export function ChatIsland() {
       setIsLoading(true);
       setLastFailedPrompt(null);
       setShowSuggestions(false);
+      announce('Consultando o recorte ativo.');
 
       if (textareaRef.current) {
         textareaRef.current.style.height = 'auto';
@@ -877,33 +1138,31 @@ export function ChatIsland() {
             context_label: contextSummary,
           },
         ]);
+        announce('SteamBot respondeu.');
       } catch (err: unknown) {
         if (err instanceof Error && err.name === 'AbortError') {
           return;
         }
-        const errorMessage =
-          err instanceof Error
-            ? err.message
-            : 'Erro desconhecido ao comunicar com o assistente.';
+        const { kind, message } = classifyChatError(err);
         setLastFailedPrompt(text);
         setMessages((prev) => [
           ...prev,
           {
             id: `error-${Date.now()}`,
             role: 'assistant',
-            content: errorMessage,
+            content: message,
             isError: true,
+            errorKind: kind,
           },
         ]);
+        announce(message);
       } finally {
         abortControllerRef.current = null;
         setIsLoading(false);
       }
     },
-    [inputValue, isLoading, messages, filters, contextSummary],
+    [inputValue, isLoading, messages, filters, contextSummary, announce],
   );
-
-  const currentTeaserItem = TEASER_ITEMS[teaserIndex] ?? TEASER_ITEMS[0];
 
   const handleTeaserClick = useCallback(
     (item: TeaserItem) => {
@@ -912,13 +1171,12 @@ export function ChatIsland() {
         void handleSendMessage(item.prompt);
       } else {
         setInputValue(item.prompt);
-        setTimeout(() => {
+        requestAnimationFrame(() => {
           if (textareaRef.current) {
-            textareaRef.current.focus();
             textareaRef.current.style.height = 'auto';
             textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 108)}px`;
           }
-        }, 100);
+        });
       }
     },
     [openDrawer, messages, isLoading, handleSendMessage],
@@ -991,50 +1249,47 @@ export function ChatIsland() {
     }
   };
 
-  const sqlTickerLines = useMemo(() => buildSqlTickerLines(filters), [filters]);
+  const sqlTickerLines = useMemo(
+    () => buildSqlTickerLines(filters, sliceTotal),
+    [filters, sliceTotal],
+  );
   const tickerIdx = Math.floor(loadingElapsedMs / 1300) % sqlTickerLines.length;
 
   const thinkingStage = loadingElapsedMs < 2200 ? 0 : loadingElapsedMs < 5500 ? 1 : 2;
+  const sliceLabel = sliceTotal !== null ? `sobre ${formatRowCount(sliceTotal)}` : 'sobre o recorte ativo';
   const stageText =
     thinkingStage === 0
       ? '1/3 Lendo filtros ativos e preparando consulta SQL...'
       : thinkingStage === 1
-      ? '2/3 Executando agregações no SQLite (1.000.000 reviews)...'
+      ? `2/3 Executando agregações no SQLite ${sliceLabel}...`
       : '3/3 Sintetizando análise estatística no modelo...';
   const isSuggestionsOpen = (messages.length === 1 && !isLoading) || showSuggestions;
 
   return (
     <>
-      {/* Botão Flutuante Fixo (FAB) + Balão Teaser */}
+      {/* Região viva única do chat (fora do painel, para existir com o painel fechado) */}
+      <div className="sr-only" role="status" aria-live="polite" data-chat-live="">
+        {announcement}
+      </div>
+
+      {/* Botão Flutuante Fixo (FAB) + Balão de dica */}
       {!isOpen && (
         <div className="chat-fab-container fixed bottom-6 right-6 z-40 flex items-center gap-3">
-          {/* Balão Teaser Rotativo */}
-          {!teaserDismissed && (
-            <div
-              className="chat-teaser group flex items-center gap-2"
-              onMouseEnter={() => setTeaserPaused(true)}
-              onMouseLeave={() => setTeaserPaused(false)}
-              onFocus={() => setTeaserPaused(true)}
-              onBlur={() => setTeaserPaused(false)}
-            >
+          {teaser && (
+            <div className="chat-teaser group flex items-center gap-2" role="group" aria-label="Dica do SteamBot">
               <button
                 type="button"
-                onClick={() => handleTeaserClick(currentTeaserItem)}
+                onClick={() => handleTeaserClick(teaser)}
                 className="chat-teaser-btn text-left"
-                title="Clique para abrir o chat com o SteamBot-9000"
+                title="Abrir o chat com o SteamBot-9000"
               >
-                <span key={teaserIndex} className="chat-teaser-text chat-teaser-swap">
-                  {currentTeaserItem.text}
-                </span>
+                <span className="chat-teaser-text">{teaser.text}</span>
               </button>
               <button
                 type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setTeaserDismissed(true);
-                }}
+                onClick={dismissTeaser}
                 className="chat-teaser-close"
-                aria-label="Dispensar aviso do SteamBot"
+                aria-label="Dispensar dica"
                 title="Dispensar"
               >
                 <RailIcon icon={X} className="w-3.5 h-3.5" />
@@ -1042,26 +1297,17 @@ export function ChatIsland() {
             </div>
           )}
 
-          {/* Botão FAB principal */}
           <button
             ref={fabRef}
             type="button"
             onClick={openDrawer}
             className="chat-fab group"
             aria-label="Abrir assistente SteamBot-9000 (Ctrl+K)"
-            aria-expanded={isOpen}
+            aria-haspopup="dialog"
           >
             <div className="chat-fab-avatar">
-              <RailIcon
-                key={teaserIndex}
-                icon={Bot}
-                className="chat-fab-icon chat-fab-icon-nod w-6 h-6"
-              />
-              <span
-                key={teaserIndex}
-                className="chat-status-dot chat-status-dot-pop"
-                aria-label="Status: Online"
-              />
+              <RailIcon icon={Bot} className="chat-fab-icon w-6 h-6" />
+              <span className="chat-status-dot chat-status-dot-pop" aria-hidden="true" />
             </div>
             <span className="chat-fab-label hidden md:inline">SteamBot</span>
             <kbd className="chat-fab-kbd hidden lg:inline">Ctrl+K</kbd>
@@ -1080,8 +1326,9 @@ export function ChatIsland() {
           />
 
           <section
+            ref={dialogRef}
             role="dialog"
-            aria-modal={isMobileViewport ? 'true' : undefined}
+            aria-modal={isMobileViewport ? 'true' : 'false'}
             aria-labelledby={titleId}
             className={`chat-drawer ${isExpanded ? 'chat-drawer-wide' : ''} ${isClosing ? 'is-closing' : ''}`}
           >
@@ -1090,7 +1337,7 @@ export function ChatIsland() {
               <div className="flex items-center gap-3 min-w-0">
                 <div className={`chat-avatar-badge relative flex items-center justify-center ${isLoading ? 'is-thinking' : ''}`}>
                   <RailIcon icon={Bot} className="w-5 h-5 text-[var(--accent)]" />
-                  <span className="chat-status-dot absolute -bottom-0.5 -right-0.5" />
+                  <span className="chat-status-dot absolute -bottom-0.5 -right-0.5" aria-hidden="true" />
                 </div>
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
@@ -1099,8 +1346,8 @@ export function ChatIsland() {
                     </h2>
                     <span className="chat-badge-model hidden sm:inline">SQL + IA</span>
                   </div>
-                  <p className="chat-subtitle truncate" title="1.000.000 de avaliações • SQLite em tempo real">
-                    1.000.000 de avaliações • SQLite em tempo real
+                  <p className="chat-subtitle truncate" title={headerSubtitle}>
+                    {headerSubtitle}
                   </p>
                 </div>
               </div>
@@ -1164,7 +1411,7 @@ export function ChatIsland() {
                 />
                 <span className="truncate">
                   <strong className="text-[var(--ink)]">
-                    {activeFiltersCount === 0 ? 'Recorte global' : `${activeFiltersCount} filtro(s)`}:
+                    {activeFiltersCount === 0 ? 'Recorte global' : formatFilterCount(activeFiltersCount)}:
                   </strong>{' '}
                   <span key={contextSummary} className="chat-context-swap">
                     {contextSummary}
@@ -1186,7 +1433,7 @@ export function ChatIsland() {
             </div>
 
             {/* Área de Mensagens */}
-            <div className="chat-messages" tabIndex={0} aria-label="Histórico de mensagens">
+            <div className="chat-messages" role="region" tabIndex={0} aria-label="Histórico de mensagens">
               {messages.map((item, idx) => {
                 if (item.role === 'user') {
                   return (
@@ -1199,11 +1446,7 @@ export function ChatIsland() {
                 }
 
                 if (item.isError) {
-                  const isOpenRouterKeyError =
-                    item.content.includes('OPENROUTER_API_KEY') ||
-                    item.content.includes('chave') ||
-                    item.content.includes('503') ||
-                    item.content.includes('502');
+                  const errorKind = item.errorKind ?? 'generic';
 
                   return (
                     <div key={item.id} className="chat-msg-row chat-msg-row-bot chat-msg-enter">
@@ -1215,27 +1458,12 @@ export function ChatIsland() {
                           />
                           <div className="flex-1 min-w-0 text-sm">
                             <strong className="font-medium text-[var(--negative)] block mb-1">
-                              Não foi possível consultar o SteamBot
+                              {ERROR_TITLE[errorKind]}
                             </strong>
                             <p className="mb-2 text-[var(--ink)] opacity-90 leading-relaxed">
                               {item.content}
                             </p>
-                            {isOpenRouterKeyError && (
-                              <details className="chat-error-details">
-                                <summary className="chat-error-summary">
-                                  Como configurar a chave OPENROUTER_API_KEY
-                                </summary>
-                                <div className="chat-error-tip">
-                                  <p className="mb-1.5">
-                                    Defina a variável <code className="chat-inline-code">OPENROUTER_API_KEY</code> antes de iniciar o backend:
-                                  </p>
-                                  <pre className="font-mono text-[12px] bg-[var(--surface)] p-2 rounded border border-[var(--line)] overflow-x-auto select-all">
-                                    $env:OPENROUTER_API_KEY="sua_chave_aqui"
-                                  </pre>
-                                </div>
-                              </details>
-                            )}
-                            {lastFailedPrompt && (
+                            {lastFailedPrompt && errorKind !== 'unavailable' && (
                               <button
                                 type="button"
                                 onClick={handleRetryLastPrompt}
@@ -1265,7 +1493,7 @@ export function ChatIsland() {
                     className={`chat-msg-row chat-msg-row-bot ${item.id !== 'welcome' ? 'chat-msg-enter' : ''}`}
                   >
                     <div className="chat-bubble chat-bubble-bot">
-                      {renderMessageContent(item.content, item.id === freshBotMsgId)}
+                      {renderMessageContent(item.content, item.id === freshBotMsgId && !reducedMotion)}
 
                       {/* Chips de Co-piloto Bidirecional: Aplicar no Painel */}
                       {copilotActions.length > 0 && (
@@ -1350,7 +1578,7 @@ export function ChatIsland() {
                 );
               })}
 
-              {/* Indicador de carregamento */}
+              {/* Indicador de carregamento (o anúncio para leitores de tela vem da região viva) */}
               {isLoading && (
                 <div className="chat-msg-row chat-msg-row-bot chat-msg-enter">
                   <div className="chat-loading">
@@ -1371,7 +1599,7 @@ export function ChatIsland() {
                           );
                         })}
                       </div>
-                      <div className="chat-thinking-stage-wrap" role="status" aria-live="polite">
+                      <div className="chat-thinking-stage-wrap">
                         <span
                           key={thinkingStage}
                           className="chat-thinking-shimmer chat-stage-enter"
@@ -1464,7 +1692,7 @@ export function ChatIsland() {
                 />
                 <div className="chat-composer-toolbar">
                   <span className="chat-input-hint">
-                    <span className="hidden sm:inline">Enter para enviar • Shift+Enter para linha • ↑ última</span>
+                    <span className="hidden sm:inline">Enter envia • Shift+Enter quebra linha • Seta para cima: última pergunta</span>
                     <span className="sm:hidden">Enter envia</span>
                   </span>
                   <div className="chat-composer-actions">

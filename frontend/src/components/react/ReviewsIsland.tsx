@@ -4,8 +4,11 @@ import {
   getCoreRowModel,
   legacyCreateColumnHelper,
   useLegacyTable,
+  type LegacyColumnDef,
 } from '@tanstack/react-table/legacy';
+import type { RowData, TableFeatures } from '@tanstack/table-core';
 import { useVirtualizer } from '@tanstack/react-virtual';
+
 import {
   useCallback,
   useEffect,
@@ -27,6 +30,14 @@ import {
   type ReviewSortBy,
 } from '../../stores/filters';
 import { QueryRoot } from './QueryRoot';
+
+// Estado de expansão vai pelo meta da tabela, para as colunas não serem recriadas a cada clique.
+declare module '@tanstack/table-core' {
+  interface TableMeta<TFeatures extends TableFeatures, TData extends RowData> {
+    expanded?: Set<number>;
+    toggleExpanded?: (reviewId: number) => void;
+  }
+}
 
 const columnHelper = legacyCreateColumnHelper<ReviewItem>();
 
@@ -54,33 +65,48 @@ function cycleSort(key: ReviewSortBy): void {
     reviewSort.set({ sortBy: key, sortDir: 'desc' });
   } else if (current.sortDir === 'desc') {
     reviewSort.set({ sortBy: key, sortDir: 'asc' });
-  } else if (key === 'created_at') {
-    reviewSort.set({ sortBy: 'created_at', sortDir: 'desc' });
   } else {
     reviewSort.set({ ...DEFAULT_SORT });
   }
 }
 
+
+function RecommendationIcon({ recommended }: { recommended: boolean }) {
+  return (
+    <svg
+      className="rec-icon"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      {recommended ? <path d="M20 6 9 17l-5-5" /> : <path d="M5 12h14" />}
+    </svg>
+  );
+}
+
 function RecommendationCell({ recommended }: { recommended: boolean }) {
-  if (recommended) {
-    return (
-      <span className="sim">
-        <span className="sim-rule" aria-hidden="true" />
-        Sim
-      </span>
-    );
-  }
-  return <span className="nao">Não</span>;
+  return (
+    <span className={recommended ? 'rec-cell is-yes' : 'rec-cell is-no'}>
+      <RecommendationIcon recommended={recommended} />
+      {recommended ? 'Sim' : 'Não'}
+    </span>
+  );
 }
 
 function ReviewBadges({
   item,
   isExpanded,
   isTruncated,
+  id,
 }: {
   item: ReviewItem;
   isExpanded: boolean;
   isTruncated: boolean;
+  id?: string;
 }) {
   let secondaryCount = 0;
   if (item.received_for_free) secondaryCount++;
@@ -90,7 +116,7 @@ function ReviewBadges({
 
   if (!isExpanded) {
     return (
-      <div className="review-badges">
+      <div id={id} className="review-badges">
         <span className="review-badge">{formatDate(item.created_at)}</span>
         {item.early_access ? (
           <span className="review-badge is-accent">Acesso antecipado</span>
@@ -98,7 +124,7 @@ function ReviewBadges({
         {secondaryCount > 0 ? (
           <span
             className="review-badge"
-            title="Clique na linha para expandir mais detalhes"
+            title="Clique para ver os detalhes"
           >
             +{secondaryCount} {secondaryCount === 1 ? 'detalhe' : 'detalhes'}
           </span>
@@ -116,24 +142,30 @@ function ReviewBadges({
   }
 
   return (
-    <div className="review-badges">
+    <div id={id} className="review-badges">
       <span className="review-badge">{formatDate(item.created_at)}</span>
       {item.early_access ? (
         <span className="review-badge is-accent">Acesso antecipado</span>
       ) : null}
       {item.received_for_free ? (
-        <span className="review-badge">Recebido de graça</span>
+        <span className="review-badge is-detail review-badge-detail">Recebido de graça</span>
       ) : null}
-      {!item.steam_purchase ? <span className="review-badge">Chave externa</span> : null}
+      {!item.steam_purchase ? (
+        <span className="review-badge is-detail review-badge-detail">Chave externa</span>
+      ) : null}
       {item.votes_funny > 0 ? (
-        <span className="review-badge">{formatInteger(item.votes_funny)} engraçados</span>
+        <span className="review-badge is-detail review-badge-detail">
+          {formatInteger(item.votes_funny)} engraçados
+        </span>
       ) : null}
       {item.comment_count > 0 ? (
-        <span className="review-badge">{formatInteger(item.comment_count)} coment.</span>
+        <span className="review-badge is-detail review-badge-detail">
+          {formatInteger(item.comment_count)} coment.
+        </span>
       ) : null}
       {isTruncated ? (
         <span
-          className="review-badge"
+          className="review-badge is-detail review-badge-detail"
           title="Resumo limitado a 280 caracteres na higienização da base"
         >
           Truncado em 280 caracteres
@@ -153,6 +185,7 @@ function ExcerptCell({
   onToggle: () => void;
 }) {
   const isTruncated = (item.excerpt?.length ?? 0) >= 275;
+  const contentId = `review-details-${item.review_id}`;
 
   return (
     <div className="excerpt-cell">
@@ -161,10 +194,11 @@ function ExcerptCell({
           type="button"
           className="excerpt-toggle"
           aria-expanded={isExpanded}
+          aria-controls={contentId}
           aria-label={
             isExpanded
-              ? 'Recolher detalhes da avaliação'
-              : 'Expandir detalhes da avaliação'
+              ? 'Ocultar detalhes da avaliação'
+              : 'Mostrar detalhes da avaliação'
           }
           onClick={(e) => {
             e.stopPropagation();
@@ -186,7 +220,12 @@ function ExcerptCell({
         </button>
         <div className="excerpt-text">{item.excerpt || 'Sem texto na avaliação.'}</div>
       </div>
-      <ReviewBadges item={item} isExpanded={isExpanded} isTruncated={isTruncated} />
+      <ReviewBadges
+        id={contentId}
+        item={item}
+        isExpanded={isExpanded}
+        isTruncated={isTruncated}
+      />
     </div>
   );
 }
@@ -194,6 +233,26 @@ function ExcerptCell({
 function sortHeaderAria(sortKey: ReviewSortBy, currentSort: ReviewSort): 'ascending' | 'descending' | 'none' {
   if (currentSort.sortBy !== sortKey) return 'none';
   return currentSort.sortDir === 'asc' ? 'ascending' : 'descending';
+}
+
+const SORT_COLUMN_LABELS: Record<ReviewSortBy, string> = {
+  created_at: 'data',
+  votes_helpful: 'votos úteis',
+  playtime_hours: 'horas jogadas',
+};
+
+function getNextSortDescription(sortKey: ReviewSortBy, currentSort: ReviewSort): string {
+  const columnName = SORT_COLUMN_LABELS[sortKey];
+  if (currentSort.sortBy !== sortKey) {
+    return `Ordenar por ${columnName}, decrescente`;
+  }
+  if (currentSort.sortDir === 'desc') {
+    return `Ordenar por ${columnName}, crescente`;
+  }
+  if (sortKey === DEFAULT_SORT.sortBy) {
+    return `Ordenar por ${columnName}, decrescente`;
+  }
+  return 'Retornar à ordenação padrão (votos úteis, decrescente)';
 }
 
 function SortHeaderButton({
@@ -204,17 +263,19 @@ function SortHeaderButton({
 }: {
   label: ReactNode;
   sortKey: ReviewSortBy;
-  title: string;
+  title?: string;
   currentSort: ReviewSort;
 }) {
   const active = currentSort.sortBy === sortKey;
+  const nextSortText = title ?? getNextSortDescription(sortKey, currentSort);
   return (
     <button
       type="button"
       className={active ? 'th-sort is-active' : 'th-sort'}
       data-sort-by={sortKey}
       data-sort-dir={active ? currentSort.sortDir : undefined}
-      title={title}
+      title={nextSortText}
+      aria-label={nextSortText}
       onClick={() => cycleSort(sortKey)}
     >
       <span>{label}</span>
@@ -255,7 +316,20 @@ function ReviewsTableContent() {
     placeholderData: keepPreviousData,
   });
 
-  const items = useMemo(() => data?.pages.flatMap((page) => page.items) ?? [], [data]);
+  // Offset pages can repeat a review when the source shifts between requests;
+  // keep the first occurrence so each row has one stable React key.
+  const items = useMemo(() => {
+    const seen = new Set<number>();
+    const unique: ReviewItem[] = [];
+    for (const page of data?.pages ?? []) {
+      for (const item of page.items) {
+        if (seen.has(item.review_id)) continue;
+        seen.add(item.review_id);
+        unique.push(item);
+      }
+    }
+    return unique;
+  }, [data]);
   const total = data?.pages.at(-1)?.total ?? data?.pages[0]?.total ?? 0;
 
   const cutRefetchActive =
@@ -328,7 +402,6 @@ function ReviewsTableContent() {
           <SortHeaderButton
             label="Horas"
             sortKey="playtime_hours"
-            title="Ordenar por horas jogadas"
             currentSort={currentSort}
           />
         ),
@@ -344,7 +417,6 @@ function ReviewsTableContent() {
           <SortHeaderButton
             label={<>Votos{'\u00a0'}úteis</>}
             sortKey="votes_helpful"
-            title="Ordenar por votos úteis"
             currentSort={currentSort}
           />
         ),
@@ -359,22 +431,26 @@ function ReviewsTableContent() {
             <SortHeaderButton
               label="Data"
               sortKey="created_at"
-              title="Ordenar por data de publicação"
               currentSort={currentSort}
             />
           </div>
         ),
         meta: { thClass: 'w-[41%]', sortKey: 'created_at' as ReviewSortBy },
-        cell: (info) => (
-          <ExcerptCell
-            item={info.row.original}
-            isExpanded={expanded.has(info.row.original.review_id)}
-            onToggle={() => toggleExpanded(info.row.original.review_id)}
-          />
-        ),
+        cell: (info) => {
+          const meta = info.table.options.meta;
+          const reviewId = info.row.original.review_id;
+          const isExpanded = meta?.expanded ? meta.expanded.has(reviewId) : false;
+          return (
+            <ExcerptCell
+              item={info.row.original}
+              isExpanded={isExpanded}
+              onToggle={() => meta?.toggleExpanded?.(reviewId)}
+            />
+          );
+        },
       }),
-    ],
-    [currentSort, expanded, toggleExpanded],
+    ] as LegacyColumnDef<ReviewItem, unknown>[],
+    [currentSort],
   );
 
   const table = useLegacyTable({
@@ -382,6 +458,10 @@ function ReviewsTableContent() {
     columns,
     getCoreRowModel: getCoreRowModel(),
     getRowId: (row) => String(row.review_id),
+    meta: {
+      expanded,
+      toggleExpanded,
+    },
   });
 
   const virtualizer = useVirtualizer({
@@ -407,7 +487,7 @@ function ReviewsTableContent() {
   } else if (showUpdating) {
     statusText = 'Atualizando…';
   } else if (total === 0) {
-    statusText = '0 de 0';
+    statusText = '';
   } else {
     statusText = `${formatInteger(items.length)} de ${formatInteger(total)} carregadas`;
   }
@@ -424,7 +504,7 @@ function ReviewsTableContent() {
         <h2 id="reviews-heading" className="title">
           Avaliações
         </h2>
-        <p className="meta">Clique na linha ou pressione Enter no botão de detalhes para expandir</p>
+        <p className="meta">Clique numa linha para ver os detalhes</p>
       </div>
 
       <div className="sheet-card">
@@ -467,7 +547,7 @@ function ReviewsTableContent() {
                 <tr>
                   <td colSpan={6} className="empty-cell">
                     <div className="empty-state">
-                      <p>Nenhuma avaliação com esses filtros.</p>
+                      <p>Nenhuma avaliação neste recorte.</p>
                       <button
                         type="button"
                         className="btn btn-secondary btn-small"
@@ -495,11 +575,21 @@ function ReviewsTableContent() {
                     const isExpanded = expanded.has(reviewId);
                     return (
                       <tr
-                        key={row.id}
+                        key={reviewId}
                         data-index={virtualRow.index}
                         ref={virtualizer.measureElement}
                         className={isExpanded ? 'review-row is-expanded' : 'review-row'}
-                        onClick={() => toggleExpanded(reviewId)}
+                        onClick={(e) => {
+                          const target = e.target as HTMLElement | null;
+                          if (target?.closest('button, a')) {
+                            return;
+                          }
+                          const selection = window.getSelection()?.toString().trim();
+                          if (selection) {
+                            return;
+                          }
+                          toggleExpanded(reviewId);
+                        }}
                       >
                         {row.getVisibleCells().map((cell) => (
                           <td key={cell.id}>
@@ -545,14 +635,14 @@ function ReviewsTableContent() {
             </span>
             <span aria-live="polite">carregando mais…</span>
           </>
-        ) : (
+        ) : statusText ? (
           <span aria-live="polite" aria-atomic="true">
             {statusText}
           </span>
-        )}
+        ) : null}
       </p>
 
-      <p className="meta">
+      <p className="reviews-note">
         Base higienizada: partição 1:1 das 4 tabelas do Kaggle · underflow uint32 corrigido em votos
         engraçados · resumo truncado em 280{'\u00a0'}caracteres.
       </p>

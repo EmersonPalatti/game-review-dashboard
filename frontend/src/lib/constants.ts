@@ -12,7 +12,7 @@ export const BASELINE_REVIEWS = 1_000_000;
 export const BASELINE_RATE = 0.8297;
 export const BASELINE_GAMES = 59;
 export const BASELINE_AUTHORS = 912_553;
-export const BASELINE_PERIOD_SHORT = 'mar/2013 a\u00a0jan/2021';
+export const BASELINE_PERIOD_SHORT = 'mar/2013 a jan/2021';
 
 export const REFUND_BUCKETS: readonly PlaytimeBucket[] = ['lt1', 'h1_2'];
 
@@ -45,12 +45,14 @@ export type ThesisPreset = {
   filters: Filters;
 };
 
+// Os números exibidos nos achados vêm da API (ver ContextIsland). Títulos e notas
+// descrevem o recorte e não afirmam percentuais.
 export const THESIS_PRESETS: readonly ThesisPreset[] = [
   {
     key: 'refund',
-    label: 'Janela < 1\u00a0h',
-    title: 'Filtrar avaliações na primeira hora de jogo (< 1 h: 49,6% de aprovação)',
-    note: 'tese: aprovação cai para 49,6% na 1ª hora\u00a0de\u00a0jogo',
+    label: 'Janela < 1 h',
+    title: 'Filtrar avaliações na primeira hora de jogo (< 1 h)',
+    note: 'recorte: primeira hora de jogo (< 1 h)',
     filters: {
       appId: null,
       language: null,
@@ -65,9 +67,9 @@ export const THESIS_PRESETS: readonly ThesisPreset[] = [
   },
   {
     key: 'early',
-    label: 'Acesso\u00a0antecipado',
-    title: 'Filtrar avaliações em Acesso Antecipado (69,8% vs. 83,8% fora dele)',
-    note: 'tese: 69,8% em acesso antecipado vs. 83,8%\u00a0fora\u00a0dele',
+    label: 'Acesso antecipado',
+    title: 'Filtrar avaliações em Acesso Antecipado',
+    note: 'recorte: jogos em acesso antecipado',
     filters: {
       appId: null,
       language: null,
@@ -82,9 +84,9 @@ export const THESIS_PRESETS: readonly ThesisPreset[] = [
   },
   {
     key: 'dissatisfaction',
-    label: 'Economia da\u00a0insatisfação',
-    title: 'Filtrar avaliações negativas (recebem 2,8x mais votos úteis)',
-    note: 'tese: avaliações negativas recebem 2,8× mais\u00a0votos\u00a0úteis',
+    label: 'Economia da insatisfação',
+    title: 'Filtrar avaliações negativas, ordenadas por votos úteis',
+    note: 'recorte: avaliações negativas, ordenadas por votos úteis',
     filters: {
       appId: null,
       language: null,
@@ -139,8 +141,8 @@ export type MetricCardConfig = {
 };
 
 export const METRIC_CARDS_CONFIG: readonly MetricCardConfig[] = [
-  { id: 'reviews', label: 'Avaliações', defaultSub: '100% da base\u00a0auditada' },
-  { id: 'recommendation', label: 'Recomendação', defaultSub: 'média global da\u00a0base', accent: true },
-  { id: 'games', label: 'Jogos', defaultSub: 'de 59 no\u00a0catálogo' },
-  { id: 'authors', label: 'Autores', defaultSub: 'de 912.553\u00a0contas' },
+  { id: 'reviews', label: 'Avaliações', defaultSub: '100% da base auditada' },
+  { id: 'recommendation', label: 'Recomendação', defaultSub: 'média global da base', accent: true },
+  { id: 'games', label: 'Jogos', defaultSub: 'de 59 no catálogo' },
+  { id: 'authors', label: 'Autores', defaultSub: 'de 912.553 contas' },
 ];

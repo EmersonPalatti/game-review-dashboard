@@ -102,7 +102,7 @@ export type ReviewSort = {
 };
 
 export const DEFAULT_SORT: ReviewSort = {
-  sortBy: 'created_at',
+  sortBy: 'votes_helpful',
   sortDir: 'desc',
 };
 
@@ -120,13 +120,13 @@ function parseTri(value: string | null): Tri {
 }
 
 function parseSortBy(value: string | null): ReviewSortBy {
-  if (value === 'votes_helpful' || value === 'playtime_hours') return value;
-  return 'created_at';
+  if (value === 'votes_helpful' || value === 'playtime_hours' || value === 'created_at') return value;
+  return DEFAULT_SORT.sortBy;
 }
 
 function parseSortDir(value: string | null): SortDir {
-  if (value === 'asc') return 'asc';
-  return 'desc';
+  if (value === 'asc' || value === 'desc') return value;
+  return DEFAULT_SORT.sortDir;
 }
 
 export function readFiltersFromSearch(search: string): {

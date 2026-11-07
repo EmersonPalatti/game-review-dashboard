@@ -1,0 +1,217 @@
+/* findings: overrides layered after global.css. Plain CSS, tokens from global.css. */
+
+/* Chips: one row is always reserved, so the strip below does not move when chips appear. */
+.active-chips {
+  min-height: 32px;
+  justify-content: flex-end;
+}
+
+@media (min-width: 768px) {
+  .active-chips {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+}
+
+@media (max-width: 767px) {
+  .active-chips {
+    flex: 0 0 100%;
+    justify-content: flex-start;
+  }
+}
+
+/* Entrada sutil de novos chips de filtro ativos. */
+.filter-chip.is-entering {
+  transform-origin: center;
+  animation: chip-enter var(--fast) var(--ease) both;
+}
+
+@keyframes chip-enter {
+  from {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Findings strip: its own full-width line under the heading. */
+.context-top .findings-strip {
+  flex: 0 0 100%;
+  min-width: 0;
+  container-type: inline-size;
+}
+
+.findings-scope-note {
+  margin: 0 0 6px;
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--secondary);
+}
+
+.findings-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+}
+
+/* Tile: flat surface, 1px line border, radius matching .card. */
+.finding-tile {
+  display: grid;
+  grid-template-areas:
+    "claim"
+    "figure"
+    "source";
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+  gap: 6px;
+  min-width: 0;
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--ink);
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background-color var(--fast) var(--ease),
+    border-color var(--fast) var(--ease);
+}
+
+.finding-tile:hover {
+  background: var(--raised);
+  border-color: var(--secondary);
+}
+
+.finding-tile[aria-pressed='true'] {
+  background: color-mix(in srgb, var(--accent) 8%, var(--surface));
+  border-color: var(--accent);
+}
+
+.finding-claim {
+  grid-area: claim;
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 500;
+  letter-spacing: 0;
+  color: var(--ink);
+  text-wrap: balance;
+}
+
+.finding-figure {
+  grid-area: figure;
+  font-family: var(--font-mono);
+  font-size: 20px;
+  line-height: 1.2;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+.finding-figure-sep {
+  margin-inline: 0.35em;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 400;
+  font-variant-numeric: normal;
+  color: var(--secondary);
+}
+
+.finding-source {
+  grid-area: source;
+  font-size: 12px;
+  line-height: 16px;
+  letter-spacing: 0.01em;
+  color: var(--secondary);
+  text-wrap: pretty;
+}
+
+/* Medium strip: claim and source on the left, figure on the right, one tile per row. */
+@container (min-width: 560px) {
+  .finding-tile {
+    grid-template-areas:
+      "claim figure"
+      "source figure";
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    column-gap: 16px;
+  }
+
+  .finding-figure {
+    justify-self: end;
+  }
+}
+
+/* Wide strip: three equal columns, each tile stacked claim / figure / source. */
+@container (min-width: 880px) {
+  .findings-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .finding-tile {
+    grid-template-areas:
+      "claim"
+      "figure"
+      "source";
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
+    column-gap: 0;
+  }
+
+  .finding-figure {
+    justify-self: start;
+  }
+}
+
+/* Provenance link in the heading area. */
+.context-audit-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  width: fit-content;
+  margin-top: 2px;
+  color: var(--ink);
+  font-size: 14px;
+  line-height: 20px;
+  letter-spacing: 0;
+  text-decoration: underline;
+  text-decoration-color: var(--line);
+  text-underline-offset: 3px;
+  transition:
+    text-decoration-color var(--fast) var(--ease),
+    color var(--fast) var(--ease);
+}
+
+.context-audit-link:hover {
+  color: var(--ink);
+  text-decoration-color: var(--ink);
+}
+
+.context-audit-link:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.context-audit-icon {
+  width: 14px;
+  height: 14px;
+  flex: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .finding-tile,
+  .context-audit-link {
+    transition: none;
+  }
+
+  .filter-chip.is-entering {
+    animation: none;
+  }
+}

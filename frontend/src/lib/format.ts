@@ -56,6 +56,11 @@ export function formatInteger(value: number): string {
   return integerFormat.format(value);
 }
 
+/** Número com substantivo no singular só para exatamente 1 (“1 jogo”, “2 jogos”, “0 avaliações”). */
+export function formatCount(value: number, singular: string, plural: string): string {
+  return `${formatInteger(value)} ${value === 1 ? singular : plural}`;
+}
+
 export function formatPercent(value: number): string {
   return percentFormat.format(value);
 }

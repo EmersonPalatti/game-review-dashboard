@@ -1,0 +1,37 @@
+/* metrics: overrides layered after global.css. Plain CSS, tokens from global.css. */
+
+/* Cartões de indicadores: a largura do conteúdo vira referência para o número. */
+.metric-card {
+  container-type: inline-size;
+}
+
+@media (max-width: 399px) {
+  .metric-card {
+    padding: 16px;
+  }
+}
+
+/* 28px é o tamanho do design; em colunas estreitas o número encolhe para caber
+   (“1.000.000” tem 9 caracteres monoespaçados, ~5,4em). */
+.metric-figure {
+  font-size: 28px;
+  font-size: min(28px, calc(100cqi / 5.5));
+}
+
+/* Recorte novo ainda carregando: números e subtítulos antigos ficam esmaecidos. */
+.metric-figure,
+.metric-sub {
+  transition: opacity var(--fast) var(--ease);
+}
+
+section[aria-label='Indicadores'][data-stale='true'] .metric-figure,
+section[aria-label='Indicadores'][data-stale='true'] .metric-sub {
+  opacity: 0.55;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .metric-figure,
+  .metric-sub {
+    transition: none;
+  }
+}

@@ -1,0 +1,55 @@
+/* chat: overrides layered after global.css. Plain CSS, tokens from global.css. */
+
+/* Balão de dica: uma única entrada autoral (opacidade, deslocamento e desfoque curtos). Sem rotação. */
+@keyframes chat-teaser-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+    filter: blur(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+.chat-teaser {
+  animation: chat-teaser-enter var(--enter) var(--ease) both;
+}
+
+/* Ponto de status do botão: assenta sem overshoot (antes, cubic-bezier com pico de 1,35). */
+@keyframes chat-status-dot-settle {
+  from {
+    transform: scale(0.7);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+.chat-status-dot-pop {
+  animation: chat-status-dot-settle 400ms var(--ease);
+}
+
+/* Chip de filtro aplicado: assenta até escala 1, sem overshoot (antes, pico de 1,05 com cubic-bezier elástico). */
+@keyframes chat-chip-settle {
+  from {
+    transform: scale(0.97);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+.chat-copilot-chip-active {
+  animation: chat-chip-settle 220ms var(--ease);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chat-teaser,
+  .chat-status-dot-pop,
+  .chat-copilot-chip-active {
+    animation: none;
+  }
+}
