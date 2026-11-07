@@ -47,10 +47,18 @@ O painel foi projetado para permitir que analistas, engenheiros e recrutadores t
   - *Janela < 1 h*: avaliações precoces (aprovação cai para 49,6%).
   - *Acesso antecipado*: impacto de jogos em desenvolvimento (69,8% vs. 83,8% no lançamento).
   - *Economia da insatisfação*: avaliações negativas (recebem 2,8x mais votos úteis).
-- **Assistente Conversacional de IA (SteamBot-9000)**: Robô gamer analista integrado diretamente ao dashboard (`ChatIsland`, `client:load`) e acoplado ao endpoint `POST /api/chat`:
-  - **Tool-calling em tempo real**: O agente (orquestrado via LangChain com modelos OpenRouter, padrão `nvidia/nemotron-3-ultra-550b-a55b:free`) consome o recorte exato de filtros ativos no dashboard e invoca dinamicamente ferramentas de dados (`get_metrics`, `get_charts`, `get_reviews_sample`) antes de responder, garantindo precisão matemática sem alucinações.
-  - **Badges de transparência de dados**: Sempre que o assistente consulta o banco de dados, exibe badges discretos indicando as ferramentas executadas (`tool: get_metrics`, `tool: get_charts`, etc.).
-  - **Interface interativa e acessível**: Botão flutuante animado (FAB) com teasers rotativos bem-humorados a cada 7 segundos, drawer responsivo com suporte a atalhos (`Esc` para fechar, `Enter` para enviar e `Shift+Enter` para quebra de linha), chips com perguntas pré-configuradas sobre as principais teses do estudo e tratamento amigável de contingência.
+- **Assistente Conversacional de IA (SteamBot-9000)**: Agente analítico sênior com inteligência contextual e humor técnico empírico integrado diretamente ao dashboard (`ChatIsland`, `client:load`) e acoplado ao endpoint `POST /api/chat`:
+  - **Persona e Inteligência de Domínio**: Configurado como um Analista de Dados Sênior da Steam com humor seco e empírico, explorando as 1M de avaliações, a regra dos 119 minutos da Valve, bugs de Early Access e o backlog da Summer Sale — sem clichês infantis de robô ("Beep boop" ou saudações genéricas).
+  - **Tool-calling em tempo real e Telemetria em 3 Estágios**: O agente consome o recorte exato de filtros ativos no dashboard e invoca dinamicamente ferramentas de dados (`get_metrics`, `get_charts`, `get_reviews_sample`). Durante a consulta, exibe telemetria transparente com **4×4 Matrix Dot Scanner** (`scan` mineral), **barra de progresso segmentada em 3 passos** (`1/3 Lendo filtros`, `2/3 Agregações no SQLite`, `3/3 Síntese estatística`) e **SQL Live Ticker** em tempo real com numerais tabulares em `IBM Plex Mono`.
+  - **Co-piloto Analítico Bidirecional**: Detecta jogos, status de Early Access, sentimento e faixas de horas nas respostas do bot e oferece chips acionáveis que aplicam ou removem filtros no dashboard em tempo real via Nanostores, sincronizados com a URL.
+  - **Tabelas GFM e Modo Amplo de Inspeção (680px)**: Suporte completo a tabelas GitHub Flavored Markdown com colunas numéricas alinhadas à direita em `IBM Plex Mono` com `tabular-nums` e botão de expansão do drawer (`440px` ↔ `680px`) para leitura comparativa confortável.
+  - **Unified Command Composer (Padrão Linear / Claude)**: Caixa de digitação unificada com foco compartilhado `:focus-within`, `<textarea>` autoexpansível (com limite seguro), dicas de atalho (`Enter` envia, `Shift+Enter` quebra linha, `↑` recupera o último prompt) e botão Enviar/Parar com estado ativo mineral e controle de interrupção (`AbortController`).
+  - **Coreografia de Vida Cinética (`transitions-dev`)**:
+    - *Editorial Staggered Block Reveal*: Respostas recém-chegadas revelam parágrafos, listas e tabelas em cascata suave (`340ms var(--ease)` com delay escalonado de 65ms por bloco), evitando despejo visual abrupto (*block dump*).
+    - *Saída Suave do Drawer*: Fechamento coreografado (`220ms` com deslize e *cross-blur*) ao clicar no `X`, backdrop ou teclar `Esc` / `Ctrl+K`.
+    - *Micro-física Tátil*: Checkmark SVG com animação de traço (`stroke-dashoffset`) nos chips do co-piloto, *shake* percussivo no Composer ao tentar enviar vazio e *soft swap* na barra de contexto quando filtros externos mudam.
+    - *Presença no FAB*: Pop elástico no indicador de status e aceno do ícone sincronizados com a rotação de teasers estatísticos a cada 7 segundos.
+    - *Acessibilidade total*: Zero anti-padrões detectados (`impeccable detect` = `[]`) e desativação rigorosa de animações sob `@media (prefers-reduced-motion: reduce)`.
 - **Usabilidade, acessibilidade e feedback visual**:
   - Feedback visual anti-flicker: indicador de carregamento progressivo com utilitário `useDelayedFlag` (tolerância de 150 ms) para transições suaves sem piscadas em leituras de cache instantâneas.
   - Alternância instantânea de tema claro e escuro persistida no armazenamento local.
@@ -110,7 +118,7 @@ O frontend adota uma abordagem híbrida moderna de alto desempenho:
   > O endpoint `/api/summary` é o caminho oficial consumido pelo frontend para evitar interceptações locais de antivírus (ex.: Kaspersky interceptando requisições a rotas denominadas `/api/metrics`).
 - `GET /api/charts`: Devolve simultaneamente a distribuição mensal (`timeline`), a taxa de aprovação por faixa de horas jogadas (`playtime_buckets`), o top 10 de jogos por volume (`game_rankings`) e os idiomas mais frequentes ordenados por aprovação (`language_rankings`). Ao filtrar um único mês (`date_from` e `date_to` no mesmo mês), a série mensal preserva a curva completa para destacar o mês selecionado no gráfico sem colapsar a 1 ponto, enquanto os demais painéis são filtrados pelo mês.
 - `GET /api/reviews`: Retorna a lista paginada de avaliações com suporte a todos os filtros dimensionais e temporais, ordenação por data (`created_at`), horas de jogo (`playtime_hours`) ou votos úteis (`votes_helpful`), além de paginação via `limit` (até 100) e `offset`.
-- `POST /api/chat`: Endpoint conversacional inteligente alimentado pelo agente LangChain (`SteamBot-9000`). Recebe a mensagem do usuário, histórico e o recorte atual de filtros. O robô aciona dinamicamente as ferramentas analíticas do backend (`get_metrics`, `get_charts`, `get_reviews_sample`) e devolve a resposta formatada em Markdown com a relação de ferramentas utilizadas (`tools_used`).
+- `POST /api/chat`: Endpoint conversacional inteligente alimentado pelo agente LangChain (`SteamBot-9000`). Recebe a mensagem do usuário, histórico e o recorte atual de filtros. O robô aciona dinamicamente as ferramentas analíticas do backend (`get_metrics`, `get_charts`, `get_reviews_sample`) e devolve a resposta formatada em Markdown com tabelas GFM, metadados de execução, suporte a cancelamento de stream/geração via `AbortSignal` e lista de ferramentas utilizadas (`tools_used`).
 - `GET /docs`: Documentação interativa Swagger/OpenAPI gerada automaticamente pelo FastAPI.
 
 ---
@@ -493,24 +501,26 @@ npm run render:overview
 
 ### Frontend
 - **[Astro 7](https://astro.build/)**: framework web com arquitetura de ilhas (Islands Architecture) e zero JavaScript enviado para a casca estática da aplicação.
-- **[React 19 & React Islands](https://react.dev/) (`@astrojs/react`)**: ilhas interativas de componentes hidratadas sob demanda (`client:load` para filtros, presets e KPIs; `client:visible` para gráficos ECharts e tabela de reviews).
+- **[React 19 & React Islands](https://react.dev/) (`@astrojs/react`)**: ilhas interativas de componentes hidratadas sob demanda (`client:load` para filtros, presets, KPIs e o chat do **SteamBot-9000**; `client:visible` para gráficos ECharts e tabela de reviews).
 - **[TanStack Query v5](https://tanstack.com/query/latest)**: gerenciamento de estado assíncrono, cache inteligente em memória, deduplicação de requisições, refetch reativo e paginação infinita (`useInfiniteQuery`).
 - **[TanStack Table v9](https://tanstack.com/table/latest)**: motor headless para gerenciamento tabular, ordenação dinâmica multicritério e mapeamento de colunas fortemente tipado.
 - **[TanStack Virtual v3](https://tanstack.com/virtual/latest)**: virtualização de lista (`useVirtualizer`) com medição dinâmica de altura de linhas, garantindo rolagem suave a 60 FPS e consumo mínimo de memória no DOM.
 - **[Apache ECharts 6](https://echarts.apache.org/)**: gráficos interativos de alta performance para séries temporais e taxas de aprovação por tempo de jogo.
-- **[Nanostores](https://github.com/nanostores/nanostores)**: barramento de estado reativo, desacoplado e ultraleve para sincronização entre ilhas React independentes sem Providers globais.
+- **[Nanostores](https://github.com/nanostores/nanostores)**: barramento de estado reativo, desacoplado e ultraleve para sincronização bidirecional entre o **SteamBot-9000** e todas as ilhas React sem Providers globais.
 - **[Tailwind CSS v4](https://tailwindcss.com/)**: estilização moderna com suporte nativo a CSS moderno, design tokens e transições de tema claro/escuro.
+- **Micro-Animações & Motion Craft (`transitions-dev`)**: biblioteca de micro-física e coreografia cinética em CSS puro (Matrix Dot Loader 4×4, Staggered Block Reveal, Accordion via CSS Grid, SVG Stroke-Draw Checkmark, Drawer Slide-Down e Composer Shake).
 - **[TypeScript](https://www.typescriptlang.org/)**: tipagem estática ponta a ponta alinhada aos modelos Pydantic do backend.
 - **[Lucide Icons](https://lucide.dev/)**: pacote consistente de ícones vetoriais.
 
-### Backend & Dados
+### Backend & Inteligência Artificial
 - **[Python 3.14](https://www.python.org/)**
 - **[FastAPI](https://fastapi.tiangolo.com/)**: criação de APIs assíncronas de alta performance com validação automática via **Pydantic**.
+- **[LangChain & OpenRouter](https://openrouter.ai/)**: orquestração do agente autônomo **SteamBot-9000** com *tool-calling* em tempo real (`get_metrics`, `get_charts`, `get_reviews_sample`) e suporte a modelos de linguagem de ponta (`nvidia/nemotron-3-ultra-550b-a55b:free`).
 - **[SQLAlchemy 2](https://www.sqlalchemy.org/)**: modelagem ORM e construção de consultas SQL agregadas com suporte híbrido SQLite/PostgreSQL.
 - **[PostgreSQL / Supabase](https://supabase.com/)**: banco de dados em produção na nuvem com índices otimizados para 1.000.000 de avaliações.
 - **[SQLite](https://www.sqlite.org/)**: armazenamento local transacional e consultas indexadas para prototipação e testes.
 - **[uv](https://docs.astral.sh/uv/)**: gerenciamento moderno de dependências e ambientes virtuais.
-- **[Pytest](https://pytest.org/)**: testes de integração automatizados da API (48 testes de validação contínua).
+- **[Pytest](https://pytest.org/)**: testes de integração automatizados da API (61 testes de validação contínua cobrindo agregação, paginação e chat).
 
 ### Infraestrutura & Deploy em Produção
 - **[Vercel](https://vercel.com/)**: hospedagem do frontend Astro estático com distribuição global via CDN Edge de baixa latência.
