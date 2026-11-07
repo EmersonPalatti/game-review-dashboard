@@ -6,6 +6,7 @@ import ContextBar from '../components/ContextBar.astro';
 import { ChartsIsland } from '../components/react/ChartsIsland';
 import { MetricsIsland } from '../components/react/MetricsIsland';
 import { ReviewsIsland } from '../components/react/ReviewsIsland';
+import { ChatIsland } from '../components/react/ChatIsland';
 ---
 
 <Base>
@@ -31,6 +32,8 @@ import { ReviewsIsland } from '../components/react/ReviewsIsland';
       </div>
     </main>
   </div>
+
+  <ChatIsland client:load />
 
   <script>
     import '../scripts/dashboard';

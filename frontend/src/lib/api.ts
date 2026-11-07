@@ -151,3 +151,85 @@ export function fetchReviews(
 ): Promise<ReviewsPage> {
   return fetchReviewWindow(current, pageIndex * PAGE_SIZE, sort, PAGE_SIZE);
 }
+
+export type ChatRole = 'user' | 'assistant';
+
+export type ChatHistoryItem = {
+  role: ChatRole;
+  content: string;
+};
+
+export type ChatFiltersPayload = {
+  app_id: number | null;
+  language: string | null;
+  recommended: boolean | null;
+  steam_purchase: boolean | null;
+  received_for_free: boolean | null;
+  early_access: boolean | null;
+  playtime_bucket: string | null;
+  date_from: string | null;
+  date_to: string | null;
+};
+
+export type ChatRequestPayload = {
+  message: string;
+  filters: ChatFiltersPayload;
+  history: ChatHistoryItem[];
+};
+
+export type ChatResponsePayload = {
+  reply: string;
+  model: string;
+  tools_used: string[];
+};
+
+function triToBoolean(value: Tri): boolean | null {
+  if (value === 'yes') return true;
+  if (value === 'no') return false;
+  return null;
+}
+
+export function toChatFiltersPayload(current: Readonly<Filters>): ChatFiltersPayload {
+  return {
+    app_id: current.appId !== null && Number.isFinite(current.appId) ? current.appId : null,
+    language: current.language || null,
+    recommended: triToBoolean(current.recommended),
+    steam_purchase: triToBoolean(current.steamPurchase),
+    received_for_free: triToBoolean(current.receivedForFree),
+    early_access: triToBoolean(current.earlyAccess),
+    playtime_bucket: current.playtime !== 'all' ? current.playtime : null,
+    date_from: current.dateFrom || null,
+    date_to: current.dateTo || null,
+  };
+}
+
+export async function sendChatMessage(
+  message: string,
+  current: Readonly<Filters>,
+  history: ChatHistoryItem[] = [],
+  signal?: AbortSignal,
+): Promise<ChatResponsePayload> {
+  const payload: ChatRequestPayload = {
+    message,
+    filters: toChatFiltersPayload(current),
+    history,
+  };
+
+  const response = await fetch(`${API_BASE}/api/chat`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+    signal,
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => null);
+    const detail = errorData?.detail;
+    throw new Error(detail || `Erro ${response.status} ao consultar o agente.`);
+  }
+
+  return (await response.json()) as ChatResponsePayload;
+}
+

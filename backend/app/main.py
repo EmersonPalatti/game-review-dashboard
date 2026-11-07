@@ -6,10 +6,13 @@ from fastapi import Depends, FastAPI, HTTPException, Query, Response
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 
+from backend.app.chat import run_chat_agent
 from backend.app.database import SessionLocal, get_db, init_db
 from backend.app.queries import charts, list_reviews, metrics, warmup_caches
 from backend.app.schemas import (
     ChartsResponse,
+    ChatRequest,
+    ChatResponse,
     MetricsResponse,
     ReviewFilters,
     ReviewListResponse,
@@ -37,7 +40,7 @@ app = FastAPI(title="Steam Reviews", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=cors_origins,
-    allow_methods=["GET"],
+    allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["*"],
 )
 
@@ -125,3 +128,15 @@ def get_reviews(
         "public, max-age=300, s-maxage=1800, stale-while-revalidate=3600"
     )
     return list_reviews(db, filters, limit, offset, sort_by=sort_by, sort_dir=sort_dir)
+
+
+@app.post("/api/chat", response_model=ChatResponse)
+def post_chat(
+    payload: ChatRequest,
+    response: Response,
+    db: Session = Depends(get_db),
+) -> ChatResponse:
+    _reject_unknown_bucket(payload.filters.playtime_bucket)
+    response.headers["Cache-Control"] = "no-store"
+    return run_chat_agent(db, payload)
+

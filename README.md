@@ -47,6 +47,10 @@ O painel foi projetado para permitir que analistas, engenheiros e recrutadores t
   - *Janela < 1 h*: avaliações precoces (aprovação cai para 49,6%).
   - *Acesso antecipado*: impacto de jogos em desenvolvimento (69,8% vs. 83,8% no lançamento).
   - *Economia da insatisfação*: avaliações negativas (recebem 2,8x mais votos úteis).
+- **Assistente Conversacional de IA (SteamBot-9000)**: Robô gamer analista integrado diretamente ao dashboard (`ChatIsland`, `client:load`) e acoplado ao endpoint `POST /api/chat`:
+  - **Tool-calling em tempo real**: O agente (orquestrado via LangChain com modelos OpenRouter, padrão `nvidia/nemotron-3-ultra-550b-a55b:free`) consome o recorte exato de filtros ativos no dashboard e invoca dinamicamente ferramentas de dados (`get_metrics`, `get_charts`, `get_reviews_sample`) antes de responder, garantindo precisão matemática sem alucinações.
+  - **Badges de transparência de dados**: Sempre que o assistente consulta o banco de dados, exibe badges discretos indicando as ferramentas executadas (`tool: get_metrics`, `tool: get_charts`, etc.).
+  - **Interface interativa e acessível**: Botão flutuante animado (FAB) com teasers rotativos bem-humorados a cada 7 segundos, drawer responsivo com suporte a atalhos (`Esc` para fechar, `Enter` para enviar e `Shift+Enter` para quebra de linha), chips com perguntas pré-configuradas sobre as principais teses do estudo e tratamento amigável de contingência.
 - **Usabilidade, acessibilidade e feedback visual**:
   - Feedback visual anti-flicker: indicador de carregamento progressivo com utilitário `useDelayedFlag` (tolerância de 150 ms) para transições suaves sem piscadas em leituras de cache instantâneas.
   - Alternância instantânea de tema claro e escuro persistida no armazenamento local.
@@ -69,11 +73,15 @@ flowchart LR
     subgraph Backend ["Backend (FastAPI)"]
         SQLITE --> REPO["Consultas Agregadas & Filtros\n(backend/app/queries.py)"]
         REPO --> API["Endpoints REST (/api/summary, /api/charts, /api/reviews)\n(backend/app/main.py)"]
+        REPO <--> AGENT["Agente SteamBot-9000 (LangChain + OpenRouter)\n(backend/app/chat.py)"]
+        AGENT --> CHAT_API["Endpoint Conversacional (/api/chat)"]
     end
 
     subgraph Frontend ["Frontend (Astro + React Islands)"]
         API --> QUERY["TanStack Query (Cache & Infinite)\n(QueryRoot / queryClient)"]
+        CHAT_API <--> CHAT_ISLAND["ChatIsland (client:load)\nSteamBot-9000 (Tool Calling & Teasers)"]
         STORE["Estado Global Reativo\n(Nanostores: filters.ts)"] <--> QUERY
+        STORE <--> CHAT_ISLAND
         STORE <--> FILTERS["Filters & Context Islands (client:load)\nControles, Calendário e Presets"]
         QUERY --> KPIS["MetricsIsland (client:load)\n4 KPI Cards"]
         QUERY --> CHARTS["ChartsIsland (client:visible)\nApache ECharts 6 (Zoom & Click-to-Filter)"]
@@ -87,6 +95,7 @@ O frontend adota uma abordagem híbrida moderna de alto desempenho:
 - **Astro & React Islands (`@astrojs/react`)**: A casca da aplicação (layout, sidebar estrutural, cabeçalho) é gerada estaticamente pelo Astro com **zero JavaScript desnecessário** para o cliente. A interatividade é isolada em ilhas React independentes:
   - `ContextIsland` e `FiltersIsland` (`client:load`): hidratados imediatamente para garantir controle imediato sobre presets analíticos, seletores de dimensão e o seletor `DateRangeFilter` (calendário popover com presets anuais e validação de datas).
   - `MetricsIsland` (`client:load`): reage instantaneamente aos filtros exibindo os 4 KPIs agregados.
+  - `ChatIsland` (`client:load`): assistente conversacional inteligente (**SteamBot-9000**) com frases rotativas (teasers), gaveta responsiva e integração em tempo real com o recorte de filtros ativo via `POST /api/chat`.
   - `ChartsIsland` (`client:visible`): renderiza os gráficos Apache ECharts apenas quando entram no campo de visão (lazy hydration), com suporte a zoom temporal (`dataZoom`) e filtros reativos disparados por clique direto nos meses ou faixas de horas.
   - `ReviewsIsland` (`client:visible`): tabela virtualizada sob demanda para navegação e expansão detalhada das avaliações.
 - **TanStack Query (React Query v5)**: Orquestra o ciclo de vida das requisições assíncronas aos endpoints da API (`/api/summary`, `/api/charts`, `/api/reviews`). Provê cache transparente em memória, deduplicação de buscas concorrentes, estados suaves de transição (`keepPreviousData` / `isPlaceholderData`) e gerenciamento de carregamento progressivo contínuo via `useInfiniteQuery` (janelas de 100 itens).
@@ -101,6 +110,7 @@ O frontend adota uma abordagem híbrida moderna de alto desempenho:
   > O endpoint `/api/summary` é o caminho oficial consumido pelo frontend para evitar interceptações locais de antivírus (ex.: Kaspersky interceptando requisições a rotas denominadas `/api/metrics`).
 - `GET /api/charts`: Devolve simultaneamente a distribuição mensal (`timeline`), a taxa de aprovação por faixa de horas jogadas (`playtime_buckets`), o top 10 de jogos por volume (`game_rankings`) e os idiomas mais frequentes ordenados por aprovação (`language_rankings`). Ao filtrar um único mês (`date_from` e `date_to` no mesmo mês), a série mensal preserva a curva completa para destacar o mês selecionado no gráfico sem colapsar a 1 ponto, enquanto os demais painéis são filtrados pelo mês.
 - `GET /api/reviews`: Retorna a lista paginada de avaliações com suporte a todos os filtros dimensionais e temporais, ordenação por data (`created_at`), horas de jogo (`playtime_hours`) ou votos úteis (`votes_helpful`), além de paginação via `limit` (até 100) e `offset`.
+- `POST /api/chat`: Endpoint conversacional inteligente alimentado pelo agente LangChain (`SteamBot-9000`). Recebe a mensagem do usuário, histórico e o recorte atual de filtros. O robô aciona dinamicamente as ferramentas analíticas do backend (`get_metrics`, `get_charts`, `get_reviews_sample`) e devolve a resposta formatada em Markdown com a relação de ferramentas utilizadas (`tools_used`).
 - `GET /docs`: Documentação interativa Swagger/OpenAPI gerada automaticamente pelo FastAPI.
 
 ---
@@ -372,6 +382,32 @@ uv run python -m backend.app.seed --limit 50000
 
 ### Passo 4: Executar o Backend (FastAPI)
 
+#### Configuração do Assistente SteamBot-9000 (Opcional, mas Recomendado)
+Para interagir com o assistente inteligente gamer (**SteamBot-9000**) via endpoint `POST /api/chat` com chamadas automáticas de ferramentas (*tool-calling*), obtenha uma chave de API gratuita no [OpenRouter](https://openrouter.ai/) e configure a variável de ambiente:
+
+**No Windows PowerShell:**
+```powershell
+$env:OPENROUTER_API_KEY = "sk-or-v1-..."
+# Opcional: especificar outro modelo (padrão gratuito: nvidia/nemotron-3-ultra-550b-a55b:free)
+# $env:OPENROUTER_MODEL = "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free"
+```
+
+**No Linux ou macOS (Bash):**
+```bash
+export OPENROUTER_API_KEY="sk-or-v1-..."
+# export OPENROUTER_MODEL="openrouter/nvidia/nemotron-3-ultra-550b-a55b:free"
+```
+
+**Ou via arquivo `.env` na raiz do repositório:**
+```dotenv
+OPENROUTER_API_KEY=sk-or-v1-...
+OPENROUTER_MODEL=openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
+```
+
+> [!NOTE]
+> Se `OPENROUTER_API_KEY` não for configurada, o painel e os endpoints analíticos (`/api/summary`, `/api/charts`, `/api/reviews`) continuam funcionando normalmente. Apenas o chat retornará uma instrução amigável indicando a necessidade da chave para acionar o modelo de linguagem.
+
+#### Iniciar o Servidor FastAPI
 Inicie o servidor da API com hot-reload:
 
 ```bash

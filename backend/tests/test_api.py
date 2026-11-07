@@ -732,3 +732,245 @@ def test_in_memory_caching_and_warmup():
         assert len(_metrics_cache._cache) == 0
         assert len(_charts_cache._cache) == 0
 
+
+def test_build_chat_tools_metrics(client):
+    import json
+    from backend.app.chat import build_chat_tools
+    from backend.app.schemas import ReviewFilters
+
+    with SessionLocal() as session:
+        tools = build_chat_tools(session, ReviewFilters())
+        tool_metrics = next(t for t in tools if t.name == "get_metrics")
+
+        # Global metrics
+        out = json.loads(tool_metrics.invoke({}))
+        assert out["total_reviews"] == 4
+        assert out["recommendation_rate"] == 0.5
+        assert out["game_count"] == 2
+        assert out["author_count"] == 3
+
+        # Filtered metrics via tool arguments
+        out_filtered = json.loads(tool_metrics.invoke({"recommended": False}))
+        assert out_filtered["total_reviews"] == 2
+        assert out_filtered["applied_filters"]["recommended"] is False
+
+        # Pre-set default filters
+        tools_with_defaults = build_chat_tools(session, ReviewFilters(app_id=ALPHA))
+        tool_metrics_default = next(t for t in tools_with_defaults if t.name == "get_metrics")
+        out_default = json.loads(tool_metrics_default.invoke({}))
+        assert out_default["total_reviews"] == 2
+        assert out_default["applied_filters"]["app_id"] == ALPHA
+
+
+def test_build_chat_tools_charts(client):
+    import json
+    from backend.app.chat import build_chat_tools
+    from backend.app.schemas import ReviewFilters
+
+    with SessionLocal() as session:
+        tools = build_chat_tools(session, ReviewFilters())
+        tool_charts = next(t for t in tools if t.name == "get_charts")
+
+        out = json.loads(tool_charts.invoke({}))
+        assert "playtime" in out
+        assert "games" in out
+        assert "languages" in out
+        assert "months" in out
+        assert len(out["playtime"]) == 9
+        assert len(out["games"]) == 2
+        assert out["languages"][0]["language"] == "english"
+
+
+def test_build_chat_tools_reviews_sample(client):
+    import json
+    from backend.app.chat import build_chat_tools
+    from backend.app.schemas import ReviewFilters
+
+    with SessionLocal() as session:
+        tools = build_chat_tools(session, ReviewFilters())
+        tool_reviews = next(t for t in tools if t.name == "get_reviews_sample")
+
+        out = json.loads(tool_reviews.invoke({"limit": 2, "sort_by": "votes_helpful", "sort_dir": "desc"}))
+        assert out["total"] == 4
+        assert out["limit"] == 2
+        assert len(out["items"]) == 2
+        assert out["items"][0]["votes_helpful"] >= out["items"][1]["votes_helpful"]
+
+
+def test_post_chat_missing_api_key(client, monkeypatch):
+    monkeypatch.delenv("OPENROUTER_API_KEY", raising=False)
+    response = client.post("/api/chat", json={"message": "Olá robô gamer!"})
+    assert response.status_code == 503
+    assert "OPENROUTER_API_KEY" in response.json()["detail"]
+
+
+def test_post_chat_empty_message(client):
+    response = client.post("/api/chat", json={"message": "    "})
+    assert response.status_code == 422
+    assert "vazia" in response.json()["detail"]
+
+
+def test_post_chat_invalid_playtime_bucket(client):
+    response = client.post(
+        "/api/chat",
+        json={"message": "Olá", "filters": {"playtime_bucket": "invalid_bucket"}},
+    )
+    assert response.status_code == 422
+    assert "playtime_bucket inválido" in response.json()["detail"]
+
+
+def test_post_chat_invalid_date_format(client, monkeypatch):
+    monkeypatch.setenv("OPENROUTER_API_KEY", "dummy_key")
+    response = client.post(
+        "/api/chat",
+        json={"message": "Olá", "filters": {"date_from": "2026/01/01"}},
+    )
+    assert response.status_code == 422
+    assert "Data inválida" in response.json()["detail"]
+
+
+def test_post_chat_with_mocked_llm_tool_calling(client, monkeypatch):
+    from langchain_core.messages import AIMessage
+
+    class MockChatModel:
+        def __init__(self):
+            self.call_count = 0
+
+        def bind_tools(self, tools):
+            return self
+
+        def invoke(self, messages):
+            self.call_count += 1
+            if self.call_count == 1:
+                msg = AIMessage(content="")
+                msg.tool_calls = [
+                    {
+                        "name": "get_metrics",
+                        "args": {"recommended": True},
+                        "id": "call_12345",
+                    }
+                ]
+                return msg
+            return AIMessage(content="Encontrei 2 avaliações positivas no banco de dados!")
+
+    monkeypatch.setenv("OPENROUTER_API_KEY", "dummy_key")
+    monkeypatch.setattr("backend.app.chat.ChatOpenAI", lambda **kwargs: MockChatModel())
+
+    payload = {
+        "message": "Quantas reviews positivas temos?",
+        "filters": {"app_id": ALPHA},
+        "history": [
+            {"role": "user", "content": "E aí SteamBot?"},
+            {"role": "assistant", "content": "Pronto para analisar os dados da Steam. Como posso ajudar?"},
+        ],
+    }
+
+    response = client.post("/api/chat", json=payload)
+    assert response.status_code == 200
+    assert response.headers["Cache-Control"] == "no-store"
+
+    data = response.json()
+    assert data["reply"] == "Encontrei 2 avaliações positivas no banco de dados!"
+    assert data["model"] == "nvidia/nemotron-3-ultra-550b-a55b:free"
+    assert "get_metrics" in data["tools_used"]
+
+
+def test_post_chat_api_rate_limit_error(client, monkeypatch):
+    import httpx
+    import openai
+
+    class RateLimitedChatModel:
+        def bind_tools(self, tools):
+            return self
+
+        def invoke(self, messages):
+            req = httpx.Request("POST", "https://openrouter.ai/api/v1/chat/completions")
+            resp = httpx.Response(status_code=429, request=req)
+            raise openai.RateLimitError(message="Rate limit exceeded", response=resp, body=None)
+
+    monkeypatch.setenv("OPENROUTER_API_KEY", "dummy_key")
+    monkeypatch.setattr("backend.app.chat.ChatOpenAI", lambda **kwargs: RateLimitedChatModel())
+
+    response = client.post("/api/chat", json={"message": "Olá"})
+    assert response.status_code == 503
+    assert "Limite de requisições" in response.json()["detail"]
+
+
+def test_post_chat_api_auth_error(client, monkeypatch):
+    import httpx
+    import openai
+
+    class AuthFailedChatModel:
+        def bind_tools(self, tools):
+            return self
+
+        def invoke(self, messages):
+            req = httpx.Request("POST", "https://openrouter.ai/api/v1/chat/completions")
+            resp = httpx.Response(status_code=401, request=req)
+            raise openai.AuthenticationError(message="Invalid API Key", response=resp, body=None)
+
+    monkeypatch.setenv("OPENROUTER_API_KEY", "invalid_key")
+    monkeypatch.setattr("backend.app.chat.ChatOpenAI", lambda **kwargs: AuthFailedChatModel())
+
+    response = client.post("/api/chat", json={"message": "Olá"})
+    assert response.status_code == 502
+    assert "não autorizada" in response.json()["detail"]
+
+
+def test_post_chat_custom_model_and_openrouter_prefix(client, monkeypatch):
+    from langchain_core.messages import AIMessage
+
+    recorded_model = None
+
+    class CaptureModel:
+        def __init__(self, model):
+            nonlocal recorded_model
+            recorded_model = model
+
+        def bind_tools(self, tools):
+            return self
+
+        def invoke(self, messages):
+            return AIMessage(content="Resposta usando modelo customizado!")
+
+    monkeypatch.setenv("OPENROUTER_API_KEY", "dummy_key")
+    monkeypatch.setenv("OPENROUTER_MODEL", "openrouter/anthropic/claude-3.5-sonnet")
+    monkeypatch.setattr("backend.app.chat.ChatOpenAI", lambda **kwargs: CaptureModel(kwargs.get("model")))
+
+    response = client.post("/api/chat", json={"message": "Teste"})
+    assert response.status_code == 200
+    assert recorded_model == "anthropic/claude-3.5-sonnet"
+    assert response.json()["model"] == "openrouter/anthropic/claude-3.5-sonnet"
+
+
+def test_system_prompt_empirical_rates_and_tone():
+    from backend.app.chat import SYSTEM_PROMPT
+
+    assert "49,6%" in SYSTEM_PROMPT
+    assert "59,9%" in SYSTEM_PROMPT
+    assert "77,4%" in SYSTEM_PROMPT
+    assert "93,3%" in SYSTEM_PROMPT
+    assert "Beep boop" not in SYSTEM_PROMPT
+    assert "tabelas Markdown concisas" in SYSTEM_PROMPT
+
+
+def test_post_chat_empty_llm_response_fallback(client, monkeypatch):
+    from langchain_core.messages import AIMessage
+
+    class EmptyChatModel:
+        def bind_tools(self, tools):
+            return self
+
+        def invoke(self, messages):
+            return AIMessage(content="   ")
+
+    monkeypatch.setenv("OPENROUTER_API_KEY", "dummy_key")
+    monkeypatch.setattr("backend.app.chat.ChatOpenAI", lambda **kwargs: EmptyChatModel())
+
+    response = client.post("/api/chat", json={"message": "Olá"})
+    assert response.status_code == 200
+    assert "Consulta concluída no acervo da Steam" in response.json()["reply"]
+
+
+
+

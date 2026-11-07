@@ -90,3 +90,24 @@ class ChartsResponse(BaseModel):
     games: list[GameBar]
     languages: list[LanguageBar]
     months: list[MonthPoint]
+
+
+ChatRole = Literal["user", "assistant"]
+
+
+class ChatHistoryItem(BaseModel):
+    role: ChatRole
+    content: str
+
+
+class ChatRequest(BaseModel):
+    message: str
+    filters: ReviewFilters = ReviewFilters()
+    history: list[ChatHistoryItem] = []
+
+
+class ChatResponse(BaseModel):
+    reply: str
+    model: str
+    tools_used: list[str] = []
+
