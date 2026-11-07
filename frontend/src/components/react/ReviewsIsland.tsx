@@ -25,11 +25,11 @@ import { useFilters, useReviewSort } from '../../lib/useNanostore';
 import { useHydrated } from '../../lib/useHydrated';
 import {
   DEFAULT_SORT,
-  resetFilters,
   reviewSort,
   type ReviewSort,
   type ReviewSortBy,
 } from '../../stores/filters';
+import { EmptyState } from './EmptyState';
 import { QueryRoot } from './QueryRoot';
 
 // Estado de expansão vai pelo meta da tabela, para as colunas não serem recriadas a cada clique.
@@ -284,6 +284,66 @@ function SortHeaderButton({
       <span>{label}</span>
       <SortChevronIcon />
     </button>
+  );
+}
+
+const SKELETON_ROWS_COUNT = 6;
+
+/**
+ * Linhas de skeleton exibidas durante o SSR e enquanto a primeira página carrega.
+ * Mantém a mesma estrutura de 6 colunas e dimensões das linhas reais para garantir
+ * que não haja layout shift (CLS ~ 0) na transição para os dados.
+ */
+function ReviewSkeletonRows() {
+  return (
+    <>
+      {Array.from({ length: SKELETON_ROWS_COUNT }).map((_, index) => (
+        <tr
+          key={`review-skeleton-${index}`}
+          className="review-row review-skeleton-row"
+          aria-hidden="true"
+        >
+          <td data-col="game">
+            <span className="review-skeleton-bar review-skeleton-game" />
+          </td>
+          <td data-col="language">
+            <span className="review-skeleton-bar review-skeleton-lang" />
+          </td>
+          <td data-col="recommendation">
+            <div className="review-skeleton-rec">
+              <span className="review-skeleton-bar review-skeleton-icon" />
+              <span className="review-skeleton-bar review-skeleton-rec-text" />
+            </div>
+          </td>
+          <td data-col="playtime_hours">
+            <span className="review-skeleton-bar review-skeleton-right review-skeleton-hours" />
+          </td>
+          <td data-col="votes_helpful">
+            <span className="review-skeleton-bar review-skeleton-right review-skeleton-votes" />
+            <span className="mobile-meta-votes-label">{' '}úteis</span>
+            <span className="mobile-meta-sep" aria-hidden="true"> · </span>
+            <span className="mobile-meta-date">
+              <span className="review-skeleton-bar review-skeleton-date" />
+            </span>
+          </td>
+          <td data-col="excerpt">
+            <div className="excerpt-cell review-skeleton-excerpt">
+              <div className="excerpt-line">
+                <span className="review-skeleton-bar review-skeleton-chevron" />
+                <div className="review-skeleton-text-group">
+                  <span className="review-skeleton-bar review-skeleton-text-l1" />
+                  <span className="review-skeleton-bar review-skeleton-text-l2" />
+                </div>
+              </div>
+              <div className="review-badges review-skeleton-badges">
+                <span className="review-skeleton-bar review-skeleton-badge review-skeleton-badge-date review-badge-date" />
+                <span className="review-skeleton-bar review-skeleton-badge review-skeleton-badge-extra" />
+              </div>
+            </div>
+          </td>
+        </tr>
+      ))}
+    </>
   );
 }
 
@@ -644,10 +704,11 @@ function ReviewsTableContent() {
   );
 
   const rows = table.getRowModel().rows;
-  const showEmpty = mounted && !isPending && items.length === 0 && !error;
+  const showSkeleton = !mounted || ((isPending || isFetching) && items.length === 0 && !error);
+  const showEmpty = mounted && !isPending && !isFetching && items.length === 0 && !error;
 
   let statusText: string;
-  if (!mounted || (isPending && items.length === 0)) {
+  if (showSkeleton) {
     statusText = 'Carregando avaliações…';
   } else if (isFetchingNextPage) {
     statusText = `${formatInteger(items.length)} de ${formatInteger(total)} carregadas · carregando mais…`;
@@ -665,7 +726,7 @@ function ReviewsTableContent() {
       aria-labelledby="reviews-heading"
       data-fetch-region="reviews"
       data-fetching={showBusy ? 'true' : 'false'}
-      aria-busy={showBusy}
+      aria-busy={showSkeleton || showBusy}
     >
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 id="reviews-heading" className="title">
@@ -684,7 +745,10 @@ function ReviewsTableContent() {
           aria-describedby="reviews-keyboard-hint"
           data-reviews-virtual="true"
         >
-          <table aria-describedby="reviews-keyboard-hint">
+          <table
+            aria-describedby="reviews-keyboard-hint"
+            aria-busy={showSkeleton || showBusy}
+          >
             <caption className="sr-only">
               Avaliações da seleção atual
               <span id="reviews-keyboard-hint">
@@ -716,23 +780,15 @@ function ReviewsTableContent() {
               ))}
             </thead>
             <tbody id="reviews-body">
-              {mounted &&
-                (showEmpty ? (
-                  <tr>
-                    <td colSpan={6} className="empty-cell">
-                      <div className="empty-state">
-                        <p>Nenhuma avaliação neste recorte.</p>
-                        <button
-                          type="button"
-                          className="btn btn-secondary btn-small"
-                          onClick={() => resetFilters()}
-                        >
-                          Limpar filtros
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ) : (
+              {showSkeleton ? (
+                <ReviewSkeletonRows />
+              ) : showEmpty ? (
+                <tr>
+                  <td colSpan={6} className="empty-cell">
+                    <EmptyState />
+                  </td>
+                </tr>
+              ) : (
                   <>
                     {paddingTop > 0 ? (
                       <tr aria-hidden="true" className="sheet-spacer">
@@ -796,7 +852,7 @@ function ReviewsTableContent() {
                       </tr>
                     ) : null}
                   </>
-                ))}
+              )}
             </tbody>
           </table>
         </div>

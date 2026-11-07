@@ -355,3 +355,224 @@
   }
 }
 
+/* ==========================================================================
+   Skeleton da Tabela de Avaliações (TASK 1)
+   Geometria idêntica às linhas reais para prevenir layout shift (CLS ~ 0).
+   Linhas reais: 71px de altura no desktop, 150px no layout mobile.
+   ========================================================================== */
+
+/* Linha esqueleto no desktop: não interativa, altura exata de 71px */
+.sheet tbody tr.review-skeleton-row {
+  height: 71px;
+  cursor: default;
+  pointer-events: none;
+}
+
+.sheet tbody tr.review-skeleton-row td {
+  height: 71px;
+  box-sizing: border-box;
+}
+
+.sheet tbody tr.review-skeleton-row:hover,
+.sheet tbody tr.review-skeleton-row:active {
+  background: var(--surface);
+}
+
+.sheet tbody tr.review-skeleton-row:hover td,
+.sheet tbody tr.review-skeleton-row:active td {
+  background: transparent;
+}
+
+/* Barra base de esqueleto com shimmer sutil usando tokens do design system */
+.review-skeleton-bar {
+  display: block;
+  border-radius: 4px;
+  background-color: var(--raised);
+  background-image: linear-gradient(
+    90deg,
+    var(--raised) 0%,
+    color-mix(in srgb, var(--surface) 75%, var(--raised)) 50%,
+    var(--raised) 100%
+  );
+  background-size: 200% 100%;
+  animation: review-skeleton-shimmer 1.8s var(--ease) infinite;
+}
+
+@keyframes review-skeleton-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Desabilita animação de shimmer sob prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  .review-skeleton-bar {
+    animation: none;
+    background-image: none;
+    background-color: var(--raised);
+  }
+}
+
+/* Alinhamento à direita para colunas numéricas (horas e votos) */
+.review-skeleton-right {
+  margin-left: auto;
+}
+
+/* Dimensões específicas dos placeholders por coluna */
+.review-skeleton-game {
+  width: 75%;
+  max-width: 130px;
+  height: 14px;
+}
+
+.review-skeleton-lang {
+  width: 60%;
+  max-width: 80px;
+  height: 14px;
+}
+
+.review-skeleton-rec {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.review-skeleton-icon {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  flex: none;
+}
+
+.review-skeleton-rec-text {
+  width: 32px;
+  height: 14px;
+}
+
+.review-skeleton-hours {
+  width: 48px;
+  height: 14px;
+}
+
+.review-skeleton-votes {
+  width: 36px;
+  height: 14px;
+}
+
+.review-skeleton-date {
+  display: inline-block;
+  width: 65px;
+  height: 12px;
+}
+
+.review-skeleton-excerpt {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.review-skeleton-chevron {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  flex: none;
+}
+
+.review-skeleton-text-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+
+.review-skeleton-text-l1 {
+  width: 85%;
+  height: 14px;
+}
+
+.review-skeleton-text-l2 {
+  display: none;
+}
+
+.review-skeleton-badges {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.review-skeleton-badge {
+  height: 18px;
+  border-radius: 4px;
+}
+
+.review-skeleton-badge-date {
+  width: 68px;
+}
+
+.review-skeleton-badge-extra {
+  width: 76px;
+}
+
+/* Layout mobile do esqueleto (< 768px): cards verticais com altura exata de 150px */
+@media (max-width: 767px) {
+  .sheet tbody tr.review-skeleton-row {
+    height: 150px;
+    box-sizing: border-box;
+    cursor: default;
+    pointer-events: none;
+  }
+
+  .sheet tbody tr.review-skeleton-row:hover,
+  .sheet tbody tr.review-skeleton-row:active {
+    background: var(--surface);
+  }
+
+  .sheet tbody tr.review-skeleton-row td[data-col="excerpt"] {
+    order: 1;
+    width: 100%;
+    flex: 0 0 100%;
+  }
+
+  .review-skeleton-text-l1 {
+    width: 95%;
+  }
+
+  .review-skeleton-text-l2 {
+    display: block;
+    width: 70%;
+    height: 14px;
+  }
+
+  .review-skeleton-game {
+    width: 80px;
+    height: 12px;
+  }
+
+  .review-skeleton-lang {
+    width: 50px;
+    height: 12px;
+  }
+
+  .review-skeleton-rec-text {
+    width: 24px;
+    height: 12px;
+  }
+
+  .review-skeleton-hours {
+    width: 40px;
+    height: 12px;
+    margin-left: 0;
+  }
+
+  .review-skeleton-votes {
+    width: 28px;
+    height: 12px;
+    margin-left: 0;
+  }
+}
+

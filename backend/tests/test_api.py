@@ -410,6 +410,7 @@ def test_charts_follow_filters(client):
     assert body["languages"][0]["review_count"] == 3
     assert len(body["months"]) == 1
     assert body["months"][0]["review_count"] == 4
+    assert body["months"][0]["recommendation_rate"] == 0.5
 
     alpha = client.get("/api/charts", params={"app_id": ALPHA})
     assert alpha.status_code == 200
@@ -438,7 +439,9 @@ def test_charts_follow_filters(client):
     sm_body = single_month.json()
     assert sm_body["games"] == []
     assert sm_body["languages"] == []
-    assert sm_body["months"] == [{"month": "2023-11", "review_count": 4}]
+    assert sm_body["months"] == [
+        {"month": "2023-11", "review_count": 4, "recommendation_rate": 0.5}
+    ]
 
     # Intervalos de múltiplos meses (como os presets de ano) aplicam zoom na série mensal.
     multi_month = client.get(
@@ -448,6 +451,35 @@ def test_charts_follow_filters(client):
     assert multi_month.status_code == 200
     mm_body = multi_month.json()
     assert mm_body["months"] == []
+
+
+def test_charts_month_recommendation_rate(client):
+    """Verifica se a série mensal inclui a taxa de recomendação calculada corretamente."""
+    response = client.get("/api/charts")
+    assert response.status_code == 200
+    body = response.json()
+    assert len(body["months"]) == 1
+    point = body["months"][0]
+    assert point["month"] == "2023-11"
+    assert point["review_count"] == 4
+    # Na fixture de testes, 2 das 4 avaliações de 2023-11 são recomendadas
+    assert point["recommendation_rate"] == 0.5
+
+    # Filtrando apenas avaliações positivas
+    rec_true = client.get("/api/charts", params={"recommended": True})
+    assert rec_true.status_code == 200
+    rec_true_months = rec_true.json()["months"]
+    assert len(rec_true_months) == 1
+    assert rec_true_months[0]["review_count"] == 2
+    assert rec_true_months[0]["recommendation_rate"] == 1.0
+
+    # Filtrando apenas avaliações negativas
+    rec_false = client.get("/api/charts", params={"recommended": False})
+    assert rec_false.status_code == 200
+    rec_false_months = rec_false.json()["months"]
+    assert len(rec_false_months) == 1
+    assert rec_false_months[0]["review_count"] == 2
+    assert rec_false_months[0]["recommendation_rate"] == 0.0
 
 
 @pytest.mark.parametrize("path", ["/api/metrics", "/api/summary", "/api/reviews", "/api/charts"])
@@ -469,6 +501,7 @@ def test_date_filtering_matching(client, path):
     elif path == "/api/charts":
         assert len(data["games"]) == 2
         assert data["months"][0]["review_count"] == 4
+        assert data["months"][0]["recommendation_rate"] == 0.5
     elif path == "/api/reviews":
         assert data["total"] == 4
         assert len(data["items"]) == 4

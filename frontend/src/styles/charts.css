@@ -22,6 +22,42 @@
     grid-column: span 3 / span 3;
   }
 }
+.chart-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+/* O texto cede espaço; o seletor só desce para baixo do título quando o card fica estreito. */
+.chart-card-header > :first-child {
+  flex: 1 1 320px;
+  min-width: 0;
+}
+
+.chart-card-subtitle {
+  display: grid;
+}
+
+.chart-card-subtitle > p {
+  grid-area: 1 / 1;
+}
+
+.chart-card-subtitle > p[data-active='false'] {
+  visibility: hidden;
+}
+
+.chart-month-toggle {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  flex-shrink: 0;
+  min-width: 170px;
+}
+
+.card-playtime {
+  container-type: inline-size;
+  container-name: playtime;
+}
 
 .chart-frame {
   border-radius: 8px;
@@ -32,6 +68,10 @@
   outline-offset: 4px;
 }
 
+.playtime-legend-container {
+  width: 100%;
+}
+
 .playtime-legend {
   display: grid;
   grid-template-columns: repeat(9, minmax(0, 1fr));
@@ -39,6 +79,18 @@
   padding-left: 48px;
   padding-right: 16px;
   margin-top: 6px;
+}
+
+/* Agrupamento sutil das duas primeiras faixas (<= 2 h: janela de reembolso Steam) */
+.playtime-refund-band {
+  grid-column: span 2 / span 2;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 2px;
+  position: relative;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--negative) 4%, transparent);
+  box-shadow: inset 0 -2px 0 0 color-mix(in srgb, var(--negative) 50%, transparent);
 }
 
 .playtime-chip {
@@ -55,6 +107,8 @@
   line-height: 14px;
   text-align: center;
   cursor: pointer;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
   transition:
     background-color var(--fast) var(--ease),
     border-color var(--fast) var(--ease),
@@ -87,10 +141,27 @@
 }
 
 .playtime-chip-label {
-  display: block;
-  word-break: normal;
-  overflow-wrap: normal;
-  white-space: normal;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 100%;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.playtime-chip-num {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Em larguras compactas do card, omite o sufixo repetido ' h' para evitar crowding */
+.playtime-chip-unit {
+  display: none;
+}
+
+@container playtime (min-width: 820px) {
+  .playtime-chip-unit {
+    display: inline;
+  }
 }
 
 .playtime-chip-dot {
@@ -102,6 +173,31 @@
   margin-top: -1px;
   border-radius: 999px;
   background: var(--negative);
+  flex-shrink: 0;
+}
+
+.playtime-legend-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-left: 48px;
+  padding-right: 16px;
+  margin-top: 6px;
+  font-size: 11px;
+  line-height: 14px;
+  color: var(--muted);
+}
+
+.playtime-legend-refund-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.playtime-legend-unit-hint {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
 }
 
 /* Ranking divergente em torno da taxa base */
@@ -193,7 +289,9 @@
 
 @media (prefers-reduced-motion: reduce) {
   .playtime-chip,
-  .rank-fill {
+  .rank-fill,
+  .seg-btn {
     transition: none;
   }
 }
+

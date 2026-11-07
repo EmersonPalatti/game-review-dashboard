@@ -1681,6 +1681,15 @@ section[data-fetch-region='reviews'][data-fetching='true'] .sheet-card::before {
   padding: 12px 0;
 }
 
+.empty-state[hidden] {
+  display: none;
+}
+
+.empty-state-start {
+  align-items: flex-start;
+  justify-content: flex-start;
+}
+
 @media (max-width: 767px), (pointer: coarse) {
   .preset-btn {
     min-height: 36px;
@@ -2404,6 +2413,7 @@ html.dark .chat-bubble-user {
   margin: 0;
   font-size: 14px;
   line-height: 20px;
+  text-wrap: pretty;
 }
 
 .chat-content-heading {

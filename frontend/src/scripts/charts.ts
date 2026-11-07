@@ -2,8 +2,33 @@ import * as echarts from 'echarts';
 import type { ECharts, EChartsOption } from 'echarts';
 import type { Charts, MonthPoint } from '../lib/api';
 import { BASELINE_RATE, REFUND_BUCKETS } from '../lib/constants';
-import { formatInteger, formatPercent } from '../lib/format';
+import { formatCount, formatInteger, formatPercent } from '../lib/format';
 import type { PlaytimeBucket } from '../stores/filters';
+
+export type MonthMetric = 'volume' | 'approval';
+let currentMonthMetric: MonthMetric = 'volume';
+
+export function getMonthMetric(): MonthMetric {
+  return currentMonthMetric;
+}
+
+export function setMonthMetric(metric: MonthMetric): void {
+  currentMonthMetric = metric;
+  if (!lastData || lastData.months.length === 0) return;
+  const colors = palette();
+  paintMonth(lastData, colors, true);
+  resizeCharts();
+}
+
+const approvalPercentFormat = new Intl.NumberFormat('pt-BR', {
+  style: 'percent',
+  minimumFractionDigits: 1,
+  maximumFractionDigits: 1,
+});
+
+export function formatApprovalRate(rate: number): string {
+  return approvalPercentFormat.format(rate);
+}
 
 const CHART_IDS = ['chart-month', 'chart-playtime'] as const;
 
@@ -211,8 +236,8 @@ function motionConfig(animate: boolean) {
   const active = animate && !prefersReducedMotion();
   return {
     animation: active,
-    animationDuration: active ? 360 : 0,
-    animationDurationUpdate: active ? 320 : 0,
+    animationDuration: active ? 340 : 0,
+    animationDurationUpdate: active ? 340 : 0,
     animationEasing: 'quarticOut' as const,
     animationEasingUpdate: 'quarticOut' as const,
   };
@@ -402,12 +427,37 @@ function peakMonthIndex(months: MonthPoint[]): number {
   return peak;
 }
 
+function lowestApprovalMonthIndex(months: MonthPoint[]): number {
+  let lowest = -1;
+  let minRate = Infinity;
+  for (let index = 0; index < months.length; index += 1) {
+    const point = months[index];
+    if (
+      point &&
+      point.review_count >= 30 &&
+      point.recommendation_rate !== null &&
+      point.recommendation_rate !== undefined
+    ) {
+      if (point.recommendation_rate < minRate) {
+        minRate = point.recommendation_rate;
+        lowest = index;
+      }
+    }
+  }
+  return lowest;
+}
+
 function defaultMonthIndex(): number {
-  if (!lastData) return 0;
+  if (!lastData || lastData.months.length === 0) return 0;
   const months = lastData.months;
   const activeIndex =
     lastActiveMonth === null ? -1 : months.findIndex((point) => point.month === lastActiveMonth);
-  return activeIndex >= 0 ? activeIndex : peakMonthIndex(months);
+  if (activeIndex >= 0) return activeIndex;
+  if (currentMonthMetric === 'approval') {
+    const lowest = lowestApprovalMonthIndex(months);
+    if (lowest >= 0) return lowest;
+  }
+  return peakMonthIndex(months);
 }
 
 function applyMonthAt(index: number): void {
@@ -451,9 +501,24 @@ function setMonthCursor(index: number): void {
   const point = lastData.months[next];
   if (!point) return;
   const active = point.month === lastActiveMonth ? ', filtro ativo' : '';
-  announce(
-    `${formatMonth(point.month)}: ${formatInteger(point.review_count)} avaliações${active}. Mês ${next + 1} de ${count}.`,
-  );
+  if (currentMonthMetric === 'approval') {
+    const rate = point.recommendation_rate;
+    if (point.review_count >= 30 && rate !== null && rate !== undefined) {
+      announce(
+        `${formatMonth(point.month)}: ${formatApprovalRate(rate)} de aprovação, ${formatInteger(point.review_count)} avaliações${active}. Mês ${next + 1} de ${count}.`,
+      );
+    } else {
+      const rateSuffix =
+        rate !== null && rate !== undefined ? `, ${formatApprovalRate(rate)} de aprovação` : '';
+      announce(
+        `${formatMonth(point.month)}: amostra pequena (${formatInteger(point.review_count)} avaliações)${rateSuffix}${active}. Mês ${next + 1} de ${count}.`,
+      );
+    }
+  } else {
+    announce(
+      `${formatMonth(point.month)}: ${formatInteger(point.review_count)} avaliações${active}. Mês ${next + 1} de ${count}.`,
+    );
+  }
 }
 
 function onMonthFocus(): void {
@@ -575,6 +640,7 @@ export function disposeCharts(): void {
   lastData = null;
   lastActivePlaytime = 'all';
   lastActiveMonth = null;
+  currentMonthMetric = 'volume';
   releaseFocusZoom();
   onSelectPlaytime = null;
   onSelectMonth = null;
@@ -592,17 +658,32 @@ function paintMonth(data: Charts, colors: ReturnType<typeof palette>, animate: b
 
   const peakIndex = peakMonthIndex(data.months);
   const best = data.months[peakIndex];
+  const lowestIndex = lowestApprovalMonthIndex(data.months);
+  const lowestMonth = lowestIndex >= 0 ? data.months[lowestIndex] : null;
   const activeIndex =
     lastActiveMonth !== null
       ? data.months.findIndex((point) => point.month === lastActiveMonth)
       : -1;
 
   const monthNode = document.getElementById('chart-month');
-  if (monthNode && best) {
-    monthNode.setAttribute(
-      'aria-label',
-      `Avaliações por mês: ${data.months.length} meses no recorte, pico em ${formatMonth(best.month)} com ${formatInteger(best.review_count)} avaliações. Use as setas ou PageUp/PageDown para percorrer os meses.`,
-    );
+  if (monthNode) {
+    if (currentMonthMetric === 'approval') {
+      const lowestInfo =
+        lowestMonth &&
+        lowestMonth.recommendation_rate !== null &&
+        lowestMonth.recommendation_rate !== undefined
+          ? `, menor aprovação em ${formatMonth(lowestMonth.month)} (${formatApprovalRate(lowestMonth.recommendation_rate)})`
+          : '';
+      monthNode.setAttribute(
+        'aria-label',
+        `Aprovação por mês: ${data.months.length} meses no recorte${lowestInfo}. Use as setas ou PageUp/PageDown para percorrer os meses.`,
+      );
+    } else if (best) {
+      monthNode.setAttribute(
+        'aria-label',
+        `Avaliações por mês: ${data.months.length} meses no recorte, pico em ${formatMonth(best.month)} com ${formatInteger(best.review_count)} avaliações. Use as setas ou PageUp/PageDown para percorrer os meses.`,
+      );
+    }
   }
 
   if (data.months.length <= 12) {
@@ -616,6 +697,93 @@ function paintMonth(data: Charts, colors: ReturnType<typeof palette>, animate: b
   const zoomStart = lastMonthZoom ? lastMonthZoom.start : 0;
   const zoomEnd = lastMonthZoom ? lastMonthZoom.end : 100;
   const monthChart = chart('chart-month');
+
+  let yMin = 0;
+  let yMax = 1;
+  if (currentMonthMetric === 'approval') {
+    const reliableRates = data.months
+      .filter(
+        (p) =>
+          p.review_count >= 30 &&
+          p.recommendation_rate !== null &&
+          p.recommendation_rate !== undefined,
+      )
+      .map((p) => p.recommendation_rate as number);
+    const boundsRates = reliableRates.length > 0 ? [...reliableRates, BASELINE_RATE] : [BASELINE_RATE];
+    const rMin = Math.min(...boundsRates);
+    const rMax = Math.max(...boundsRates);
+    // Limites em dezenas redondas: evita rótulos colados (ex.: 55% logo abaixo de 60%).
+    yMin = Math.max(0, Math.floor((rMin - 0.02) * 10) / 10);
+    yMax = Math.min(1, Math.ceil((rMax + 0.02) * 10) / 10);
+    if (yMax <= yMin) {
+      yMin = Math.max(0, yMin - 0.05);
+      yMax = Math.min(1, yMax + 0.05);
+    }
+  }
+
+  const seriesData =
+    currentMonthMetric === 'approval'
+      ? data.months.map((point) => {
+          const rate = point.recommendation_rate;
+          if (point.review_count < 30 || rate === null || rate === undefined) {
+            return null;
+          }
+          return rate;
+        })
+      : data.months.map((point) => point.review_count);
+
+  const peakScatterData =
+    currentMonthMetric === 'approval'
+      ? data.months.map((point, index) =>
+          index === lowestIndex &&
+          point.recommendation_rate !== null &&
+          point.recommendation_rate !== undefined
+            ? point.recommendation_rate
+            : null,
+        )
+      : data.months.map((point, index) => (index === peakIndex ? point.review_count : null));
+
+  const selectedScatterData =
+    currentMonthMetric === 'approval'
+      ? data.months.map((point, index) => {
+          if (index !== activeIndex) return null;
+          const rate = point.recommendation_rate;
+          return point.review_count >= 30 && rate !== null && rate !== undefined ? rate : null;
+        })
+      : data.months.map((point, index) => (index === activeIndex ? point.review_count : null));
+
+  const markLineData: any[] = [];
+  if (currentMonthMetric === 'approval') {
+    markLineData.push({
+      yAxis: BASELINE_RATE,
+      lineStyle: {
+        color: colors.muted,
+        type: [5, 4],
+        width: 1.5,
+      },
+      label: {
+        show: true,
+        position: 'insideEndTop',
+        distance: [0, 4],
+        formatter: 'média geral',
+        color: colors.muted,
+        fontFamily: '"IBM Plex Mono", monospace',
+        fontSize: 11,
+        fontWeight: 500,
+      },
+    });
+  }
+  if (activeIndex >= 0 && lastActiveMonth !== null) {
+    markLineData.push({
+      xAxis: lastActiveMonth,
+      lineStyle: {
+        color: colors.accent,
+        type: [5, 4],
+        width: 1.5,
+      },
+      label: { show: false },
+    });
+  }
 
   suppressZoomEvent = true;
   try {
@@ -681,11 +849,29 @@ function paintMonth(data: Charts, colors: ReturnType<typeof palette>, animate: b
           const index = (row as { dataIndex: number }).dataIndex;
           const point = data.months[index];
           if (!point) return '';
-          const peak = index === peakIndex ? '<br/>pico do recorte' : '';
+
           const action =
             index === activeIndex
               ? '<br/>Clique para limpar o filtro'
               : '<br/>Clique para filtrar o mês';
+
+          if (currentMonthMetric === 'approval') {
+            const rate = point.recommendation_rate;
+            const rateStr =
+              rate !== null && rate !== undefined ? `${formatApprovalRate(rate)} recomendam` : 'sem dados';
+            const baseLine = `${formatMonth(point.month)} · ${rateStr} · ${formatInteger(point.review_count)} avaliações`;
+            const smallSample =
+              point.review_count < 30
+                ? `<br/>amostra pequena (${formatCount(point.review_count, 'avaliação', 'avaliações')})`
+                : '';
+            const lowestNote =
+              point.review_count >= 30 && index === lowestIndex
+                ? '<br/>menor aprovação do recorte'
+                : '';
+            return `${baseLine}${smallSample}${lowestNote}${action}`;
+          }
+
+          const peak = index === peakIndex ? '<br/>pico do recorte' : '';
           return `${formatMonth(point.month)}<br/>${formatInteger(point.review_count)} avaliações${peak}${action}`;
         },
       },
@@ -708,25 +894,33 @@ function paintMonth(data: Charts, colors: ReturnType<typeof palette>, animate: b
       },
       yAxis: {
         type: 'value',
-        min: 0,
+        min: currentMonthMetric === 'approval' ? yMin : 0,
+        max: currentMonthMetric === 'approval' ? yMax : (null as any),
         axisLine: { show: false },
         axisTick: { show: false },
         splitLine: { show: true, lineStyle: { color: colors.line } },
         axisLabel: {
           ...axisLabel(colors.muted),
-          formatter: (value: number) => formatInteger(value),
+          formatter:
+            currentMonthMetric === 'approval'
+              ? (value: number) => `${Math.round(value * 100)}%`
+              : (value: number) => formatInteger(value),
         },
       },
       series: [
         {
           id: 'month-line',
           type: 'line',
-          data: data.months.map((point) => point.review_count),
+          connectNulls: false,
+          data: seriesData,
           showSymbol: false,
           symbol: 'circle',
           symbolSize: 6,
           cursor: 'pointer',
-          lineStyle: { color: colors.secondary, width: 1.75 },
+          lineStyle: {
+            color: currentMonthMetric === 'approval' ? colors.accent : colors.secondary,
+            width: 1.75,
+          },
           itemStyle: { color: colors.accent },
           emphasis: {
             disabled: false,
@@ -742,31 +936,26 @@ function paintMonth(data: Charts, colors: ReturnType<typeof palette>, animate: b
             silent: true,
             symbol: ['none', 'none'],
             z: 2,
-            data:
-              activeIndex >= 0 && lastActiveMonth !== null
-                ? [
-                    {
-                      xAxis: lastActiveMonth,
-                      lineStyle: {
-                        color: colors.accent,
-                        type: [5, 4],
-                        width: 1.5,
-                      },
-                      label: { show: false },
-                    },
-                  ]
-                : [],
+            data: markLineData,
           },
         },
         {
           id: 'month-peak',
           type: 'scatter',
-          data: data.months.map((point, index) => (index === peakIndex ? point.review_count : null)),
+          data: peakScatterData,
           symbolSize: 8,
           cursor: 'pointer',
           itemStyle: {
-            color: activeIndex >= 0 && activeIndex !== peakIndex ? colors.muted : colors.accent,
-            opacity: activeIndex >= 0 && activeIndex !== peakIndex ? 0.55 : 1,
+            color:
+              activeIndex >= 0 &&
+              activeIndex !== (currentMonthMetric === 'approval' ? lowestIndex : peakIndex)
+                ? colors.muted
+                : colors.accent,
+            opacity:
+              activeIndex >= 0 &&
+              activeIndex !== (currentMonthMetric === 'approval' ? lowestIndex : peakIndex)
+                ? 0.55
+                : 1,
           },
           tooltip: { show: false },
           z: 3,
@@ -774,7 +963,7 @@ function paintMonth(data: Charts, colors: ReturnType<typeof palette>, animate: b
         {
           id: 'month-selected',
           type: 'scatter',
-          data: data.months.map((point, index) => (index === activeIndex ? point.review_count : null)),
+          data: selectedScatterData,
           symbolSize: 9,
           cursor: 'pointer',
           itemStyle: {

@@ -357,9 +357,12 @@ def charts(session: Session, filters: ReviewFilters) -> ChartsResponse:
     if is_empty_filters(filters):
         baseline = _get_baseline()
         if baseline and "charts" in baseline:
-            result = ChartsResponse.model_validate(baseline["charts"])
-            _charts_cache.set(cache_key, result)
-            return result
+            baseline_months = baseline["charts"].get("months", [])
+            # Só reutiliza o baseline estático se os meses já possuírem recommendation_rate pré-calculada
+            if baseline_months and any(m.get("recommendation_rate") is not None for m in baseline_months):
+                result = ChartsResponse.model_validate(baseline["charts"])
+                _charts_cache.set(cache_key, result)
+                return result
 
     columns = []
     for key, bounds in PLAYTIME_BUCKETS.items():
@@ -469,9 +472,13 @@ def charts(session: Session, filters: ReviewFilters) -> ChartsResponse:
             "%Y-%m", Review.timestamp_created, "unixepoch"
         ).label("month")
     month_count = func.count().label("review_count")
+    month_positive = func.coalesce(
+        func.sum(case((Review.recommended.is_(True), 1), else_=0)),
+        0,
+    ).label("positive")
     month_rows = session.execute(
         apply_filters(
-            select(month_key, month_count)
+            select(month_key, month_count, month_positive)
             .where(Review.timestamp_created.is_not(None))
             .group_by(month_key)
             .order_by(month_key.asc()),
@@ -487,7 +494,11 @@ def charts(session: Session, filters: ReviewFilters) -> ChartsResponse:
         ],
         languages=languages,
         months=[
-            MonthPoint(month=row.month, review_count=int(row.review_count))
+            MonthPoint(
+                month=row.month,
+                review_count=int(row.review_count),
+                recommendation_rate=_rate(int(row.positive or 0), int(row.review_count)),
+            )
             for row in month_rows
             if row.month
         ],

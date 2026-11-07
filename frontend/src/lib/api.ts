@@ -67,6 +67,7 @@ export type LanguageBar = {
 export type MonthPoint = {
   month: string;
   review_count: number;
+  recommendation_rate?: number | null;
 };
 
 export type Charts = {

@@ -83,6 +83,7 @@ class LanguageBar(BaseModel):
 class MonthPoint(BaseModel):
     month: str
     review_count: int
+    recommendation_rate: float | None = None
 
 
 class ChartsResponse(BaseModel):

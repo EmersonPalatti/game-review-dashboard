@@ -552,383 +552,478 @@
     "months": [
       {
         "month": "2013-03",
-        "review_count": 571
+        "review_count": 571,
+        "recommendation_rate": 0.9702276707530648
       },
       {
         "month": "2013-04",
-        "review_count": 181
+        "review_count": 181,
+        "recommendation_rate": 0.9668508287292817
       },
       {
         "month": "2013-05",
-        "review_count": 150
+        "review_count": 150,
+        "recommendation_rate": 0.9933333333333333
       },
       {
         "month": "2013-06",
-        "review_count": 218
+        "review_count": 218,
+        "recommendation_rate": 0.9541284403669725
       },
       {
         "month": "2013-07",
-        "review_count": 234
+        "review_count": 234,
+        "recommendation_rate": 0.9871794871794872
       },
       {
         "month": "2013-08",
-        "review_count": 145
+        "review_count": 145,
+        "recommendation_rate": 0.9793103448275862
       },
       {
         "month": "2013-09",
-        "review_count": 352
+        "review_count": 352,
+        "recommendation_rate": 0.96875
       },
       {
         "month": "2013-10",
-        "review_count": 171
+        "review_count": 171,
+        "recommendation_rate": 0.9649122807017544
       },
       {
         "month": "2013-11",
-        "review_count": 508
+        "review_count": 508,
+        "recommendation_rate": 0.9586614173228346
       },
       {
         "month": "2013-12",
-        "review_count": 1320
+        "review_count": 1320,
+        "recommendation_rate": 0.9484848484848485
       },
       {
         "month": "2014-01",
-        "review_count": 1232
+        "review_count": 1232,
+        "recommendation_rate": 0.9237012987012987
       },
       {
         "month": "2014-02",
-        "review_count": 1211
+        "review_count": 1211,
+        "recommendation_rate": 0.9430222956234517
       },
       {
         "month": "2014-03",
-        "review_count": 1232
+        "review_count": 1232,
+        "recommendation_rate": 0.922077922077922
       },
       {
         "month": "2014-04",
-        "review_count": 881
+        "review_count": 881,
+        "recommendation_rate": 0.9432463110102156
       },
       {
         "month": "2014-05",
-        "review_count": 2512
+        "review_count": 2512,
+        "recommendation_rate": 0.8873407643312102
       },
       {
         "month": "2014-06",
-        "review_count": 2642
+        "review_count": 2642,
+        "recommendation_rate": 0.9473883421650265
       },
       {
         "month": "2014-07",
-        "review_count": 1640
+        "review_count": 1640,
+        "recommendation_rate": 0.9329268292682927
       },
       {
         "month": "2014-08",
-        "review_count": 1150
+        "review_count": 1150,
+        "recommendation_rate": 0.9217391304347826
       },
       {
         "month": "2014-09",
-        "review_count": 953
+        "review_count": 953,
+        "recommendation_rate": 0.9233997901364114
       },
       {
         "month": "2014-10",
-        "review_count": 2222
+        "review_count": 2222,
+        "recommendation_rate": 0.869036903690369
       },
       {
         "month": "2014-11",
-        "review_count": 1642
+        "review_count": 1642,
+        "recommendation_rate": 0.9031668696711328
       },
       {
         "month": "2014-12",
-        "review_count": 2047
+        "review_count": 2047,
+        "recommendation_rate": 0.9281875915974597
       },
       {
         "month": "2015-01",
-        "review_count": 1981
+        "review_count": 1981,
+        "recommendation_rate": 0.9162039374053509
       },
       {
         "month": "2015-02",
-        "review_count": 4117
+        "review_count": 4117,
+        "recommendation_rate": 0.9120718970123877
       },
       {
         "month": "2015-03",
-        "review_count": 2345
+        "review_count": 2345,
+        "recommendation_rate": 0.9125799573560768
       },
       {
         "month": "2015-04",
-        "review_count": 1819
+        "review_count": 1819,
+        "recommendation_rate": 0.9131390874106652
       },
       {
         "month": "2015-05",
-        "review_count": 2554
+        "review_count": 2554,
+        "recommendation_rate": 0.8598277212216131
       },
       {
         "month": "2015-06",
-        "review_count": 2766
+        "review_count": 2766,
+        "recommendation_rate": 0.8987707881417208
       },
       {
         "month": "2015-07",
-        "review_count": 1722
+        "review_count": 1722,
+        "recommendation_rate": 0.8896631823461092
       },
       {
         "month": "2015-08",
-        "review_count": 1712
+        "review_count": 1712,
+        "recommendation_rate": 0.8796728971962616
       },
       {
         "month": "2015-09",
-        "review_count": 1375
+        "review_count": 1375,
+        "recommendation_rate": 0.9018181818181819
       },
       {
         "month": "2015-10",
-        "review_count": 1868
+        "review_count": 1868,
+        "recommendation_rate": 0.8736616702355461
       },
       {
         "month": "2015-11",
-        "review_count": 1658
+        "review_count": 1658,
+        "recommendation_rate": 0.8974668275030157
       },
       {
         "month": "2015-12",
-        "review_count": 2880
+        "review_count": 2880,
+        "recommendation_rate": 0.8809027777777778
       },
       {
         "month": "2016-01",
-        "review_count": 4269
+        "review_count": 4269,
+        "recommendation_rate": 0.8945888966971187
       },
       {
         "month": "2016-02",
-        "review_count": 2907
+        "review_count": 2907,
+        "recommendation_rate": 0.8751289989680082
       },
       {
         "month": "2016-03",
-        "review_count": 1870
+        "review_count": 1870,
+        "recommendation_rate": 0.9128342245989305
       },
       {
         "month": "2016-04",
-        "review_count": 1480
+        "review_count": 1480,
+        "recommendation_rate": 0.9182432432432432
       },
       {
         "month": "2016-05",
-        "review_count": 3131
+        "review_count": 3131,
+        "recommendation_rate": 0.8588310443947621
       },
       {
         "month": "2016-06",
-        "review_count": 2813
+        "review_count": 2813,
+        "recommendation_rate": 0.8890863846427302
       },
       {
         "month": "2016-07",
-        "review_count": 2763
+        "review_count": 2763,
+        "recommendation_rate": 0.8635541078537822
       },
       {
         "month": "2016-08",
-        "review_count": 1816
+        "review_count": 1816,
+        "recommendation_rate": 0.8623348017621145
       },
       {
         "month": "2016-09",
-        "review_count": 1419
+        "review_count": 1419,
+        "recommendation_rate": 0.8780831571529246
       },
       {
         "month": "2016-10",
-        "review_count": 11195
+        "review_count": 11195,
+        "recommendation_rate": 0.6835194283162126
       },
       {
         "month": "2016-11",
-        "review_count": 22059
+        "review_count": 22059,
+        "recommendation_rate": 0.9067047463620291
       },
       {
         "month": "2016-12",
-        "review_count": 4239
+        "review_count": 4239,
+        "recommendation_rate": 0.86482661004954
       },
       {
         "month": "2017-01",
-        "review_count": 3654
+        "review_count": 3654,
+        "recommendation_rate": 0.8568691844553914
       },
       {
         "month": "2017-02",
-        "review_count": 13493
+        "review_count": 13493,
+        "recommendation_rate": 0.61669013562588
       },
       {
         "month": "2017-03",
-        "review_count": 12590
+        "review_count": 12590,
+        "recommendation_rate": 0.7172359015091342
       },
       {
         "month": "2017-04",
-        "review_count": 11013
+        "review_count": 11013,
+        "recommendation_rate": 0.6989921002451648
       },
       {
         "month": "2017-05",
-        "review_count": 8111
+        "review_count": 8111,
+        "recommendation_rate": 0.7107631611391937
       },
       {
         "month": "2017-06",
-        "review_count": 9197
+        "review_count": 9197,
+        "recommendation_rate": 0.7798195063607698
       },
       {
         "month": "2017-07",
-        "review_count": 7554
+        "review_count": 7554,
+        "recommendation_rate": 0.8130791633571618
       },
       {
         "month": "2017-08",
-        "review_count": 6866
+        "review_count": 6866,
+        "recommendation_rate": 0.67491989513545
       },
       {
         "month": "2017-09",
-        "review_count": 8306
+        "review_count": 8306,
+        "recommendation_rate": 0.6815555020467132
       },
       {
         "month": "2017-10",
-        "review_count": 6373
+        "review_count": 6373,
+        "recommendation_rate": 0.6300015691197238
       },
       {
         "month": "2017-11",
-        "review_count": 19981
+        "review_count": 19981,
+        "recommendation_rate": 0.9133176517691807
       },
       {
         "month": "2017-12",
-        "review_count": 5951
+        "review_count": 5951,
+        "recommendation_rate": 0.8227188707780205
       },
       {
         "month": "2018-01",
-        "review_count": 8491
+        "review_count": 8491,
+        "recommendation_rate": 0.8222824166764809
       },
       {
         "month": "2018-02",
-        "review_count": 27055
+        "review_count": 27055,
+        "recommendation_rate": 0.6506745518388468
       },
       {
         "month": "2018-03",
-        "review_count": 22236
+        "review_count": 22236,
+        "recommendation_rate": 0.7458625652095701
       },
       {
         "month": "2018-04",
-        "review_count": 13456
+        "review_count": 13456,
+        "recommendation_rate": 0.75185790725327
       },
       {
         "month": "2018-05",
-        "review_count": 19324
+        "review_count": 19324,
+        "recommendation_rate": 0.6817429103705237
       },
       {
         "month": "2018-06",
-        "review_count": 40674
+        "review_count": 40674,
+        "recommendation_rate": 0.755249053449378
       },
       {
         "month": "2018-07",
-        "review_count": 16402
+        "review_count": 16402,
+        "recommendation_rate": 0.7464333617851482
       },
       {
         "month": "2018-08",
-        "review_count": 20168
+        "review_count": 20168,
+        "recommendation_rate": 0.7173740579135264
       },
       {
         "month": "2018-09",
-        "review_count": 11126
+        "review_count": 11126,
+        "recommendation_rate": 0.7212834801366169
       },
       {
         "month": "2018-10",
-        "review_count": 13003
+        "review_count": 13003,
+        "recommendation_rate": 0.7173729139429362
       },
       {
         "month": "2018-11",
-        "review_count": 40418
+        "review_count": 40418,
+        "recommendation_rate": 0.8855460438418526
       },
       {
         "month": "2018-12",
-        "review_count": 19300
+        "review_count": 19300,
+        "recommendation_rate": 0.7038341968911918
       },
       {
         "month": "2019-01",
-        "review_count": 14006
+        "review_count": 14006,
+        "recommendation_rate": 0.7569613022990147
       },
       {
         "month": "2019-02",
-        "review_count": 13282
+        "review_count": 13282,
+        "recommendation_rate": 0.7282788736636049
       },
       {
         "month": "2019-03",
-        "review_count": 11398
+        "review_count": 11398,
+        "recommendation_rate": 0.7546060712405686
       },
       {
         "month": "2019-04",
-        "review_count": 8832
+        "review_count": 8832,
+        "recommendation_rate": 0.7689085144927537
       },
       {
         "month": "2019-05",
-        "review_count": 11957
+        "review_count": 11957,
+        "recommendation_rate": 0.7665802458810739
       },
       {
         "month": "2019-06",
-        "review_count": 31897
+        "review_count": 31897,
+        "recommendation_rate": 0.8852243157663731
       },
       {
         "month": "2019-07",
-        "review_count": 33620
+        "review_count": 33620,
+        "recommendation_rate": 0.8984830458060679
       },
       {
         "month": "2019-08",
-        "review_count": 8478
+        "review_count": 8478,
+        "recommendation_rate": 0.7701108752064166
       },
       {
         "month": "2019-09",
-        "review_count": 6160
+        "review_count": 6160,
+        "recommendation_rate": 0.7610389610389611
       },
       {
         "month": "2019-10",
-        "review_count": 11686
+        "review_count": 11686,
+        "recommendation_rate": 0.7954817730617834
       },
       {
         "month": "2019-11",
-        "review_count": 46169
+        "review_count": 46169,
+        "recommendation_rate": 0.9239099828889514
       },
       {
         "month": "2019-12",
-        "review_count": 34410
+        "review_count": 34410,
+        "recommendation_rate": 0.9217378668991573
       },
       {
         "month": "2020-01",
-        "review_count": 29587
+        "review_count": 29587,
+        "recommendation_rate": 0.9087775036333525
       },
       {
         "month": "2020-02",
-        "review_count": 23019
+        "review_count": 23019,
+        "recommendation_rate": 0.9031235066684044
       },
       {
         "month": "2020-03",
-        "review_count": 30466
+        "review_count": 30466,
+        "recommendation_rate": 0.8995601654303158
       },
       {
         "month": "2020-04",
-        "review_count": 28652
+        "review_count": 28652,
+        "recommendation_rate": 0.9017171576155242
       },
       {
         "month": "2020-05",
-        "review_count": 22863
+        "review_count": 22863,
+        "recommendation_rate": 0.8732449809736255
       },
       {
         "month": "2020-06",
-        "review_count": 19801
+        "review_count": 19801,
+        "recommendation_rate": 0.8890965102772588
       },
       {
         "month": "2020-07",
-        "review_count": 22239
+        "review_count": 22239,
+        "recommendation_rate": 0.8792211880030577
       },
       {
         "month": "2020-08",
-        "review_count": 16653
+        "review_count": 16653,
+        "recommendation_rate": 0.8569627094217258
       },
       {
         "month": "2020-09",
-        "review_count": 15922
+        "review_count": 15922,
+        "recommendation_rate": 0.8725662605200352
       },
       {
         "month": "2020-10",
-        "review_count": 18884
+        "review_count": 18884,
+        "recommendation_rate": 0.8804808303325566
       },
       {
         "month": "2020-11",
-        "review_count": 23607
+        "review_count": 23607,
+        "recommendation_rate": 0.906849663235481
       },
       {
         "month": "2020-12",
-        "review_count": 22678
+        "review_count": 22678,
+        "recommendation_rate": 0.8911720610283094
       },
       {
         "month": "2021-01",
-        "review_count": 19020
+        "review_count": 19020,
+        "recommendation_rate": 0.9009989484752892
       }
     ]
   }

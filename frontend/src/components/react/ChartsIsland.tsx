@@ -1,5 +1,5 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   fetchCharts,
   fetchFacets,
@@ -20,6 +20,8 @@ import {
   formatMonth,
   initCharts,
   renderCharts,
+  setMonthMetric,
+  type MonthMetric,
 } from '../../scripts/charts';
 import { rankRow } from '../../scripts/renderers';
 import {
@@ -31,8 +33,8 @@ import {
   type PlaytimeBucket,
 } from '../../stores/filters';
 import { QueryRoot } from './QueryRoot';
+import { EmptyState } from './EmptyState';
 
-const EMPTY_TEXT = 'Sem avaliações neste recorte.';
 const RANK_GAMES_LIMIT = 8;
 
 function patchFilters(patch: Partial<Filters>): void {
@@ -166,35 +168,58 @@ type PlaytimeLegendProps = {
 };
 
 function PlaytimeLegend({ rows, active, onToggle }: PlaytimeLegendProps) {
+  // Filtra faixas válidas e separa o par da janela de reembolso (<= 2 h)
+  const validRows = rows.filter((row) => isPlaytimeBucket(row.key));
+  const refundRows = validRows.filter((row) => REFUND_BUCKETS.includes(row.key as PlaytimeBucket));
+  const otherRows = validRows.filter((row) => !REFUND_BUCKETS.includes(row.key as PlaytimeBucket));
+
+  const renderChip = (row: PlaytimePoint) => {
+    const bucket = row.key as PlaytimeBucket;
+    const refund = REFUND_BUCKETS.includes(bucket);
+    const rate =
+      row.recommendation_rate === null
+        ? PLACEHOLDER
+        : formatPercent(row.recommendation_rate);
+    const rateName = row.recommendation_rate === null ? 'sem dados' : rate;
+    const valueOnly = row.label.replace(/\s*h$/, '');
+
+    return (
+      <button
+        key={row.key}
+        type="button"
+        className="playtime-chip"
+        aria-pressed={active === bucket}
+        aria-label={`${row.label} ${rateName}${refund ? ', janela de reembolso' : ''}`}
+        title={`${row.label}: ${rateName} · ${formatCount(row.review_count, 'avaliação', 'avaliações')}`}
+        onClick={() => onToggle(bucket)}
+      >
+        <span className="playtime-chip-label">
+          {refund ? <span className="playtime-chip-dot" aria-hidden="true" /> : null}
+          <span className="playtime-chip-num">{valueOnly}</span>
+          <span className="playtime-chip-unit"> h</span>
+        </span>
+      </button>
+    );
+  };
+
   return (
-    <div className="playtime-legend" role="group" aria-label="Filtrar por faixa de tempo de jogo">
-      {rows.map((row) => {
-        if (!isPlaytimeBucket(row.key)) return null;
-        const bucket = row.key;
-        const refund = REFUND_BUCKETS.includes(bucket);
-        const rate =
-          row.recommendation_rate === null
-            ? PLACEHOLDER
-            : formatPercent(row.recommendation_rate);
-        const rateName = row.recommendation_rate === null ? 'sem dados' : rate;
-        return (
-          <button
-            key={row.key}
-            type="button"
-            className="playtime-chip"
-            aria-pressed={active === bucket}
-            aria-label={`${row.label} ${rateName}${refund ? ', janela de reembolso' : ''}`}
-            title={`${row.label}: ${rateName} · ${formatCount(row.review_count, 'avaliação', 'avaliações')}`}
-            onClick={() => onToggle(bucket)}
-          >
-            <span className="playtime-chip-label">
-              {refund ? <span className="playtime-chip-dot" aria-hidden="true" /> : null}
-              {row.label.replace(/\s*h$/, '')}
-              <span className="playtime-chip-unit"> h</span>
-            </span>
-          </button>
-        );
-      })}
+    <div className="playtime-legend-container">
+      <div className="playtime-legend" role="group" aria-label="Filtrar por faixa de tempo de jogo">
+        {refundRows.length === 2 ? (
+          <div className="playtime-refund-band" title="Janela de reembolso Steam (até 2 horas)">
+            {refundRows.map(renderChip)}
+          </div>
+        ) : (
+          refundRows.map(renderChip)
+        )}
+        {otherRows.map(renderChip)}
+      </div>
+      <div className="playtime-legend-footer" aria-hidden="true">
+        <span className="playtime-legend-refund-hint">
+          <span className="playtime-chip-dot" /> até 2 h: janela de reembolso
+        </span>
+        <span className="playtime-legend-unit-hint">horas jogadas</span>
+      </div>
     </div>
   );
 }
@@ -287,22 +312,42 @@ function MonthTable({ months }: { months: MonthPoint[] }) {
         <tr>
           <th scope="col">Mês</th>
           <th scope="col">Avaliações</th>
+          <th scope="col">Recomendação</th>
         </tr>
       </thead>
       <tbody>
-        {months.map((point) => (
-          <tr key={point.month}>
-            <th scope="row">{formatMonth(point.month)}</th>
-            <td>{formatInteger(point.review_count)}</td>
-          </tr>
-        ))}
+        {months.map((point) => {
+          const rate = point.recommendation_rate;
+          return (
+            <tr key={point.month}>
+              <th scope="row">{formatMonth(point.month)}</th>
+              <td>{formatInteger(point.review_count)}</td>
+              <td>{rate !== null && rate !== undefined ? formatPercent(rate) : '—'}</td>
+            </tr>
+          );
+        })}
       </tbody>
     </table>
   );
 }
 
+const MONTH_METRIC_SUBTITLES: ReadonlyArray<{ metric: MonthMetric; text: string }> = [
+  { metric: 'volume', text: 'Publicadas em cada mês do recorte · clique em um mês para filtrar' },
+  {
+    metric: 'approval',
+    text: 'Percentual que recomenda em cada mês · meses com menos de 30 avaliações ficam de fora · clique em um mês para filtrar',
+  },
+];
+
 function ChartsContent() {
   const currentFilters = useFilters();
+  const [monthMetric, setMonthMetricState] = useState<MonthMetric>('volume');
+
+  const handleMonthMetricChange = (metric: MonthMetric) => {
+    setMonthMetricState(metric);
+    setMonthMetric(metric);
+  };
+
   const metricsKey = useMemo(() => ['metrics', currentFilters] as const, [currentFilters]);
   const chartsKey = useMemo(() => ['charts', currentFilters] as const, [currentFilters]);
   const gameRanksRef = useRef<HTMLOListElement>(null);
@@ -471,8 +516,48 @@ function ChartsContent() {
         aria-busy={showBusy}
       >
         <article className="card charts-col-span-2">
-          <h2 className="title">Avaliações por mês</h2>
-          <p className="meta mt-2">Publicadas em cada mês do recorte · clique em um mês para filtrar</p>
+          <div className="chart-card-header">
+            <div>
+              <h2 className="title">
+                {monthMetric === 'approval' ? 'Aprovação por mês' : 'Avaliações por mês'}
+              </h2>
+              {/* As duas legendas ocupam a mesma célula: o cabeçalho reserva a mais alta e
+                  a troca de métrica não desloca o seletor nem o gráfico. */}
+              <div className="chart-card-subtitle mt-2">
+                {MONTH_METRIC_SUBTITLES.map(({ metric, text }) => (
+                  <p
+                    key={metric}
+                    className="meta"
+                    data-active={metric === monthMetric ? 'true' : 'false'}
+                  >
+                    {text}
+                  </p>
+                ))}
+              </div>
+            </div>
+            <div
+              className="seg-control chart-month-toggle"
+              role="group"
+              aria-label="Métrica do gráfico mensal"
+            >
+              <button
+                type="button"
+                className="seg-btn"
+                aria-pressed={monthMetric === 'volume' ? 'true' : 'false'}
+                onClick={() => handleMonthMetricChange('volume')}
+              >
+                Volume
+              </button>
+              <button
+                type="button"
+                className="seg-btn"
+                aria-pressed={monthMetric === 'approval' ? 'true' : 'false'}
+                onClick={() => handleMonthMetricChange('approval')}
+              >
+                Aprovação
+              </button>
+            </div>
+          </div>
           <div
             id="chart-month"
             role="group"
@@ -483,12 +568,10 @@ function ChartsContent() {
             className="chart-frame mt-4 h-[320px] w-full"
             hidden={monthEmpty}
           />
-          <p className="meta mt-4" hidden={!monthEmpty}>
-            {EMPTY_TEXT}
-          </p>
+          <EmptyState align="start" className="mt-4" hidden={!monthEmpty} />
           <p id="chart-month-hint" className="sr-only">
             Use as setas para percorrer os meses (PageUp/PageDown para avançar ou voltar 12 meses). Enter ou Espaço filtra o mês destacado. Escape
-            remove o filtro de mês.
+            remove o filtro de mês. Uma tabela com os mesmos dados segue logo abaixo.
           </p>
           <p id="chart-month-live" className="sr-only" aria-live="polite" />
           {effectiveChartsData !== undefined && !monthEmpty ? <MonthTable months={effectiveChartsData.months} /> : null}
@@ -503,9 +586,7 @@ function ChartsContent() {
             className="rank-list"
             hidden={gamesEmpty}
           />
-          <p className="meta mt-4" hidden={!gamesEmpty}>
-            {EMPTY_TEXT}
-          </p>
+          <EmptyState align="start" className="mt-4" hidden={!gamesEmpty} />
           {gameRankNote ? (
             <p className="meta mt-4" hidden={gamesEmpty}>
               {gameRankNote}
@@ -513,7 +594,7 @@ function ChartsContent() {
           ) : null}
         </article>
 
-        <article className="card charts-col-span-2">
+        <article className="card charts-col-span-2 card-playtime">
           <h2 className="title">Recomendação por tempo de jogo</h2>
 
           <div className="playtime-desktop">
@@ -521,9 +602,7 @@ function ChartsContent() {
               Aprovação por faixa de horas jogadas (reembolso até 2{' '}h)
             </p>
             <div id="chart-playtime" className="chart-frame mt-4 h-[280px] w-full" hidden={playtimeEmpty} />
-            <p className="meta mt-4" hidden={!playtimeEmpty}>
-              {EMPTY_TEXT}
-            </p>
+            <EmptyState align="start" className="mt-4" hidden={!playtimeEmpty} />
             {effectiveChartsData !== undefined && !playtimeEmpty ? (
               <PlaytimeLegend
                 rows={effectiveChartsData.playtime}
@@ -537,9 +616,7 @@ function ChartsContent() {
             <p className="meta mt-2">
               Barras partem da base geral ({formatPercent(BASELINE_RATE)}) · janela de reembolso até 2&nbsp;h
             </p>
-            <p className="meta mt-4" hidden={!playtimeEmpty}>
-              {EMPTY_TEXT}
-            </p>
+            <EmptyState align="start" className="mt-4" hidden={!playtimeEmpty} />
             {effectiveChartsData !== undefined && !playtimeEmpty ? (
               <PlaytimeRanks
                 rows={effectiveChartsData.playtime}
@@ -561,9 +638,7 @@ function ChartsContent() {
             className="rank-list"
             hidden={languagesEmpty}
           />
-          <p className="meta mt-4" hidden={!languagesEmpty}>
-            {EMPTY_TEXT}
-          </p>
+          <EmptyState align="start" className="mt-4" hidden={!languagesEmpty} />
           {languageRankNote ? (
             <p className="meta mt-4" hidden={languagesEmpty}>
               {languageRankNote}
