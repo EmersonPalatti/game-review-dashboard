@@ -91,9 +91,8 @@
 
 /* Disclosure "Mais filtros" */
 .disclosure {
-  margin-top: 6px;
-  padding-top: 12px;
-  border-top: 1px solid var(--line);
+  margin-top: 14px;
+  padding-top: 8px;
 }
 
 .disclosure-toggle {
@@ -165,18 +164,29 @@
   gap: 8px;
   margin: auto -20px 0;
   padding: 12px 20px 16px;
-  border-top: 1px solid var(--line);
   background: var(--sidebar);
+  box-shadow: 0 -12px 16px -12px rgba(28, 25, 21, 0.18);
+}
+
+html.dark .filters-footer {
+  box-shadow: 0 -12px 16px -12px rgba(0, 0, 0, 0.6);
 }
 
 .clear-row:disabled {
   cursor: default;
-  opacity: 0.5;
+  background: transparent;
+  border-color: transparent;
+  color: var(--muted);
+  opacity: 1;
+}
+
+.clear-row:disabled .sidebar-icon {
+  color: var(--muted);
 }
 
 .clear-row:disabled:hover,
 .clear-row:disabled:active {
-  background-color: var(--surface);
+  background: transparent;
   transform: none;
 }
 
@@ -198,9 +208,9 @@
   padding: 0 4px;
   align-items: center;
   justify-content: center;
-  border: 1px solid var(--line);
+  border: 0;
   border-radius: 4px;
-  background: var(--paper);
+  background: var(--well);
   font-family: var(--font-mono);
   font-size: 11px;
   line-height: 1;
@@ -218,7 +228,7 @@
   .filters-footer {
     margin: auto -24px 0;
     padding: 12px 24px 20px;
-    background: var(--surface);
+    background: var(--sidebar);
   }
 
   .filters-keys {

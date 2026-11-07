@@ -117,13 +117,13 @@
 
 .playtime-chip:hover {
   background: var(--raised);
-  border-color: var(--line);
+  border-color: transparent;
   color: var(--ink);
 }
 
 .playtime-chip:focus-visible {
   background: var(--raised);
-  border-color: var(--line);
+  border-color: transparent;
   color: var(--ink);
   outline: 2px solid var(--accent);
   outline-offset: 1px;

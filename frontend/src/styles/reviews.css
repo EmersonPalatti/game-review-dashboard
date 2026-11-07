@@ -44,7 +44,7 @@
 .sheet tbody tr.review-row .review-badge-date.is-sorted {
   color: var(--ink);
   font-weight: 500;
-  border-color: var(--secondary);
+  border: 0;
 }
 
 .mobile-meta-date.is-sorted {

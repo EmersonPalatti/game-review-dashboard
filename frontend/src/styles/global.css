@@ -32,17 +32,33 @@
   --pop: 240ms;    /* entradas de balões/gaveta mobile */
   --settle: 340ms; /* barras e mudanças de altura */
   --enter: 400ms;
-  --paper: #f4f4f2;
+  /*
+    Superfícies sem contorno: a profundidade vem do tom e de uma sombra curta.
+    paper  = chão da página e da sidebar (mesmo plano)
+    surface = cards apoiados no chão (--shadow-card no lugar da borda)
+    well / well-hover = controles rebaixados no chão (campos, segmentos, presets)
+    raised = hover dentro de um card
+    line = só divisórias que organizam leitura (linhas da tabela, trilhos, grade)
+  */
+  --paper: #efeee9;
   --surface: #ffffff;
-  --sidebar: #ffffff;
+  --sidebar: var(--paper);
   --raised: #f0efec;
+  --well: #e7e5e0;
+  --well-hover: #e0ded8;
   --line: #e4e2dc;
   --ink: #1c1915;
   --secondary: #5c564e;
-  --muted: #6f685f;
+  --muted: #665f57;
   --accent: #1f4e46;
   --negative: #9d341f;
   --shadow: 0 8px 24px rgba(28, 25, 21, 0.06);
+  --shadow-card:
+    0 1px 2px rgba(28, 25, 21, 0.05),
+    0 4px 16px -4px rgba(28, 25, 21, 0.07);
+  --shadow-lift:
+    0 1px 2px rgba(28, 25, 21, 0.06),
+    0 8px 24px -6px rgba(28, 25, 21, 0.1);
   --shadow-popover:
     0 18px 38px -6px rgba(28, 25, 21, 0.16),
     0 6px 16px -3px rgba(28, 25, 21, 0.1),
@@ -55,10 +71,12 @@
 }
 
 html.dark {
-  --paper: #161513;
-  --surface: #1c1a18;
-  --sidebar: #12110f;
-  --raised: #262421;
+  --paper: #0f0e0d;
+  --surface: #1e1c19;
+  --sidebar: var(--paper);
+  --raised: #282622;
+  --well: #1c1a17;
+  --well-hover: #25231f;
   --line: #34302b;
   --ink: #efe9de;
   --secondary: #aaa398;
@@ -66,6 +84,13 @@ html.dark {
   --accent: #8fbfa8;
   --negative: #e7a090;
   --shadow: none;
+  /* No escuro a sombra some; a borda superior clara faz o papel de luz. */
+  --shadow-card:
+    inset 0 1px 0 rgba(239, 233, 222, 0.045),
+    0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-lift:
+    inset 0 1px 0 rgba(239, 233, 222, 0.06),
+    0 8px 24px -6px rgba(0, 0, 0, 0.6);
   --shadow-popover:
     0 22px 44px -6px rgba(0, 0, 0, 0.78),
     0 8px 20px -4px rgba(0, 0, 0, 0.56),
@@ -137,7 +162,6 @@ html.dark {
   justify-content: space-between;
   padding: 0 16px;
   background: var(--sidebar);
-  border-bottom: 1px solid var(--line);
 }
 
 .mobile-wordmark {
@@ -244,9 +268,9 @@ html.dark {
 .theme-toggle,
 .clear-row {
   min-height: 44px;
-  border: 1px solid var(--line);
+  border: 1px solid transparent;
   border-radius: 8px;
-  background: var(--surface);
+  background: var(--well);
   padding-right: 10px;
   padding-left: 10px;
   font: inherit;
@@ -254,17 +278,17 @@ html.dark {
   cursor: pointer;
   transition:
     background-color var(--fast) var(--ease),
-    border-color var(--fast) var(--ease),
+    color var(--fast) var(--ease),
     transform var(--fast) var(--ease);
 }
 
 .theme-toggle:hover,
-.clear-row:hover {
-  background-color: var(--raised);
+.clear-row:hover:not(:disabled) {
+  background-color: var(--well-hover);
 }
 
 .theme-toggle:active,
-.clear-row:active {
+.clear-row:active:not(:disabled) {
   transform: scale(0.98);
 }
 
@@ -277,7 +301,9 @@ html.dark {
     flex-direction: column;
     overflow: auto;
     padding: 24px;
-    background: var(--surface);
+    background: var(--sidebar);
+    border: 0;
+    box-shadow: var(--shadow-lift);
     opacity: 0;
     pointer-events: none;
     transform: translateX(-100%);
@@ -301,9 +327,14 @@ html.dark {
     bottom: -24px;
     margin: 16px -24px -24px;
     padding: 12px 24px 20px;
-    background: var(--surface);
-    border-top: 1px solid var(--line);
+    background: var(--sidebar);
+    border-top: 0;
+    box-shadow: 0 -12px 16px -12px rgba(28, 25, 21, 0.18);
     z-index: 10;
+  }
+
+  html.dark .sidebar-mobile-actions {
+    box-shadow: 0 -12px 16px -12px rgba(0, 0, 0, 0.6);
   }
 }
 
@@ -331,7 +362,8 @@ html.dark {
     overflow-x: hidden;
     overflow-y: auto;
     padding: 20px;
-    border-right: 1px solid var(--line);
+    border-right: 0;
+    background: var(--sidebar);
   }
 }
 
@@ -389,7 +421,6 @@ html.dark {
   align-items: stretch;
   gap: 10px;
   padding-bottom: 16px;
-  border-bottom: 1px solid var(--line);
 }
 
 .context-top {
@@ -405,9 +436,9 @@ html.dark {
   align-items: center;
   min-height: 28px;
   padding: 2px 10px;
-  border: 1px solid var(--line);
+  border: 1px solid transparent;
   border-radius: 9999px;
-  background: var(--surface);
+  background: var(--well);
   color: var(--secondary);
   font-family: inherit;
   font-size: 12px;
@@ -420,13 +451,12 @@ html.dark {
 }
 
 .preset-btn:hover {
-  background: var(--raised);
+  background: var(--well-hover);
   color: var(--ink);
-  border-color: var(--secondary);
 }
 
 .preset-btn[aria-pressed='true'] {
-  background: var(--raised);
+  background: var(--surface);
   color: var(--accent);
   border-color: var(--accent);
   font-weight: 500;
@@ -451,21 +481,20 @@ html.dark {
   gap: 6px;
   min-height: 32px;
   padding: 4px 10px;
-  border: 1px solid var(--line);
+  border: 0;
   border-radius: 8px;
-  background: var(--surface);
+  background: var(--well);
   color: var(--ink);
   font-size: 12px;
   line-height: 16px;
   cursor: pointer;
   transition:
     background-color var(--fast) var(--ease),
-    border-color var(--fast) var(--ease);
+    color var(--fast) var(--ease);
 }
 
 .filter-chip:hover {
-  background: var(--raised);
-  border-color: var(--secondary);
+  background: var(--well-hover);
 }
 
 .filter-chip-label {
@@ -488,15 +517,15 @@ html.dark {
 }
 
 .filter-chip.is-reset {
-  border-color: transparent;
-  background: transparent;
+  border: 0;
+  background: var(--well);
   color: var(--secondary);
   text-decoration: underline;
   text-underline-offset: 3px;
 }
 
 .filter-chip.is-reset:hover {
-  background: var(--raised);
+  background: var(--well-hover);
   color: var(--ink);
 }
 
@@ -504,12 +533,17 @@ html.dark {
   position: relative;
   overflow: hidden;
   background: var(--surface);
-  border: 1px solid var(--line);
+  border: 0;
   border-radius: 12px;
   padding: 20px;
+  box-shadow: var(--shadow-card);
   transition:
     background-color var(--fast) var(--ease),
-    border-color var(--fast) var(--ease);
+    box-shadow var(--fast) var(--ease);
+}
+
+.card:is(a, button, [role='button'], .is-clickable):hover {
+  box-shadow: var(--shadow-lift);
 }
 
 section[aria-label='Gráficos'] > .card::before {
@@ -599,9 +633,8 @@ section[data-fetch-region='reviews'][data-fetching='true'] .th-sort {
 }
 
 .filter-group + .filter-group {
-  margin-top: 6px;
-  padding-top: 12px;
-  border-top: 1px solid var(--line);
+  margin-top: 14px;
+  padding-top: 8px;
 }
 
 .seg-control {
@@ -609,13 +642,9 @@ section[data-fetch-region='reviews'][data-fetching='true'] .th-sort {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 2px;
   padding: 2px;
-  border: 1px solid var(--line);
+  border: 0;
   border-radius: 8px;
-  background: var(--paper);
-}
-
-.sidebar-row.is-field.is-filtered .seg-control {
-  border-color: var(--accent);
+  background: var(--well);
 }
 
 .seg-btn {
@@ -633,24 +662,30 @@ section[data-fetch-region='reviews'][data-fetching='true'] .th-sort {
   transition:
     background-color var(--fast) var(--ease),
     color var(--fast) var(--ease),
-    border-color var(--fast) var(--ease);
+    box-shadow var(--fast) var(--ease);
 }
 
 .seg-btn:hover:not([aria-pressed='true']) {
   color: var(--ink);
-  background: var(--raised);
+  background: var(--well-hover);
 }
 
 .seg-btn[aria-pressed='true'] {
   background: var(--surface);
   color: var(--ink);
   font-weight: 500;
-  border-color: var(--line);
+  border-color: transparent;
+  box-shadow: 0 1px 2px rgba(28, 25, 21, 0.08);
 }
 
-.sidebar-row.is-field.is-filtered .seg-btn[aria-pressed='true'] {
-  border-color: var(--accent);
+html.dark .seg-btn[aria-pressed='true'] {
+  box-shadow: inset 0 1px 0 rgba(239, 233, 222, 0.06);
+}
+
+.sidebar-row.is-field.is-filtered .seg-btn[aria-pressed='true'],
+html.dark .sidebar-row.is-field.is-filtered .seg-btn[aria-pressed='true'] {
   color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent);
 }
 
 .field {
@@ -681,9 +716,9 @@ section[data-fetch-region='reviews'][data-fetching='true'] .th-sort {
   min-width: 18px;
   height: 18px;
   padding: 0 5px;
-  border: 1px solid var(--line);
+  border: 0;
   border-radius: 4px;
-  background: var(--paper);
+  background: var(--well);
   font-family: var(--font-mono);
   font-size: 11px;
   line-height: 1;
@@ -694,9 +729,9 @@ section[data-fetch-region='reviews'][data-fetching='true'] .th-sort {
   width: 100%;
   min-height: 44px;
   padding: 0 12px;
-  border: 1px solid var(--line);
+  border: 1px solid transparent;
   border-radius: 8px;
-  background: var(--surface);
+  background: var(--well);
   color: var(--ink);
   font: inherit;
   letter-spacing: 0;
@@ -711,7 +746,7 @@ section[data-fetch-region='reviews'][data-fetching='true'] .th-sort {
 
 .field-control:hover,
 .combo:hover .field-control {
-  background-color: var(--raised);
+  background-color: var(--well-hover);
 }
 
 .combo .field-control {
@@ -841,10 +876,10 @@ html.dark .when-dark {
   padding: 4px;
   overflow: auto;
   list-style: none;
-  border: 1px solid var(--line);
+  border: 1px solid var(--border-popover);
   border-radius: 8px;
-  background: var(--surface);
-  box-shadow: var(--shadow);
+  background: var(--surface-popover);
+  box-shadow: var(--shadow-popover);
   visibility: hidden;
   opacity: 0;
   pointer-events: none;
@@ -926,9 +961,13 @@ html.dark .when-dark {
   gap: 4px;
   flex: 1 1 0%;
   min-width: 0;
-  min-height: 40px;
-  height: 40px;
+  min-height: 44px;
+  height: 44px;
   padding: 0 9px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background-color: var(--well);
+  color: var(--ink);
   font-size: 12px;
   line-height: 16px;
   text-align: left;
@@ -936,22 +975,20 @@ html.dark .when-dark {
   transition:
     background-color var(--fast) var(--ease),
     border-color var(--fast) var(--ease),
-    box-shadow var(--fast) var(--ease),
     color var(--fast) var(--ease),
     transform var(--fast) var(--ease);
 }
 
 .date-trigger:hover {
-  background-color: var(--raised);
-  border-color: var(--secondary);
+  background-color: var(--well-hover);
 }
 
 .date-trigger:active {
   transform: scale(0.98);
 }
 
-.sidebar-row.is-field.is-filtered .date-trigger:not(.has-value):not(.is-open) {
-  border-color: var(--line);
+.sidebar-row.is-field.is-filtered .date-trigger:not(.has-value) {
+  border-color: transparent;
 }
 
 .date-trigger.has-value {
@@ -959,13 +996,11 @@ html.dark .when-dark {
   font-family: var(--font-mono);
   font-weight: 500;
   font-variant-numeric: tabular-nums;
-  border-color: color-mix(in srgb, var(--accent) 65%, var(--line));
+  border-color: var(--accent);
 }
 
 .date-trigger.is-open {
-  background-color: var(--raised);
-  border-color: var(--accent);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 22%, transparent);
+  background-color: var(--well-hover);
   color: var(--ink);
 }
 
@@ -1375,11 +1410,12 @@ html.dark .when-dark {
   position: relative;
   overflow: hidden;
   background: var(--surface);
-  border: 1px solid var(--line);
+  border: 0;
   border-radius: 12px;
+  box-shadow: var(--shadow-card);
   transition:
     background-color var(--fast) var(--ease),
-    border-color var(--fast) var(--ease);
+    box-shadow var(--fast) var(--ease);
 }
 
 .sheet-card::before {
@@ -1629,8 +1665,8 @@ section[data-fetch-region='reviews'][data-fetching='true'] .sheet-card::before {
   align-items: center;
   padding: 2px 6px;
   border-radius: 4px;
-  border: 1px solid var(--line);
-  background: var(--paper);
+  border: 0;
+  background: var(--raised);
   font-family: var(--font-mono);
   font-size: 11px;
   line-height: 14px;
@@ -1640,8 +1676,9 @@ section[data-fetch-region='reviews'][data-fetching='true'] .sheet-card::before {
 }
 
 .review-badge.is-accent {
-  border-color: var(--accent);
+  border: 0;
   color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, var(--surface));
 }
 
 .sim,
@@ -1805,16 +1842,15 @@ html[data-theme-reveal='active']::view-transition-new(root) {
   gap: 8px;
   padding: 6px 14px 6px 6px;
   background: var(--surface);
-  border: 1px solid var(--line);
+  border: 0;
   border-radius: 9999px;
   box-shadow: var(--shadow-popover);
   color: var(--ink);
   cursor: pointer;
-  transition: border-color var(--fast) var(--ease), transform var(--fast) var(--ease), box-shadow var(--fast) var(--ease);
+  transition: transform var(--fast) var(--ease), box-shadow var(--fast) var(--ease);
 }
 
 .chat-fab:hover {
-  border-color: var(--accent);
   transform: translateY(-2px);
   box-shadow: 0 10px 24px -4px rgba(28, 25, 21, 0.16);
 }
@@ -2371,7 +2407,6 @@ html.dark .chat-bubble-user {
   font-weight: 400;
   background: var(--raised);
   color: var(--ink);
-  border: 1px solid var(--line);
 }
 
 .chat-bubble-error {
@@ -2441,8 +2476,7 @@ html.dark .chat-bubble-user {
   line-height: 16px;
   padding: 8px 10px;
   border-radius: 6px;
-  background: var(--surface);
-  border: 1px solid var(--line);
+  background: var(--well);
   overflow-x: auto;
   margin: 4px 0;
 }
@@ -2498,7 +2532,6 @@ html.dark .chat-bubble-user {
   margin: 6px 0;
   width: 100%;
   overflow-x: auto;
-  border: 1px solid var(--line);
   border-radius: 8px;
   background: var(--surface);
 }
@@ -2577,8 +2610,8 @@ html.dark .chat-bubble-user {
   font-weight: 500;
   padding: 3px 8px;
   border-radius: 6px;
-  background: var(--surface);
-  border: 1px solid var(--line);
+  background: var(--well);
+  border: 1px solid transparent;
   color: var(--secondary);
   cursor: pointer;
   animation: chat-chip-appear var(--exit) var(--ease) backwards;
@@ -2587,8 +2620,7 @@ html.dark .chat-bubble-user {
 }
 
 .chat-copilot-chip:hover {
-  background: color-mix(in srgb, var(--accent) 8%, var(--surface));
-  border-color: var(--accent);
+  background: var(--well-hover);
   color: var(--ink);
 }
 
@@ -2764,7 +2796,6 @@ html.dark .chat-bubble-user {
   padding: 10px 12px;
   border-radius: 14px 14px 14px 3px;
   background: var(--raised);
-  border: 1px solid var(--line);
   font-size: 12px;
   line-height: 16px;
   font-weight: 400;
@@ -2979,17 +3010,16 @@ html.dark .chat-bubble-user {
   text-align: left;
   padding: 6px 10px;
   border-radius: 8px;
-  background: var(--raised);
-  border: 1px solid var(--line);
+  background: var(--well);
+  border: 0;
   color: var(--ink);
   cursor: pointer;
-  transition: border-color var(--fast) var(--ease), color var(--fast) var(--ease), background var(--fast) var(--ease);
+  transition: color var(--fast) var(--ease), background var(--fast) var(--ease);
 }
 
 .chat-chip:hover:not(:disabled) {
-  border-color: var(--accent);
   color: var(--accent);
-  background: var(--surface);
+  background: var(--well-hover);
 }
 
 .chat-chip:disabled {
@@ -3010,9 +3040,9 @@ html.dark .chat-bubble-user {
   gap: 6px;
   padding: 10px 12px 8px 12px;
   border-radius: 12px;
-  background: var(--raised);
-  border: 1px solid var(--line);
-  transition: border-color var(--fast) var(--ease), background var(--fast) var(--ease), box-shadow var(--fast) var(--ease);
+  background: var(--well);
+  border: 1px solid transparent;
+  transition: border-color var(--fast) var(--ease), background var(--fast) var(--ease);
 }
 
 .chat-composer-box:focus-within {
@@ -3064,6 +3094,12 @@ html.dark .chat-bubble-user {
   outline: none;
 }
 
+/* O padrão do navegador (tinta a 50%) fica abaixo de 4,5:1 sobre o --well. */
+.chat-textarea::placeholder {
+  color: var(--muted);
+  opacity: 1;
+}
+
 .chat-composer-toolbar {
   display: flex;
   align-items: center;
@@ -3102,8 +3138,8 @@ html.dark .chat-bubble-user {
   font-size: 12px;
   line-height: 16px;
   font-weight: 500;
-  border: 1px solid var(--line);
-  background: var(--surface);
+  border: 1px solid transparent;
+  background: var(--well-hover);
   color: var(--muted);
   cursor: not-allowed;
   transition: background var(--fast) var(--ease), color var(--fast) var(--ease), border-color var(--fast) var(--ease), transform var(--fast) var(--ease);

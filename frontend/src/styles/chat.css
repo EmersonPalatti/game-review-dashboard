@@ -48,14 +48,19 @@
     max-height: 100vh;
     max-height: 100dvh;
     border-radius: 0;
-    border-top: none;
-    border-bottom: none;
-    border-right: none;
-    border-left: 1px solid var(--line);
-    box-shadow: none;
+    border: none;
+    box-shadow:
+      -1px 0 0 rgba(28, 25, 21, 0.04),
+      -12px 0 32px -12px rgba(28, 25, 21, 0.14);
     background: var(--surface);
     animation: chat-dock-slide-in var(--enter) var(--ease);
     transition: none;
+  }
+
+  html.dark .chat-drawer.chat-drawer-docked {
+    box-shadow:
+      inset 1px 0 0 rgba(239, 233, 222, 0.05),
+      -12px 0 32px -12px rgba(0, 0, 0, 0.6);
   }
 
   .chat-drawer.chat-drawer-docked.is-closing {
@@ -247,4 +252,3 @@
 .chat-drawer.chat-drawer-docked .chat-hint-sep-history {
   display: none;
 }
-
