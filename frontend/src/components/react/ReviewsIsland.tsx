@@ -7,7 +7,7 @@ import {
   type LegacyColumnDef,
 } from '@tanstack/react-table/legacy';
 import type { RowData, TableFeatures } from '@tanstack/table-core';
-import { useVirtualizer } from '@tanstack/react-virtual';
+import { useVirtualizer, useWindowVirtualizer } from '@tanstack/react-virtual';
 
 import {
   useCallback,
@@ -117,7 +117,7 @@ function ReviewBadges({
   if (!isExpanded) {
     return (
       <div id={id} className="review-badges">
-        <span className="review-badge">{formatDate(item.created_at)}</span>
+        <span className="review-badge review-badge-date">{formatDate(item.created_at)}</span>
         {item.early_access ? (
           <span className="review-badge is-accent">Acesso antecipado</span>
         ) : null}
@@ -134,7 +134,7 @@ function ReviewBadges({
             className="review-badge"
             title="Resumo limitado a 280 caracteres na higienização da base"
           >
-            280 car.
+            truncado
           </span>
         ) : null}
       </div>
@@ -143,7 +143,7 @@ function ReviewBadges({
 
   return (
     <div id={id} className="review-badges">
-      <span className="review-badge">{formatDate(item.created_at)}</span>
+      <span className="review-badge review-badge-date">{formatDate(item.created_at)}</span>
       {item.early_access ? (
         <span className="review-badge is-accent">Acesso antecipado</span>
       ) : null}
@@ -186,12 +186,14 @@ function ExcerptCell({
 }) {
   const isTruncated = (item.excerpt?.length ?? 0) >= 275;
   const contentId = `review-details-${item.review_id}`;
+  const excerptId = `review-excerpt-${item.review_id}`;
 
   return (
     <div className="excerpt-cell">
       <div className="excerpt-line">
         <button
           type="button"
+          tabIndex={-1}
           className="excerpt-toggle"
           aria-expanded={isExpanded}
           aria-controls={contentId}
@@ -218,7 +220,7 @@ function ExcerptCell({
             <path d="m9 18 6-6-6-6" />
           </svg>
         </button>
-        <div className="excerpt-text">{item.excerpt || 'Sem texto na avaliação.'}</div>
+        <div id={excerptId} className="excerpt-text">{item.excerpt || 'Sem texto na avaliação.'}</div>
       </div>
       <ReviewBadges
         id={contentId}
@@ -289,6 +291,43 @@ function ReviewsTableContent() {
   const currentSort = useReviewSort();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [expanded, setExpanded] = useState<Set<number>>(() => new Set());
+  const [activeIndex, setActiveIndex] = useState(0);
+  const activeIndexRef = useRef(0);
+  activeIndexRef.current = activeIndex;
+  const shouldFocusRef = useRef(false);
+  const [isMobile, setIsMobile] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return window.matchMedia('(max-width: 767px)').matches;
+  });
+  const [scrollMargin, setScrollMargin] = useState(0);
+
+  useEffect(() => {
+    const mql = window.matchMedia('(max-width: 767px)');
+    const onChange = (e: MediaQueryListEvent) => {
+      setIsMobile(e.matches);
+    };
+    mql.addEventListener('change', onChange);
+    setIsMobile(mql.matches);
+    return () => mql.removeEventListener('change', onChange);
+  }, []);
+
+  const updateScrollMargin = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const offset = rect.top + window.scrollY;
+    setScrollMargin(offset);
+  }, []);
+
+  // O que fica acima da tabela muda de altura (gráficos hidratando, achados recolhendo):
+  // observar o body mantém o deslocamento da lista certo no scroll da janela.
+  useEffect(() => {
+    if (!isMobile) return;
+    updateScrollMargin();
+    const observer = new ResizeObserver(() => updateScrollMargin());
+    observer.observe(document.body);
+    return () => observer.disconnect();
+  }, [isMobile, updateScrollMargin]);
 
   const queryKey = useMemo(
     () => ['reviews', currentFilters, currentSort] as const,
@@ -339,28 +378,19 @@ function ReviewsTableContent() {
 
   useEffect(() => {
     setExpanded(new Set());
+    setActiveIndex(0);
+    activeIndexRef.current = 0;
     const el = scrollRef.current;
     if (el) el.scrollTop = 0;
   }, [queryKey]);
 
-  const tryFetchNext = useCallback(() => {
-    const el = scrollRef.current;
-    if (!el || !hasNextPage || isFetchingNextPage) return;
-    const distance = el.scrollHeight - el.scrollTop - el.clientHeight;
-    if (distance < 240) void fetchNextPage();
-  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
-
   useEffect(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    const onScroll = () => tryFetchNext();
-    el.addEventListener('scroll', onScroll, { passive: true });
-    return () => el.removeEventListener('scroll', onScroll);
-  }, [tryFetchNext]);
-
-  useEffect(() => {
-    if (!isPending) tryFetchNext();
-  }, [items.length, isPending, tryFetchNext]);
+    setActiveIndex((prev) => {
+      if (items.length === 0) return 0;
+      if (prev >= items.length) return items.length - 1;
+      return prev;
+    });
+  }, [items.length]);
 
   const toggleExpanded = useCallback((reviewId: number) => {
     setExpanded((prev) => {
@@ -421,7 +451,14 @@ function ReviewsTableContent() {
           />
         ),
         meta: { thClass: 'w-[11%]', sortKey: 'votes_helpful' as ReviewSortBy },
-        cell: (info) => formatInteger(info.getValue()),
+        cell: (info) => (
+          <>
+            <span className="votes-value">{formatInteger(info.getValue())}</span>
+            <span className="mobile-meta-votes-label">{' '}úteis</span>
+            <span className="mobile-meta-sep" aria-hidden="true"> · </span>
+            <span className="mobile-meta-date">{formatDate(info.row.original.created_at)}</span>
+          </>
+        ),
       }),
       columnHelper.display({
         id: 'excerpt',
@@ -464,17 +501,146 @@ function ReviewsTableContent() {
     },
   });
 
-  const virtualizer = useVirtualizer({
+  const elementVirtualizer = useVirtualizer({
     count: items.length,
     getScrollElement: () => scrollRef.current,
     estimateSize: () => 52,
     overscan: 8,
+    enabled: !isMobile,
     measureElement: (el) => el.getBoundingClientRect().height,
   });
 
+  const windowVirtualizer = useWindowVirtualizer({
+    count: items.length,
+    estimateSize: () => 104,
+    overscan: 8,
+    scrollMargin,
+    enabled: isMobile,
+    measureElement: (el) => el.getBoundingClientRect().height,
+  });
+
+  const virtualizer = isMobile ? windowVirtualizer : elementVirtualizer;
   const virtualRows = virtualizer.getVirtualItems();
-  const paddingTop = virtualRows[0]?.start ?? 0;
-  const paddingBottom = virtualizer.getTotalSize() - (virtualRows.at(-1)?.end ?? 0);
+
+  const activeMargin = isMobile ? scrollMargin : 0;
+  const paddingTop =
+    virtualRows.length > 0 ? Math.max(0, virtualRows[0].start - activeMargin) : 0;
+  const lastRowEnd =
+    virtualRows.length > 0 ? Math.max(0, virtualRows.at(-1)!.end - activeMargin) : 0;
+  const paddingBottom =
+    virtualRows.length > 0
+      ? Math.max(0, virtualizer.getTotalSize() - lastRowEnd)
+      : 0;
+
+  const lastVirtualRow = virtualRows.at(-1);
+  const lastIndex = lastVirtualRow?.index;
+
+  // Carrega mais itens quando o último item virtualizado se aproxima do fim da lista
+  useEffect(() => {
+    if (lastIndex === undefined) return;
+    if (lastIndex >= items.length - 8 && hasNextPage && !isFetchingNextPage) {
+      void fetchNextPage();
+    }
+  }, [lastIndex, items.length, hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+  // Foco automático na linha ativa após navegação por teclado e renderização virtual
+  useEffect(() => {
+    if (!shouldFocusRef.current) return;
+
+    let rafId: number;
+    let attempts = 0;
+
+    const focusTarget = () => {
+      const selector = `tr[data-index="${activeIndex}"]`;
+      const el =
+        scrollRef.current?.querySelector<HTMLTableRowElement>(selector) ??
+        document.querySelector<HTMLTableRowElement>(selector);
+
+      if (el) {
+        if (document.activeElement !== el) {
+          el.focus({ preventScroll: true });
+        }
+        shouldFocusRef.current = false;
+      } else if (attempts < 10) {
+        attempts++;
+        rafId = requestAnimationFrame(focusTarget);
+      } else {
+        shouldFocusRef.current = false;
+      }
+    };
+
+    rafId = requestAnimationFrame(focusTarget);
+    return () => {
+      if (rafId) cancelAnimationFrame(rafId);
+    };
+  }, [activeIndex, virtualRows]);
+
+  const handleRowKeyDown = useCallback(
+    (
+      e: React.KeyboardEvent<HTMLTableRowElement>,
+      virtualIndex: number,
+      reviewId: number,
+      isExpanded: boolean,
+    ) => {
+      const count = items.length;
+      if (count === 0) return;
+
+      const currentIndex = activeIndexRef.current;
+      let nextIndex: number | null = null;
+
+      switch (e.key) {
+        case 'ArrowDown':
+          e.preventDefault();
+          nextIndex = Math.min(count - 1, currentIndex + 1);
+          break;
+        case 'ArrowUp':
+          e.preventDefault();
+          nextIndex = Math.max(0, currentIndex - 1);
+          break;
+        case 'PageDown':
+          e.preventDefault();
+          nextIndex = Math.min(count - 1, currentIndex + 10);
+          break;
+        case 'PageUp':
+          e.preventDefault();
+          nextIndex = Math.max(0, currentIndex - 10);
+          break;
+        case 'Home':
+          e.preventDefault();
+          nextIndex = 0;
+          break;
+        case 'End':
+          e.preventDefault();
+          nextIndex = Math.max(0, count - 1);
+          break;
+        case 'Enter':
+        case ' ':
+          e.preventDefault();
+          toggleExpanded(reviewId);
+          return;
+        case 'Escape':
+          if (isExpanded) {
+            e.preventDefault();
+            toggleExpanded(reviewId);
+          }
+          return;
+        default:
+          return;
+      }
+
+      if (nextIndex !== null) {
+        activeIndexRef.current = nextIndex;
+        setActiveIndex(nextIndex);
+        shouldFocusRef.current = true;
+        virtualizer.scrollToIndex(nextIndex, { align: 'auto' });
+
+        if (nextIndex >= count - 8 && hasNextPage && !isFetchingNextPage) {
+          void fetchNextPage();
+        }
+      }
+    },
+    [items.length, toggleExpanded, virtualizer, hasNextPage, isFetchingNextPage, fetchNextPage],
+  );
 
   const rows = table.getRowModel().rows;
   const showEmpty = !isPending && items.length === 0 && !error;
@@ -511,13 +677,19 @@ function ReviewsTableContent() {
         <div
           ref={scrollRef}
           className="sheet sheet-virtual"
-          tabIndex={0}
+          tabIndex={-1}
           role="region"
           aria-label="Tabela de avaliações"
+          aria-describedby="reviews-keyboard-hint"
           data-reviews-virtual="true"
         >
-          <table>
-            <caption className="sr-only">Avaliações da seleção atual</caption>
+          <table aria-describedby="reviews-keyboard-hint">
+            <caption className="sr-only">
+              Avaliações da seleção atual
+              <span id="reviews-keyboard-hint">
+                . Use as setas para percorrer as avaliações; Enter expande o texto.
+              </span>
+            </caption>
             <thead>
               {table.getHeaderGroups().map((headerGroup) => (
                 <tr key={headerGroup.id}>
@@ -573,12 +745,24 @@ function ReviewsTableContent() {
                     if (!row) return null;
                     const reviewId = row.original.review_id;
                     const isExpanded = expanded.has(reviewId);
+                    const isRowActive = virtualRow.index === activeIndex;
                     return (
                       <tr
                         key={reviewId}
                         data-index={virtualRow.index}
                         ref={virtualizer.measureElement}
+                        tabIndex={isRowActive ? 0 : -1}
+                        aria-expanded={isExpanded}
+                        aria-label={`${row.original.app_name}, ${row.original.recommended ? 'Recomenda' : 'Não recomenda'}`}
+                        aria-describedby={`review-excerpt-${reviewId}`}
                         className={isExpanded ? 'review-row is-expanded' : 'review-row'}
+                        onKeyDown={(e) =>
+                          handleRowKeyDown(e, virtualRow.index, reviewId, isExpanded)
+                        }
+                        onFocus={() => {
+                          activeIndexRef.current = virtualRow.index;
+                          setActiveIndex(virtualRow.index);
+                        }}
                         onClick={(e) => {
                           const target = e.target as HTMLElement | null;
                           if (target?.closest('button, a')) {
@@ -588,11 +772,13 @@ function ReviewsTableContent() {
                           if (selection) {
                             return;
                           }
+                          activeIndexRef.current = virtualRow.index;
+                          setActiveIndex(virtualRow.index);
                           toggleExpanded(reviewId);
                         }}
                       >
                         {row.getVisibleCells().map((cell) => (
-                          <td key={cell.id}>
+                          <td key={cell.id} data-col={cell.column.id}>
                             {flexRender(cell.column.columnDef.cell, cell.getContext())}
                           </td>
                         ))}

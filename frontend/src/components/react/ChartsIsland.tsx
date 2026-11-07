@@ -10,7 +10,7 @@ import {
   type PlaytimePoint,
 } from '../../lib/api';
 import { useDelayedFlag } from '../../lib/fetchFeedback';
-import { PLACEHOLDER, REFUND_BUCKETS } from '../../lib/constants';
+import { BASELINE_RATE, PLACEHOLDER, REFUND_BUCKETS } from '../../lib/constants';
 import { formatCount, formatInteger, formatPercent, languageLabel } from '../../lib/format';
 import { useFilters } from '../../lib/useNanostore';
 import {
@@ -96,6 +96,12 @@ function compareLanguagesByApproval(a: LanguageBar, b: LanguageBar): number {
   );
 }
 
+const ppFormat = new Intl.NumberFormat('pt-BR', {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+  signDisplay: 'exceptZero',
+});
+
 function renderLanguageRanks(
   container: HTMLOListElement,
   languages: LanguageBar[],
@@ -103,26 +109,48 @@ function renderLanguageRanks(
 ): void {
   container.replaceChildren();
   const sorted = [...languages].sort(compareLanguagesByApproval);
+  const deltas = sorted
+    .filter((item) => item.recommendation_rate !== null)
+    .map((item) => Math.abs(item.recommendation_rate! - BASELINE_RATE));
+  const maxDelta = deltas.length > 0 ? Math.max(...deltas) : 0;
+  // Escala pelo maior |delta|, com piso de 5 p.p. (0.05) para não distorcer variações mínimas.
+  const scaleMax = Math.max(maxDelta, 0.05);
+
   sorted.forEach((item, index) => {
     const selected = currentLanguage === item.language;
     const rate = item.recommendation_rate;
-    const valueText =
-      rate === null ? PLACEHOLDER : `${formatPercent(rate)} · ${formatInteger(item.review_count)}`;
     const name = languageLabel(item.language);
+
+    let valueText = PLACEHOLDER;
+    let signedValue = 0;
+    if (rate !== null) {
+      const diffPp = (rate - BASELINE_RATE) * 100;
+      const formattedPp = ppFormat.format(Math.abs(diffPp) < 0.005 ? 0 : diffPp);
+      valueText = `${formatPercent(rate)} · ${formattedPp} p.p.`;
+      signedValue = Math.max(-1, Math.min(1, (rate - BASELINE_RATE) / scaleMax));
+    }
+
+    const reviewText = formatCount(item.review_count, 'avaliação', 'avaliações');
+
     container.append(
       rankRow(
         `lang:${item.language}`,
         index,
         name,
         valueText,
-        rate === null ? 0 : rate * 100,
+        0,
         {
-          title: `${name}: ${formatCount(item.review_count, 'avaliação', 'avaliações')}`,
+          title: `${name}: ${reviewText}`,
           selected,
-          ariaLabel: `${name}: ${valueText}`,
+          ariaLabel:
+            rate === null
+              ? `${name}: sem avaliações, ${reviewText}`
+              : `${name}: ${valueText}, ${reviewText}`,
           onSelect: () => {
             patchFilters({ language: selected ? null : item.language });
           },
+          variant: 'diverging',
+          signedValue,
         },
       ),
     );
@@ -154,16 +182,98 @@ function PlaytimeLegend({ rows, active, onToggle }: PlaytimeLegendProps) {
             className="playtime-chip"
             aria-pressed={active === bucket}
             aria-label={`${row.label} ${rateName}${refund ? ', janela de reembolso' : ''}`}
-            title={`${row.label}: ${formatCount(row.review_count, 'avaliação', 'avaliações')}`}
+            title={`${row.label}: ${rateName} · ${formatCount(row.review_count, 'avaliação', 'avaliações')}`}
             onClick={() => onToggle(bucket)}
           >
-            {refund ? <span className="playtime-chip-dot" aria-hidden="true" /> : null}
-            <span className="playtime-chip-label">{row.label}</span>
-            <span className="playtime-chip-value">{rate}</span>
+            <span className="playtime-chip-label">
+              {refund ? <span className="playtime-chip-dot" aria-hidden="true" /> : null}
+              {row.label.replace(/\s*h$/, '')}
+              <span className="playtime-chip-unit"> h</span>
+            </span>
           </button>
         );
       })}
     </div>
+  );
+}
+
+function PlaytimeRanks({ rows, active, onToggle }: PlaytimeLegendProps) {
+  const deltas = rows
+    .filter((row) => row.recommendation_rate !== null)
+    .map((row) => Math.abs(row.recommendation_rate! - BASELINE_RATE));
+  const maxDelta = deltas.length > 0 ? Math.max(...deltas) : 0;
+  // Escala pelo maior |delta|, com piso de 5 p.p. (0.05) para não distorcer variações mínimas.
+  const scaleMax = Math.max(maxDelta, 0.05);
+
+  return (
+    <ol className="rank-list" aria-label="Recomendação por faixa de tempo de jogo">
+      {rows.map((row) => {
+        if (!isPlaytimeBucket(row.key)) return null;
+        const bucket = row.key;
+        const selected = active === bucket;
+        const refund = REFUND_BUCKETS.includes(bucket);
+        const rate = row.recommendation_rate;
+        const displayLabel = row.label === '500+ h' ? '500 h+' : row.label;
+
+        let valueText = PLACEHOLDER;
+        let signedValue = 0;
+        let fillClass: string | null = null;
+        let targetScale = 0;
+
+        if (rate !== null) {
+          const diffPp = (rate - BASELINE_RATE) * 100;
+          const formattedPp = ppFormat.format(Math.abs(diffPp) < 0.005 ? 0 : diffPp);
+          valueText = `${formatPercent(rate)} · ${formattedPp} p.p.`;
+          signedValue = Math.max(-1, Math.min(1, (rate - BASELINE_RATE) / scaleMax));
+
+          if (signedValue > 0) {
+            fillClass = 'rank-fill rank-fill-positive';
+            targetScale = Math.min(1, signedValue);
+          } else if (signedValue < 0) {
+            fillClass = 'rank-fill rank-fill-negative';
+            targetScale = Math.min(1, Math.abs(signedValue));
+          }
+        }
+
+        const reviewText = formatCount(row.review_count, 'avaliação', 'avaliações');
+        const refundSuffix = refund ? ', janela de reembolso' : '';
+        const rateName = rate === null ? 'sem dados' : formatPercent(rate);
+        const ariaLabel =
+          rate === null
+            ? `${displayLabel}: sem avaliações, ${reviewText}${refundSuffix}`
+            : `${displayLabel}: ${valueText}, ${reviewText}${refundSuffix}`;
+        const title = `${displayLabel}: ${rateName} · ${reviewText}${refundSuffix}`;
+
+        return (
+          <li key={bucket} className="rank-item">
+            <button
+              type="button"
+              className={`rank-row w-full text-left${selected ? ' is-selected' : ''}`}
+              aria-pressed={selected}
+              aria-label={ariaLabel}
+              title={title}
+              onClick={() => onToggle(bucket)}
+            >
+              <div className="rank-line">
+                <span className="min-w-0 flex-1 truncate flex items-center whitespace-nowrap">
+                  {refund ? <span className="rank-dot-negative" aria-hidden="true" /> : null}
+                  <span className="playtime-rank-name">{displayLabel}</span>
+                </span>
+                <span className="rank-value">{valueText}</span>
+              </div>
+              <div className="rank-track rank-track-diverging" aria-hidden="true">
+                {fillClass ? (
+                  <div
+                    className={fillClass}
+                    style={{ transform: `scaleX(${targetScale})` }}
+                  />
+                ) : null}
+              </div>
+            </button>
+          </li>
+        );
+      })}
+    </ol>
   );
 }
 
@@ -342,108 +452,131 @@ function ChartsContent() {
   }, [chartsData, metricsData, facetsData, currentFilters.appId, currentFilters.language]);
 
   return (
-    <section
-      className="grid grid-cols-1 gap-4 lg:grid-cols-3"
-      aria-label="Gráficos"
-      data-fetching={showBusy ? 'true' : 'false'}
-      aria-busy={showBusy}
-    >
-      <article className="card lg:col-span-2">
-        <h2 className="title">Avaliações por mês</h2>
-        <p className="meta mt-2">Publicadas em cada mês do recorte · pico destacado</p>
-        <div
-          id="chart-month"
-          role="group"
-          aria-roledescription="gráfico"
-          aria-label="Avaliações por mês"
-          tabIndex={0}
-          aria-describedby="chart-month-hint"
-          className="chart-frame mt-4 h-[320px] w-full"
-          hidden={monthEmpty}
-        />
-        <p className="meta mt-4" hidden={!monthEmpty}>
-          {EMPTY_TEXT}
-        </p>
-        <p id="chart-month-hint" className="sr-only">
-          Use as setas para percorrer os meses (PageUp/PageDown para avançar ou voltar 12 meses). Enter ou Espaço filtra o mês destacado. Escape
-          remove o filtro de mês.
-        </p>
-        <p id="chart-month-live" className="sr-only" aria-live="polite" />
-        {chartsData !== undefined && !monthEmpty ? <MonthTable months={chartsData.months} /> : null}
-      </article>
-
-      <article className="card">
-        <h2 className="title">Volume por jogo</h2>
-        <p className="meta mt-2">Jogos com mais avaliações</p>
-        <ol
-          id="rank-games"
-          ref={gameRanksRef}
-          className="rank-list"
-          hidden={gamesEmpty}
-        />
-        <p className="meta mt-4" hidden={!gamesEmpty}>
-          {EMPTY_TEXT}
-        </p>
-        {gameRankNote ? (
-          <p className="meta mt-4" hidden={gamesEmpty}>
-            {gameRankNote}
-          </p>
-        ) : null}
-      </article>
-
-      <article className="card lg:col-span-2">
-        <h2 className="title">Recomendação por tempo de jogo</h2>
-        <p className="meta mt-2">
-          Aprovação por faixa (reembolso até 2{' '}h)
-        </p>
-        <div id="chart-playtime" className="mt-4 h-[280px] w-full" hidden={playtimeEmpty} />
-        <p className="meta mt-4" hidden={!playtimeEmpty}>
-          {EMPTY_TEXT}
-        </p>
-        {chartsData !== undefined && !playtimeEmpty ? (
-          <PlaytimeLegend
-            rows={chartsData.playtime}
-            active={currentFilters.playtime}
-            onToggle={togglePlaytime}
+    <div className="charts-shell">
+      <section
+        className="charts-grid"
+        aria-label="Gráficos"
+        data-fetching={showBusy ? 'true' : 'false'}
+        aria-busy={showBusy}
+      >
+        <article className="card charts-col-span-2">
+          <h2 className="title">Avaliações por mês</h2>
+          <p className="meta mt-2">Publicadas em cada mês do recorte · clique em um mês para filtrar</p>
+          <div
+            id="chart-month"
+            role="group"
+            aria-roledescription="gráfico"
+            aria-label="Avaliações por mês"
+            tabIndex={0}
+            aria-describedby="chart-month-hint"
+            className="chart-frame mt-4 h-[320px] w-full"
+            hidden={monthEmpty}
           />
-        ) : null}
-      </article>
-
-      <article className="card">
-        <h2 className="title">Aprovação por idioma</h2>
-        <p className="meta mt-2">Top idiomas por volume, ordenados pela aprovação</p>
-        <ol
-          id="rank-languages"
-          ref={languageRanksRef}
-          className="rank-list"
-          hidden={languagesEmpty}
-        />
-        <p className="meta mt-4" hidden={!languagesEmpty}>
-          {EMPTY_TEXT}
-        </p>
-        {languageRankNote ? (
-          <p className="meta mt-4" hidden={languagesEmpty}>
-            {languageRankNote}
+          <p className="meta mt-4" hidden={!monthEmpty}>
+            {EMPTY_TEXT}
           </p>
-        ) : null}
-      </article>
+          <p id="chart-month-hint" className="sr-only">
+            Use as setas para percorrer os meses (PageUp/PageDown para avançar ou voltar 12 meses). Enter ou Espaço filtra o mês destacado. Escape
+            remove o filtro de mês.
+          </p>
+          <p id="chart-month-live" className="sr-only" aria-live="polite" />
+          {chartsData !== undefined && !monthEmpty ? <MonthTable months={chartsData.months} /> : null}
+        </article>
 
-      {error && chartsData !== undefined ? (
-        <div
-          className="flex flex-wrap items-center gap-3 lg:col-span-3"
-          role="alert"
-        >
-          <p className="meta">Não foi possível atualizar os gráficos.</p>
-          <button
-            type="button"
-            className="btn btn-secondary btn-small"
-            onClick={() => void refetch()}
+        <article className="card">
+          <h2 className="title">Volume por jogo</h2>
+          <p className="meta mt-2">Jogos com mais avaliações</p>
+          <ol
+            id="rank-games"
+            ref={gameRanksRef}
+            className="rank-list"
+            hidden={gamesEmpty}
+          />
+          <p className="meta mt-4" hidden={!gamesEmpty}>
+            {EMPTY_TEXT}
+          </p>
+          {gameRankNote ? (
+            <p className="meta mt-4" hidden={gamesEmpty}>
+              {gameRankNote}
+            </p>
+          ) : null}
+        </article>
+
+        <article className="card charts-col-span-2">
+          <h2 className="title">Recomendação por tempo de jogo</h2>
+
+          <div className="playtime-desktop">
+            <p className="meta mt-2">
+              Aprovação por faixa de horas jogadas (reembolso até 2{' '}h)
+            </p>
+            <div id="chart-playtime" className="chart-frame mt-4 h-[280px] w-full" hidden={playtimeEmpty} />
+            <p className="meta mt-4" hidden={!playtimeEmpty}>
+              {EMPTY_TEXT}
+            </p>
+            {chartsData !== undefined && !playtimeEmpty ? (
+              <PlaytimeLegend
+                rows={chartsData.playtime}
+                active={currentFilters.playtime}
+                onToggle={togglePlaytime}
+              />
+            ) : null}
+          </div>
+
+          <div className="playtime-mobile">
+            <p className="meta mt-2">
+              Barras partem da base geral ({formatPercent(BASELINE_RATE)}) · janela de reembolso até 2&nbsp;h
+            </p>
+            <p className="meta mt-4" hidden={!playtimeEmpty}>
+              {EMPTY_TEXT}
+            </p>
+            {chartsData !== undefined && !playtimeEmpty ? (
+              <PlaytimeRanks
+                rows={chartsData.playtime}
+                active={currentFilters.playtime}
+                onToggle={togglePlaytime}
+              />
+            ) : null}
+          </div>
+        </article>
+
+        <article className="card">
+          <h2 className="title">Aprovação por idioma</h2>
+          <p className="meta mt-2">
+            Top idiomas por volume, ordenados pela aprovação · barras partem da base geral ({formatPercent(BASELINE_RATE)})
+          </p>
+          <ol
+            id="rank-languages"
+            ref={languageRanksRef}
+            className="rank-list"
+            hidden={languagesEmpty}
+          />
+          <p className="meta mt-4" hidden={!languagesEmpty}>
+            {EMPTY_TEXT}
+          </p>
+          {languageRankNote ? (
+            <p className="meta mt-4" hidden={languagesEmpty}>
+              {languageRankNote}
+            </p>
+          ) : null}
+        </article>
+
+        {error && chartsData !== undefined ? (
+          <div
+            className="charts-col-span-3 flex flex-wrap items-center gap-3"
+            role="alert"
           >
-            Tentar de novo
-          </button>
-        </div>
-      ) : null}
-    </section>
+            <p className="meta">Não foi possível atualizar os gráficos.</p>
+            <button
+              type="button"
+              className="btn btn-secondary btn-small"
+              onClick={() => void refetch()}
+            >
+              Tentar de novo
+            </button>
+          </div>
+        ) : null}
+      </section>
+    </div>
   );
 }
 

@@ -8,13 +8,17 @@ export function applyTheme(
   theme: 'dark' | 'light',
   themeToggle?: HTMLButtonElement,
   onRepaintCharts?: () => void,
+  persist = true,
 ): void {
   document.documentElement.classList.toggle('dark', theme === 'dark');
   document.documentElement.style.colorScheme = theme;
-  try {
-    localStorage.setItem(THEME_KEY, theme);
-  } catch {
-    /* armazenamento bloqueado: o tema vale só nesta página */
+  // Só a escolha explícita é gravada; sem ela a página segue o tema do sistema.
+  if (persist) {
+    try {
+      localStorage.setItem(THEME_KEY, theme);
+    } catch {
+      /* armazenamento bloqueado: o tema vale só nesta página */
+    }
   }
   if (themeToggle) {
     // O botão é uma ação: o nome descreve o tema que ele vai aplicar.
@@ -144,8 +148,22 @@ export function revealTheme(
     .catch(() => {});
 }
 
+function savedTheme(): 'dark' | 'light' | null {
+  try {
+    const saved = localStorage.getItem(THEME_KEY);
+    return saved === 'dark' || saved === 'light' ? saved : null;
+  } catch {
+    return null;
+  }
+}
+
 export function setupTheme(themeToggle: HTMLButtonElement, onRepaintCharts: () => void): void {
-  applyTheme(currentTheme(), themeToggle);
+  applyTheme(currentTheme(), themeToggle, undefined, false);
+  const systemDark = window.matchMedia('(prefers-color-scheme: dark)');
+  systemDark.addEventListener('change', (event) => {
+    if (savedTheme() !== null) return;
+    applyTheme(event.matches ? 'dark' : 'light', themeToggle, onRepaintCharts, false);
+  });
   themeToggle.addEventListener('click', () => {
     revealTheme(themeToggle, onRepaintCharts);
   });

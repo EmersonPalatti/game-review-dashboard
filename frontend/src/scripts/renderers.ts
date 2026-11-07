@@ -93,13 +93,22 @@ export function renderFilterChips(
 
 const previousRankScales = new Map<string, number>();
 
+export type RankRowOptions = {
+  title: string;
+  selected: boolean;
+  ariaLabel: string;
+  onSelect: () => void;
+  variant?: 'default' | 'diverging';
+  signedValue?: number;
+};
+
 export function rankRow(
   key: string,
   index: number,
   name: string,
   value: string,
   widthPercent: number,
-  options: { title: string; selected: boolean; ariaLabel: string; onSelect: () => void },
+  options: RankRowOptions,
 ): HTMLLIElement {
   const row = document.createElement('li');
   row.className = 'rank-item';
@@ -122,12 +131,40 @@ export function rankRow(
   number.className = 'rank-value';
   number.textContent = value;
 
+  const isDiverging = options.variant === 'diverging';
   const track = document.createElement('div');
-  track.className = 'rank-track';
+  track.className = isDiverging ? 'rank-track rank-track-diverging' : 'rank-track';
   track.setAttribute('aria-hidden', 'true');
 
   const fill = document.createElement('div');
-  fill.className = 'rank-fill';
+
+  let targetScale = 0;
+  let fromScale = 0;
+
+  if (isDiverging) {
+    const signed = options.signedValue ?? 0;
+    const prevSigned = previousRankScales.get(key) ?? 0;
+    previousRankScales.set(key, signed);
+
+    if (signed > 0) {
+      fill.className = 'rank-fill rank-fill-positive';
+      targetScale = Math.min(1, signed);
+      fromScale = prevSigned > 0 ? Math.min(1, prevSigned) : 0;
+    } else if (signed < 0) {
+      fill.className = 'rank-fill rank-fill-negative';
+      targetScale = Math.min(1, Math.abs(signed));
+      fromScale = prevSigned < 0 ? Math.min(1, Math.abs(prevSigned)) : 0;
+    } else {
+      fill.className = 'rank-fill';
+      targetScale = 0;
+      fromScale = 0;
+    }
+  } else {
+    fill.className = 'rank-fill';
+    targetScale = Math.max(0, Math.min(1, widthPercent / 100));
+    fromScale = previousRankScales.get(key) ?? 0;
+    previousRankScales.set(key, targetScale);
+  }
 
   line.append(label, number);
   track.append(fill);
@@ -138,9 +175,6 @@ export function rankRow(
     options.onSelect();
   });
 
-  const targetScale = Math.max(0, Math.min(1, widthPercent / 100));
-  const fromScale = previousRankScales.get(key) ?? 0;
-  previousRankScales.set(key, targetScale);
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   if (fill) {

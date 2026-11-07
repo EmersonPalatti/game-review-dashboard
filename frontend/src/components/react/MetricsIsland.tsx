@@ -193,7 +193,7 @@ function MetricsContent() {
 
   const sublabels: Record<string, string> = useMemo(() => {
     if (!metrics) {
-      return Object.fromEntries(METRIC_CARDS_CONFIG.map((c) => [c.id, c.defaultSub]));
+      return Object.fromEntries(METRIC_CARDS_CONFIG.map((c) => [c.id, 'Carregando…']));
     }
 
     const empty = metrics.total_reviews === 0;
@@ -313,7 +313,7 @@ function MetricsContent() {
           key={card.id}
           id={card.id}
           label={card.label}
-          sublabel={sublabels[card.id] ?? card.defaultSub}
+          sublabel={sublabels[card.id] ?? (metrics ? card.defaultSub : 'Carregando…')}
           accent={card.accent}
           value={values[card.id]}
           format={formatters[card.id] ?? formatInteger}

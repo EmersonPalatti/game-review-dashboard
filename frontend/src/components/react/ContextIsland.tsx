@@ -1,6 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
-import { useEffect, useMemo, useRef, type ReactNode } from 'react';
+import { ArrowRight } from 'lucide';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { fetchMetrics } from '../../lib/api';
+import { RailIcon } from './RailIcon';
 import {
   PLACEHOLDER,
   PRESETS,
@@ -138,10 +140,11 @@ function buildFilterChips(current: Filters, gameNameById: Map<number, string>): 
   return chips;
 }
 
-function applyPreset(preset: PresetKey): void {
+/** Aplica o recorte do achado (ou limpa, se já ativo). Retorna true quando o recorte foi aplicado. */
+function applyPreset(preset: PresetKey): boolean {
   if (isPresetActive(filters.get(), preset)) {
     resetFilters();
-    return;
+    return false;
   }
   suppressUrlSyncDuring(() => {
     reviewSort.set(
@@ -151,6 +154,7 @@ function applyPreset(preset: PresetKey): void {
     );
   });
   filters.set({ ...PRESETS[preset] });
+  return true;
 }
 
 function useRecommendationRate(probe: ProbeKey): number | undefined {
@@ -162,11 +166,17 @@ function useRecommendationRate(probe: ProbeKey): number | undefined {
   return data?.recommendation_rate;
 }
 
-function FindingsStrip({ currentFilters }: { currentFilters: Filters }) {
+function FindingsStrip() {
+  const currentFilters = useFilters();
   const refundShort = useRecommendationRate('refundShort');
   const refundLong = useRecommendationRate('refundLong');
   const earlyYes = useRecommendationRate('earlyYes');
   const earlyNo = useRecommendationRate('earlyNo');
+  const stripRef = useRef<HTMLDivElement>(null);
+  // A grade e a linha compacta trocam de lugar ao aplicar ou limpar um achado; o botão clicado
+  // desmonta, então o foco é devolvido ao botão equivalente do novo layout.
+  const pendingFocusRef = useRef<PresetKey | null>(null);
+  const [announcement, setAnnouncement] = useState('');
 
   // Só os números usam a fonte mono; o conector (→, vs.) fica na fonte do texto para caber no tile.
   const refundFigure: ReactNode =
@@ -214,6 +224,16 @@ function FindingsStrip({ currentFilters }: { currentFilters: Filters }) {
     },
   };
 
+  const handlePreset = (key: PresetKey): void => {
+    const applied = applyPreset(key);
+    pendingFocusRef.current = key;
+    setAnnouncement(
+      applied
+        ? `Recorte aplicado: ${copy[key].claim}. Os achados continuam mostrando a base completa.`
+        : 'Recorte do achado removido. Filtros limpos.',
+    );
+  };
+
   const hasActiveFilters =
     currentFilters.appId !== null ||
     currentFilters.language !== null ||
@@ -225,10 +245,20 @@ function FindingsStrip({ currentFilters }: { currentFilters: Filters }) {
     currentFilters.earlyAccess !== 'all' ||
     currentFilters.playtime !== 'all';
 
+  useEffect(() => {
+    const key = pendingFocusRef.current;
+    if (key === null) return;
+    pendingFocusRef.current = null;
+    const strip = stripRef.current;
+    if (!strip || strip.contains(document.activeElement)) return;
+    strip.querySelector<HTMLButtonElement>(`button[data-preset="${key}"]`)?.focus();
+  }, [currentFilters]);
+
   return (
     <div
+      ref={stripRef}
       id="thesis-presets"
-      className="findings-strip"
+      className={`findings-strip ${hasActiveFilters ? 'is-collapsed' : 'is-expanded'}`}
       role="group"
       aria-label={
         hasActiveFilters
@@ -236,29 +266,73 @@ function FindingsStrip({ currentFilters }: { currentFilters: Filters }) {
           : 'Achados do estudo'
       }
     >
+      <span id="findings-preset-desc" className="sr-only">
+        Aplica o recorte deste achado e substitui os filtros atuais.
+      </span>
+      <p className="sr-only" aria-live="polite">
+        {announcement}
+      </p>
+
       {hasActiveFilters && (
-        <p className="findings-scope-note">Achados da base completa · não seguem o filtro</p>
+        <p className="meta findings-scope-note">Achados da base completa · não seguem o filtro</p>
       )}
-      <div className="findings-grid">
-        {THESIS_PRESETS.map((preset) => {
-          const tile = copy[preset.key];
-          return (
-            <button
-              key={preset.key}
-              type="button"
-              className="finding-tile"
-              data-preset={preset.key}
-              aria-pressed={isPresetActive(currentFilters, preset.key) ? 'true' : 'false'}
-              title={preset.title}
-              onClick={() => applyPreset(preset.key)}
-            >
-              <span className="finding-claim">{tile.claim}</span>
-              <span className="finding-figure">{tile.figure}</span>
-              <span className="finding-source">{tile.source}</span>
-            </button>
-          );
-        })}
-      </div>
+
+      {hasActiveFilters ? (
+        <div className="findings-compact-row">
+          {THESIS_PRESETS.map((preset) => {
+            const tile = copy[preset.key];
+            const isActive = isPresetActive(currentFilters, preset.key);
+            return (
+              <button
+                key={preset.key}
+                type="button"
+                className="finding-compact-btn"
+                data-preset={preset.key}
+                aria-pressed={isActive ? 'true' : 'false'}
+                aria-describedby="findings-preset-desc"
+                title={preset.title}
+                onClick={() => handlePreset(preset.key)}
+              >
+                <span className="finding-compact-claim">{tile.claim}</span>
+                <span className="finding-compact-figure">{tile.figure}</span>
+              </button>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="findings-grid">
+          {THESIS_PRESETS.map((preset) => {
+            const tile = copy[preset.key];
+            const isActive = isPresetActive(currentFilters, preset.key);
+            return (
+              <button
+                key={preset.key}
+                type="button"
+                className="finding-tile"
+                data-preset={preset.key}
+                aria-pressed={isActive ? 'true' : 'false'}
+                aria-describedby="findings-preset-desc"
+                title={preset.title}
+                onClick={() => handlePreset(preset.key)}
+              >
+                <span className="finding-claim">{tile.claim}</span>
+                <span className="finding-figure">{tile.figure}</span>
+                <span className="finding-source">{tile.source}</span>
+                <span className="finding-action">
+                  {isActive ? (
+                    'Limpar recorte'
+                  ) : (
+                    <>
+                      Ver recorte
+                      <RailIcon icon={ArrowRight} className="finding-action-icon" />
+                    </>
+                  )}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
@@ -288,10 +362,7 @@ function ContextContent() {
   }, [currentFilters, gameNameById]);
 
   return (
-    <>
-      <div ref={chipsRef} id="active-chips" className="active-chips" aria-live="polite" />
-      <FindingsStrip currentFilters={currentFilters} />
-    </>
+    <div ref={chipsRef} id="active-chips" className="active-chips" aria-live="polite" />
   );
 }
 
@@ -299,6 +370,14 @@ export function ContextIsland() {
   return (
     <QueryRoot>
       <ContextContent />
+    </QueryRoot>
+  );
+}
+
+export function FindingsIsland() {
+  return (
+    <QueryRoot>
+      <FindingsStrip />
     </QueryRoot>
   );
 }

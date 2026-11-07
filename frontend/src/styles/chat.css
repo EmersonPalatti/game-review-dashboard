@@ -1,5 +1,83 @@
 /* chat: overrides layered after global.css. Plain CSS, tokens from global.css. */
 
+:root {
+  --chat-dock-w: clamp(360px, 26vw, 420px);
+}
+
+:root[data-chat-dock='open'] #dashboard-main {
+  margin-right: var(--chat-dock-w);
+}
+
+/* Painel acoplado lateral em telas amplas (>= 1280px) */
+@keyframes chat-dock-slide-in {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes chat-dock-slide-out {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+
+@media (min-width: 1280px) {
+  .chat-drawer.chat-drawer-docked {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    right: 0;
+    left: auto;
+    width: var(--chat-dock-w);
+    max-width: var(--chat-dock-w);
+    height: 100vh;
+    height: 100dvh;
+    max-height: 100vh;
+    max-height: 100dvh;
+    border-radius: 0;
+    border-top: none;
+    border-bottom: none;
+    border-right: none;
+    border-left: 1px solid var(--line);
+    box-shadow: none;
+    background: var(--surface);
+    animation: chat-dock-slide-in var(--enter) var(--ease);
+    transition: none;
+  }
+
+  .chat-drawer.chat-drawer-docked.is-closing {
+    animation: chat-dock-slide-out var(--menu) var(--ease) forwards;
+    pointer-events: none;
+  }
+
+  .chat-drawer.chat-drawer-docked .chat-expand-btn {
+    display: none !important;
+  }
+
+  .chat-drawer.chat-drawer-docked .chat-badge-model {
+    white-space: nowrap;
+  }
+}
+
+/* Painel estreito (360–374px): o selo divide espaço com o título e quebrava; o título vence. */
+@media (min-width: 1280px) and (max-width: 1439px) {
+  .chat-drawer.chat-drawer-docked .chat-badge-model {
+    display: none;
+  }
+}
+
+@media (min-width: 1280px) {
+  .chat-backdrop {
+    display: none !important;
+  }
+}
+
 /* Balão de dica: uma única entrada autoral (opacidade, deslocamento e desfoque curtos). Sem rotação. */
 @keyframes chat-teaser-enter {
   from {
@@ -51,5 +129,40 @@
   .chat-status-dot-pop,
   .chat-copilot-chip-active {
     animation: none;
+    transition: none;
   }
+
+  .chat-drawer.chat-drawer-docked,
+  .chat-drawer.chat-drawer-docked.is-closing {
+    animation: none !important;
+    transform: none !important;
+  }
+}
+
+/* Espaço reservado para o botão flutuante não cobrir o final do conteúdo */
+#dashboard-main {
+  padding-bottom: calc(54px + 24px);
+}
+
+/* Em telas mobile (< 768px), o balão nunca é exibido */
+@media (max-width: 767px) {
+  .chat-teaser {
+    display: none !important;
+  }
+}
+
+/* Previne faux bold (apenas IBM Plex Sans 400 e 500 estão carregados) */
+.chat-drawer,
+.chat-fab-container,
+.chat-teaser {
+  font-synthesis-weight: none;
+}
+
+.chat-drawer strong,
+.chat-drawer b,
+.chat-fab-container strong,
+.chat-fab-container b,
+.chat-teaser strong,
+.chat-teaser b {
+  font-weight: 500;
 }

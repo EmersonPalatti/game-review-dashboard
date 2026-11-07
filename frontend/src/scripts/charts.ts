@@ -268,10 +268,31 @@ function tooltipBase(colors: ReturnType<typeof palette>) {
 }
 
 function resizeCharts(): void {
-  for (const chart of charts.values()) chart.resize();
+  for (const chart of charts.values()) {
+    const dom = chart.getDom();
+    if (dom && dom.clientWidth > 0 && dom.clientHeight > 0) {
+      chart.resize();
+    }
+  }
 }
 
 let chartObserver: ResizeObserver | null = null;
+
+function isClickableMonthPoint(
+  monthChart: ECharts,
+  x: number,
+  y: number,
+): boolean {
+  if (monthChart.containPixel('grid', [x, y])) return true;
+  const converted = monthChart.convertFromPixel({ seriesIndex: 0 }, [x, y]);
+  if (!Array.isArray(converted) || !lastData || lastData.months.length === 0) return false;
+  const dataIndex = Math.round(converted[0]);
+  if (dataIndex < 0 || dataIndex >= lastData.months.length) return false;
+  const pixel = monthChart.convertToPixel({ seriesIndex: 0 }, [dataIndex, 0]);
+  if (!pixel) return false;
+  const height = monthChart.getHeight();
+  return Math.abs(x - pixel[0]) <= 28 && y >= 10 && y <= height - 22;
+}
 
 export function initCharts(
   onPlaytimeSelect?: (bucket: PlaytimeBucket) => void,
@@ -319,10 +340,8 @@ export function initCharts(
     downPoint = [event.offsetX, event.offsetY];
   });
   monthZr.on('mousemove', (event: { offsetX: number; offsetY: number }) => {
-    const inGrid = monthChart.containPixel('grid', [event.offsetX, event.offsetY]);
-    if (inGrid) {
-      monthZr.setCursorStyle('pointer');
-    }
+    const isClickable = isClickableMonthPoint(monthChart, event.offsetX, event.offsetY);
+    monthZr.setCursorStyle(isClickable ? 'pointer' : 'default');
   });
   monthZr.on('click', (event: { offsetX: number; offsetY: number }) => {
     if (!lastData || !onSelectMonth || lastData.months.length === 0) return;
@@ -333,7 +352,7 @@ export function initCharts(
       return;
     }
     const pointInPixel: [number, number] = [event.offsetX, event.offsetY];
-    if (!monthChart.containPixel('grid', pointInPixel)) return;
+    if (!isClickableMonthPoint(monthChart, pointInPixel[0], pointInPixel[1])) return;
     const pointInGrid = monthChart.convertFromPixel({ seriesIndex: 0 }, pointInPixel);
     const dataIndex = Array.isArray(pointInGrid) ? Math.round(pointInGrid[0]) : -1;
     applyMonthAt(dataIndex);
@@ -662,7 +681,11 @@ function paintMonth(data: Charts, colors: ReturnType<typeof palette>, animate: b
           hideOverlap: true,
           formatter: (value: string) => formatMonth(value),
         },
-        axisPointer: { type: 'line', lineStyle: { color: colors.line, type: 'solid' } },
+        axisPointer: {
+          type: 'line',
+          lineStyle: { color: colors.line, type: 'solid' },
+          triggerEmphasis: true,
+        },
       },
       yAxis: {
         type: 'value',
@@ -688,8 +711,13 @@ function paintMonth(data: Charts, colors: ReturnType<typeof palette>, animate: b
           itemStyle: { color: colors.accent },
           emphasis: {
             disabled: false,
-            scale: true,
-            itemStyle: { color: colors.accent },
+            scale: 1.4,
+            focus: 'none',
+            itemStyle: {
+              color: colors.accent,
+              borderColor: colors.surface,
+              borderWidth: 2,
+            },
           },
           markLine: {
             silent: true,
@@ -782,7 +810,7 @@ function paintPlaytime(data: Charts, colors: ReturnType<typeof palette>, animate
     {
       ...motionConfig(animate),
       backgroundColor: 'transparent',
-      grid: { left: 8, right: 12, top: 16, bottom: 4, containLabel: true },
+      grid: { left: 48, right: 16, top: 20, bottom: 4, containLabel: false },
       tooltip: {
         ...tooltipBase(colors),
         trigger: 'axis',
@@ -808,10 +836,7 @@ function paintPlaytime(data: Charts, colors: ReturnType<typeof palette>, animate
         axisTick: { show: false },
         splitLine: { show: false },
         axisLabel: {
-          ...axisLabel(colors.muted),
-          interval: 0,
-          rotate: 40,
-          hideOverlap: false,
+          show: false,
         },
       },
       yAxis: {

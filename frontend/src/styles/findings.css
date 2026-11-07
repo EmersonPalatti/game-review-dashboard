@@ -37,15 +37,15 @@
   }
 }
 
-/* Findings strip: its own full-width line under the heading. */
-.context-top .findings-strip {
-  flex: 0 0 100%;
+/* Findings strip: layout in its own section below MetricsIsland. */
+.findings-strip {
+  width: 100%;
   min-width: 0;
   container-type: inline-size;
 }
 
 .findings-scope-note {
-  margin: 0 0 6px;
+  margin: 0 0 8px;
   font-size: 12px;
   line-height: 16px;
   color: var(--secondary);
@@ -55,6 +55,85 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: 8px;
+  animation: findings-enter var(--menu) var(--ease) both;
+}
+
+/* Compact row when any filter is active. */
+.findings-compact-row {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  animation: findings-enter var(--menu) var(--ease) both;
+}
+
+.finding-compact-btn {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  min-height: 28px;
+  padding: 4px 12px;
+  border: 1px solid var(--line);
+  border-radius: 9999px;
+  background: var(--surface);
+  color: var(--ink);
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background-color var(--fast) var(--ease),
+    border-color var(--fast) var(--ease),
+    color var(--fast) var(--ease);
+}
+
+.finding-compact-btn:hover {
+  background: var(--raised);
+  border-color: var(--secondary);
+}
+
+.finding-compact-btn[aria-pressed='true'] {
+  background: color-mix(in srgb, var(--accent) 8%, var(--surface));
+  border-color: var(--accent);
+}
+
+.finding-compact-btn:focus-visible,
+.finding-tile:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.finding-compact-claim {
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.finding-compact-figure {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  line-height: 18px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+  color: var(--secondary);
+}
+
+.finding-compact-btn[aria-pressed='true'] .finding-compact-figure {
+  color: var(--accent);
+}
+
+@keyframes findings-enter {
+  from {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* Tile: flat surface, 1px line border, radius matching .card. */
@@ -63,7 +142,8 @@
   grid-template-areas:
     "claim"
     "figure"
-    "source";
+    "source"
+    "action";
   grid-template-columns: minmax(0, 1fr);
   align-items: start;
   gap: 6px;
@@ -132,12 +212,40 @@
   text-wrap: pretty;
 }
 
+.finding-action {
+  grid-area: action;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 500;
+  color: var(--secondary);
+  transition: color var(--fast) var(--ease);
+}
+
+.finding-tile:hover .finding-action {
+  color: var(--ink);
+}
+
+.finding-tile[aria-pressed='true'] .finding-action {
+  color: var(--accent);
+}
+
+.finding-action-icon {
+  width: 14px;
+  height: 14px;
+  flex: none;
+}
+
 /* Medium strip: claim and source on the left, figure on the right, one tile per row. */
 @container (min-width: 560px) {
   .finding-tile {
     grid-template-areas:
       "claim figure"
-      "source figure";
+      "source figure"
+      "action figure";
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: center;
     column-gap: 16px;
@@ -148,7 +256,7 @@
   }
 }
 
-/* Wide strip: three equal columns, each tile stacked claim / figure / source. */
+/* Wide strip: three equal columns, each tile stacked claim / figure / source / action. */
 @container (min-width: 880px) {
   .findings-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -159,7 +267,8 @@
     grid-template-areas:
       "claim"
       "figure"
-      "source";
+      "source"
+      "action";
     grid-template-columns: minmax(0, 1fr);
     align-items: start;
     column-gap: 0;
@@ -176,6 +285,7 @@
   align-items: center;
   gap: 4px;
   width: fit-content;
+  min-height: 24px;
   margin-top: 2px;
   color: var(--ink);
   font-size: 14px;
@@ -207,10 +317,14 @@
 
 @media (prefers-reduced-motion: reduce) {
   .finding-tile,
+  .finding-compact-btn,
+  .finding-action,
   .context-audit-link {
     transition: none;
   }
 
+  .findings-grid,
+  .findings-compact-row,
   .filter-chip.is-entering {
     animation: none;
   }

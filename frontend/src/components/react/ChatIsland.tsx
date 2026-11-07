@@ -156,10 +156,16 @@ const TOOL_LABELS: Record<string, string> = {
 };
 
 const TEASER_STORAGE_KEY = 'reviews-da-steam:steambot-teaser';
-const TEASER_DELAY_MS = 4000;
+const TEASER_IDLE_DELAY_MS = 10000;
+const TEASER_AUTOHIDE_MS = 8000;
+
+// Guarda em memória se a dica já foi exibida nesta sessão (para o caso de falha de localStorage).
+let teaserShownSession = false;
 
 function readTeaserSeen(): boolean {
+  if (teaserShownSession) return true;
   try {
+    if (typeof window === 'undefined') return true;
     return window.localStorage.getItem(TEASER_STORAGE_KEY) === 'seen';
   } catch {
     return false;
@@ -167,14 +173,36 @@ function readTeaserSeen(): boolean {
 }
 
 function writeTeaserSeen(): void {
+  teaserShownSession = true;
   try {
+    if (typeof window === 'undefined') return;
     window.localStorage.setItem(TEASER_STORAGE_KEY, 'seen');
   } catch {
-    // Armazenamento indisponível (janela privada, bloqueio do navegador): a dica pode voltar, sem erro.
+    // Armazenamento indisponível (janela privada, bloqueio do navegador)
   }
 }
 
+// Verifica se um campo de digitação ou combobox está focado no momento.
+function isInputOrComboboxFocused(): boolean {
+  if (typeof document === 'undefined') return false;
+  const active = document.activeElement;
+  if (!active || active === document.body) return false;
+  const tagName = active.tagName.toLowerCase();
+  if (tagName === 'input' || tagName === 'textarea' || tagName === 'select') {
+    return true;
+  }
+  const role = active.getAttribute('role');
+  if (role === 'combobox' || role === 'textbox' || role === 'searchbox') {
+    return true;
+  }
+  if (active.hasAttribute('contenteditable') && active.getAttribute('contenteditable') !== 'false') {
+    return true;
+  }
+  return false;
+}
+
 const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)';
+const DOCKED_MEDIA_QUERY = '(min-width: 1280px)';
 
 function subscribeReducedMotion(onChange: () => void): () => void {
   const query = window.matchMedia(REDUCED_MOTION_QUERY);
@@ -371,7 +399,11 @@ function renderInlineText(text: string): React.ReactNode[] {
       );
     }
     if (part.startsWith('**') && part.endsWith('**') && part.length >= 4) {
-      return <strong key={index}>{part.slice(2, -2)}</strong>;
+      return (
+        <strong key={index} className="font-medium">
+          {part.slice(2, -2)}
+        </strong>
+      );
     }
     if (part.startsWith('*') && part.endsWith('*') && part.length >= 2) {
       return <em key={index}>{part.slice(1, -1)}</em>;
@@ -805,6 +837,7 @@ export function ChatIsland() {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [confirmClear, setConfirmClear] = useState(false);
   const [isMobileViewport, setIsMobileViewport] = useState(false);
+  const [isDockedViewport, setIsDockedViewport] = useState(false);
   const [freshBotMsgId, setFreshBotMsgId] = useState<string | null>(null);
   const [contextPulse, setContextPulse] = useState(false);
   const [isComposerShaking, setIsComposerShaking] = useState(false);
@@ -819,11 +852,17 @@ export function ChatIsland() {
   const confirmClearTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const composerShakeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const teaserTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const autoHideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const teaserRetiredRef = useRef(false);
+  const isOpenRef = useRef(isOpen);
   const announceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const restoreFocusRef = useRef(false);
   const isFirstMount = useRef(true);
+
+  useEffect(() => {
+    isOpenRef.current = isOpen;
+  }, [isOpen]);
 
   const sliceTotal = metrics?.total_reviews ?? null;
 
@@ -849,9 +888,13 @@ export function ChatIsland() {
   // Balão: some para sempre nesta visita e fica salvo se foi dispensado ou usado.
   const retireTeaser = useCallback(() => {
     teaserRetiredRef.current = true;
-    if (teaserTimerRef.current !== null) {
-      clearTimeout(teaserTimerRef.current);
-      teaserTimerRef.current = null;
+    if (idleTimerRef.current !== null) {
+      clearTimeout(idleTimerRef.current);
+      idleTimerRef.current = null;
+    }
+    if (autoHideTimerRef.current !== null) {
+      clearTimeout(autoHideTimerRef.current);
+      autoHideTimerRef.current = null;
     }
     writeTeaserSeen();
     setTeaser(null);
@@ -869,10 +912,8 @@ export function ChatIsland() {
 
   const closeDrawer = useCallback(() => {
     if (!isOpen || isClosing) return;
-    // Só devolve o foco ao botão se ele estava no painel (ou sem foco definido).
-    const active = document.activeElement;
-    restoreFocusRef.current =
-      !active || active === document.body || (dialogRef.current?.contains(active) ?? false);
+    // Devolve o foco ao botão FAB ao fechar
+    restoreFocusRef.current = true;
     setIsClosing(true);
     closeTimerRef.current = setTimeout(() => {
       setIsOpen(false);
@@ -896,24 +937,124 @@ export function ChatIsland() {
     return () => mq.removeEventListener('change', handler);
   }, []);
 
-  // Balão de dica: uma entrada por visita, após o carregamento assentar. Sem rotação.
+  // Detecção de viewport para modo acoplado (>= 1280px)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const mq = window.matchMedia(DOCKED_MEDIA_QUERY);
+    setIsDockedViewport(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setIsDockedViewport(e.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
+
+  // Sinaliza no elemento raiz quando o painel estiver acoplado para reservar espaço no #dashboard-main
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+
+    if (isOpen && isDockedViewport) {
+      document.documentElement.dataset.chatDock = 'open';
+    } else {
+      delete document.documentElement.dataset.chatDock;
+    }
+
+    return () => {
+      delete document.documentElement.dataset.chatDock;
+    };
+  }, [isOpen, isDockedViewport]);
+
+  // Balão de dica: exibido após ~10s de ociosidade, no máximo uma vez por visitante.
   useEffect(() => {
     if (readTeaserSeen()) {
       teaserRetiredRef.current = true;
       return;
     }
-    teaserTimerRef.current = setTimeout(() => {
-      teaserTimerRef.current = null;
+
+    function scheduleTimer() {
       if (teaserRetiredRef.current) return;
-      setTeaser(TEASER_ITEMS[Math.floor(Math.random() * TEASER_ITEMS.length)] ?? TEASER_ITEMS[0]);
-    }, TEASER_DELAY_MS);
-    return () => {
-      if (teaserTimerRef.current !== null) {
-        clearTimeout(teaserTimerRef.current);
-        teaserTimerRef.current = null;
+      idleTimerRef.current = setTimeout(() => {
+        idleTimerRef.current = null;
+        if (teaserRetiredRef.current || readTeaserSeen()) return;
+        if (isOpenRef.current) return;
+        if (typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches) return;
+        if (isInputOrComboboxFocused()) {
+          // Se houver campo ou combobox com foco, reagenda a verificação de ociosidade
+          scheduleTimer();
+          return;
+        }
+
+        // Exibe no máximo uma vez por visitante
+        teaserRetiredRef.current = true;
+        writeTeaserSeen();
+        const item = TEASER_ITEMS[Math.floor(Math.random() * TEASER_ITEMS.length)] ?? TEASER_ITEMS[0];
+        setTeaser(item);
+        announce(`Dica do SteamBot: ${item.text}`);
+      }, TEASER_IDLE_DELAY_MS);
+    }
+
+    function handleActivity() {
+      if (teaserRetiredRef.current) return;
+      if (idleTimerRef.current !== null) {
+        clearTimeout(idleTimerRef.current);
+        idleTimerRef.current = null;
       }
+      scheduleTimer();
+    }
+
+    scheduleTimer();
+
+    const activityEvents = [
+      'pointerdown',
+      'pointermove',
+      'keydown',
+      'scroll',
+      'wheel',
+      'touchstart',
+      'touchmove',
+    ] as const;
+    const listenerOpts: AddEventListenerOptions = { passive: true };
+
+    activityEvents.forEach((ev) => {
+      window.addEventListener(ev, handleActivity, listenerOpts);
+    });
+
+    return () => {
+      if (idleTimerRef.current !== null) {
+        clearTimeout(idleTimerRef.current);
+        idleTimerRef.current = null;
+      }
+      activityEvents.forEach((ev) => {
+        window.removeEventListener(ev, handleActivity, listenerOpts);
+      });
     };
-  }, []);
+  }, [announce]);
+
+  // Auto-esconde o balão após ~8s ou em qualquer rolagem de tela.
+  useEffect(() => {
+    if (!teaser) return;
+
+    autoHideTimerRef.current = setTimeout(() => {
+      autoHideTimerRef.current = null;
+      setTeaser(null);
+    }, TEASER_AUTOHIDE_MS);
+
+    const handleScroll = () => {
+      if (autoHideTimerRef.current !== null) {
+        clearTimeout(autoHideTimerRef.current);
+        autoHideTimerRef.current = null;
+      }
+      setTeaser(null);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true, once: true });
+
+    return () => {
+      if (autoHideTimerRef.current !== null) {
+        clearTimeout(autoHideTimerRef.current);
+        autoHideTimerRef.current = null;
+      }
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, [teaser]);
 
   // Atalho global de teclado (Ctrl+K / ⌘K) para abrir/fechar o assistente
   useEffect(() => {
@@ -956,8 +1097,11 @@ export function ChatIsland() {
       if (composerShakeTimerRef.current) {
         clearTimeout(composerShakeTimerRef.current);
       }
-      if (teaserTimerRef.current !== null) {
-        clearTimeout(teaserTimerRef.current);
+      if (idleTimerRef.current !== null) {
+        clearTimeout(idleTimerRef.current);
+      }
+      if (autoHideTimerRef.current !== null) {
+        clearTimeout(autoHideTimerRef.current);
       }
       if (announceTimerRef.current !== null) {
         clearTimeout(announceTimerRef.current);
@@ -976,29 +1120,37 @@ export function ChatIsland() {
     }
     if (restoreFocusRef.current) {
       restoreFocusRef.current = false;
-      fabRef.current?.focus();
+      requestAnimationFrame(() => {
+        fabRef.current?.focus();
+      });
     }
   }, [isOpen]);
 
-  // Esc fecha quando o foco está no painel (ou no corpo da página), sem roubar o foco de outros controles.
+  // Esc fecha quando o foco está no painel (em modo acoplado, apenas se o foco estiver dentro; no flutuante, se dentro ou no body).
   useEffect(() => {
     if (!isOpen) return;
 
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key !== 'Escape') return;
       const active = document.activeElement;
-      if (dialogRef.current?.contains(active) || active === document.body) {
-        closeDrawer();
+      if (isDockedViewport) {
+        if (dialogRef.current?.contains(active)) {
+          closeDrawer();
+        }
+      } else {
+        if (dialogRef.current?.contains(active) || active === document.body) {
+          closeDrawer();
+        }
       }
     }
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, closeDrawer]);
+  }, [isOpen, isDockedViewport, closeDrawer]);
 
   // Modal só no mobile: fundo inerte e Tab preso no diálogo. No desktop o painel é não modal.
   useEffect(() => {
-    if (!isOpen || !isMobileViewport) return;
+    if (!isOpen || !isMobileViewport || isDockedViewport) return;
     const dialog = dialogRef.current;
     if (!dialog) return;
 
@@ -1318,19 +1470,22 @@ export function ChatIsland() {
       {/* Modal / Drawer do Chat */}
       {isOpen && (
         <>
-          {/* Backdrop para mobile */}
-          <div
-            className={`chat-backdrop ${isClosing ? 'is-closing' : ''}`}
-            onClick={closeDrawer}
-            aria-hidden="true"
-          />
+          {/* Backdrop para mobile (não renderizado no modo acoplado) */}
+          {!isDockedViewport && (
+            <div
+              className={`chat-backdrop ${isClosing ? 'is-closing' : ''}`}
+              onClick={closeDrawer}
+              aria-hidden="true"
+            />
+          )}
 
           <section
             ref={dialogRef}
-            role="dialog"
-            aria-modal={isMobileViewport ? 'true' : 'false'}
-            aria-labelledby={titleId}
-            className={`chat-drawer ${isExpanded ? 'chat-drawer-wide' : ''} ${isClosing ? 'is-closing' : ''}`}
+            role={isDockedViewport ? 'complementary' : 'dialog'}
+            aria-modal={isDockedViewport ? undefined : isMobileViewport ? 'true' : 'false'}
+            aria-label={isDockedViewport ? 'SteamBot' : undefined}
+            aria-labelledby={isDockedViewport ? undefined : titleId}
+            className={`chat-drawer ${isDockedViewport ? 'chat-drawer-docked' : isExpanded ? 'chat-drawer-wide' : ''} ${isClosing ? 'is-closing' : ''}`}
           >
             {/* Header */}
             <header className="chat-header">
@@ -1370,22 +1525,24 @@ export function ChatIsland() {
                     </span>
                   </span>
                 </button>
-                <button
-                  type="button"
-                  onClick={() => setIsExpanded((prev) => !prev)}
-                  className="chat-action-btn hidden sm:flex"
-                  title={isExpanded ? 'Restaurar largura padrão (440px)' : 'Expandir painel para tabelas (680px)'}
-                  aria-label={isExpanded ? 'Restaurar largura padrão (440px)' : 'Expandir painel para tabelas (680px)'}
-                >
-                  <span className="chat-icon-swap" data-state={isExpanded ? 'b' : 'a'}>
-                    <span className="chat-icon-slot" data-icon="a">
-                      <RailIcon icon={Maximize2} className="w-4 h-4" />
+                {!isDockedViewport && (
+                  <button
+                    type="button"
+                    onClick={() => setIsExpanded((prev) => !prev)}
+                    className="chat-action-btn chat-expand-btn hidden sm:flex"
+                    title={isExpanded ? 'Restaurar largura padrão (440px)' : 'Expandir painel para tabelas (680px)'}
+                    aria-label={isExpanded ? 'Restaurar largura padrão (440px)' : 'Expandir painel para tabelas (680px)'}
+                  >
+                    <span className="chat-icon-swap" data-state={isExpanded ? 'b' : 'a'}>
+                      <span className="chat-icon-slot" data-icon="a">
+                        <RailIcon icon={Maximize2} className="w-4 h-4" />
+                      </span>
+                      <span className="chat-icon-slot" data-icon="b">
+                        <RailIcon icon={Minimize2} className="w-4 h-4" />
+                      </span>
                     </span>
-                    <span className="chat-icon-slot" data-icon="b">
-                      <RailIcon icon={Minimize2} className="w-4 h-4" />
-                    </span>
-                  </span>
-                </button>
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={closeDrawer}
@@ -1410,7 +1567,7 @@ export function ChatIsland() {
                   className="w-3.5 h-3.5 text-[var(--accent)] flex-none"
                 />
                 <span className="truncate">
-                  <strong className="text-[var(--ink)]">
+                  <strong className="font-medium text-[var(--ink)]">
                     {activeFiltersCount === 0 ? 'Recorte global' : formatFilterCount(activeFiltersCount)}:
                   </strong>{' '}
                   <span key={contextSummary} className="chat-context-swap">

@@ -1,4 +1,27 @@
-/* charts: overrides layered after global.css. Plain CSS, tokens from global.css. */
+.charts-shell {
+  container: charts / inline-size;
+  width: 100%;
+}
+
+.charts-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+}
+
+@container charts (min-width: 880px) {
+  .charts-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .charts-col-span-2 {
+    grid-column: span 2 / span 2;
+  }
+
+  .charts-col-span-3 {
+    grid-column: span 3 / span 3;
+  }
+}
 
 .chart-frame {
   border-radius: 8px;
@@ -10,25 +33,27 @@
 }
 
 .playtime-legend {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 16px;
+  display: grid;
+  grid-template-columns: repeat(9, minmax(0, 1fr));
+  gap: 2px;
+  padding-left: 48px;
+  padding-right: 16px;
+  margin-top: 6px;
 }
 
 .playtime-chip {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: 6px;
+  justify-content: center;
   min-height: 32px;
-  padding: 4px 10px;
+  padding: 4px 2px;
   border: 1px solid transparent;
   border-radius: 6px;
   background: transparent;
   color: var(--secondary);
-  font-size: 12px;
-  line-height: 16px;
-  white-space: nowrap;
+  font-size: 11px;
+  line-height: 14px;
+  text-align: center;
   cursor: pointer;
   transition:
     background-color var(--fast) var(--ease),
@@ -47,7 +72,7 @@
   border-color: var(--line);
   color: var(--ink);
   outline: 2px solid var(--accent);
-  outline-offset: 2px;
+  outline-offset: 1px;
 }
 
 .playtime-chip[aria-pressed='true'] {
@@ -61,22 +86,114 @@
   border-color: var(--accent);
 }
 
-.playtime-chip-value {
-  font-family: var(--font-mono);
-  font-variant-numeric: tabular-nums;
-  color: inherit;
+.playtime-chip-label {
+  display: block;
+  word-break: normal;
+  overflow-wrap: normal;
+  white-space: normal;
 }
 
 .playtime-chip-dot {
-  flex: none;
-  width: 6px;
-  height: 6px;
+  display: inline-block;
+  vertical-align: middle;
+  width: 5px;
+  height: 5px;
+  margin-right: 3px;
+  margin-top: -1px;
   border-radius: 999px;
   background: var(--negative);
 }
 
+/* Ranking divergente em torno da taxa base */
+.rank-track-diverging {
+  position: relative;
+  overflow: visible;
+}
+
+.rank-track-diverging::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: -2px;
+  bottom: -2px;
+  width: 2px;
+  transform: translateX(-50%);
+  background: var(--ink);
+  opacity: 0.75;
+  border-radius: 1px;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.rank-fill-positive {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: 50%;
+  height: 100%;
+  border-radius: 0 2px 2px 0;
+  background: var(--accent);
+  transform-origin: left center;
+}
+
+.rank-fill-negative {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 50%;
+  height: 100%;
+  border-radius: 2px 0 0 2px;
+  background: var(--negative);
+  transform-origin: right center;
+}
+
+.rank-row.is-selected .rank-fill-positive {
+  background: var(--accent);
+}
+
+.rank-row.is-selected .rank-fill-negative {
+  background: var(--negative);
+}
+
+/* Alternância entre desktop (colunas ECharts + chips) e mobile (lista divergente) */
+@media (max-width: 639px) {
+  .playtime-desktop {
+    display: none !important;
+  }
+}
+
+@media (min-width: 640px) {
+  .playtime-mobile {
+    display: none !important;
+  }
+}
+
+.playtime-mobile[hidden],
+.playtime-desktop[hidden] {
+  display: none !important;
+}
+
+.playtime-rank-name {
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+.rank-dot-negative {
+  display: inline-block;
+  vertical-align: middle;
+  width: 6px;
+  height: 6px;
+  margin-right: 6px;
+  border-radius: 999px;
+  background: var(--negative);
+  flex: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .playtime-chip {
+  .playtime-chip,
+  .rank-fill {
     transition: none;
   }
 }

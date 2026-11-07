@@ -38,6 +38,18 @@
   cursor: text;
 }
 
+/* Foco visível por teclado na linha de avaliação: outline 2px com offset negativo e fundo --raised */
+.sheet tbody tr.review-row:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+  background: var(--raised);
+}
+
+.sheet tbody tr.review-row:focus-visible td {
+  background: var(--raised);
+  box-shadow: none;
+}
+
 /* Chevron de expansão: rotação suave de 200ms com centro como origem */
 .excerpt-chevron {
   transform-origin: center;
@@ -69,9 +81,275 @@
     transition: none;
   }
 
+  .sheet tbody tr.review-row,
+  .sheet tbody tr.review-row td {
+    transition: none;
+  }
+
   .sheet tbody tr.review-row.is-expanded .review-badge.is-detail,
   .sheet tbody tr.review-row.is-expanded .review-badge-detail {
     animation: none;
+  }
+}
+
+/* Touch target expandido para o botão de expansão sem alterar o tamanho visual (≥ 32px) */
+.excerpt-toggle {
+  position: relative;
+}
+
+.excerpt-toggle::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  min-width: 32px;
+  min-height: 32px;
+  width: 100%;
+  height: 100%;
+}
+
+/* Elementos de metadados visíveis apenas no layout mobile */
+.mobile-meta-votes-label,
+.mobile-meta-sep,
+.mobile-meta-date {
+  display: none;
+}
+
+/* Layout mobile (< 768px): cards verticais com rolagem da janela */
+@media (max-width: 767px) {
+  /* Remove a caixa de rolagem interna; a página rola */
+  .sheet.sheet-virtual {
+    max-height: none;
+    overflow: visible;
+  }
+
+  .sheet {
+    overflow-x: visible;
+    padding: 0;
+  }
+
+  /* Tabela vira bloco sem rolagem horizontal */
+  .sheet table {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    table-layout: auto;
+  }
+
+  /* Cabeçalho visualmente oculto, mantido para a11y */
+  .sheet thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .sheet tbody {
+    display: block;
+    width: 100%;
+  }
+
+  /* Linhas espaçadoras da virtualização */
+  .sheet tbody tr.sheet-spacer {
+    display: block;
+    width: 100%;
+  }
+
+  .sheet tbody tr.sheet-spacer td {
+    display: block;
+    width: 100%;
+    padding: 0;
+    border: 0;
+  }
+
+  /* Estado vazio */
+  .sheet tbody td.empty-cell {
+    display: block;
+    width: 100%;
+    padding: 24px 16px;
+    white-space: normal;
+  }
+
+  /* Card de avaliação: tr como flex container em bloco */
+  .sheet tbody tr.review-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--line);
+    background: var(--surface);
+    row-gap: 8px;
+    cursor: pointer;
+    text-align: left;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .sheet tbody tr.review-row:last-child {
+    border-bottom: 0;
+  }
+
+  .sheet tbody tr.review-row:hover,
+  .sheet tbody tr.review-row:active {
+    background: var(--raised);
+  }
+
+  .sheet tbody tr.review-row.is-expanded {
+    background: var(--raised);
+  }
+
+  .sheet tbody tr.review-row:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: -2px;
+    background: var(--raised);
+  }
+
+  /* Reset dos estilos padrão de td de tabela */
+  .sheet tbody tr.review-row td {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    overflow: visible;
+    text-overflow: unset;
+  }
+
+  .sheet tbody tr.review-row:hover td,
+  .sheet tbody tr.review-row:active td,
+  .sheet tbody tr.review-row.is-expanded td,
+  .sheet tbody tr.review-row:focus-visible td {
+    background: transparent;
+    box-shadow: none;
+  }
+
+  /* 1. Texto da avaliação vem primeiro, ocupando a largura total */
+  .sheet tbody tr.review-row td[data-col="excerpt"] {
+    order: 1;
+    width: 100%;
+    flex: 0 0 100%;
+    color: var(--ink);
+  }
+
+  .excerpt-line {
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .excerpt-toggle {
+    margin-top: 2px;
+  }
+
+  .sheet tbody tr.review-row .excerpt-text {
+    font-size: 14px;
+    line-height: 20px;
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .sheet tbody tr.review-row.is-expanded .excerpt-text {
+    display: block;
+    -webkit-line-clamp: unset;
+    overflow: visible;
+  }
+
+  /* Oculta o badge de data dentro do excerpt no mobile (já exibido na linha meta) */
+  .sheet tbody tr.review-row .review-badge-date {
+    display: none;
+  }
+
+  /* 2. Linha compacta de metadados: game · language · rec · hours · votes · date */
+  .sheet tbody tr.review-row td[data-col="game"],
+  .sheet tbody tr.review-row td[data-col="language"],
+  .sheet tbody tr.review-row td[data-col="recommendation"],
+  .sheet tbody tr.review-row td[data-col="playtime_hours"],
+  .sheet tbody tr.review-row td[data-col="votes_helpful"] {
+    display: inline-flex;
+    align-items: center;
+    width: auto;
+    flex: 0 0 auto;
+    font-size: 12px;
+    line-height: 18px;
+    color: var(--secondary);
+    white-space: normal;
+  }
+
+  .sheet tbody tr.review-row td[data-col="game"] {
+    order: 2;
+    color: var(--ink);
+    font-weight: 500;
+  }
+
+  .sheet tbody tr.review-row td[data-col="game"] > span {
+    display: inline-block;
+    max-width: 130px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: middle;
+  }
+
+  .sheet tbody tr.review-row td[data-col="language"] {
+    order: 3;
+  }
+
+  .sheet tbody tr.review-row td[data-col="language"] > span {
+    display: inline-block;
+    max-width: 100px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: middle;
+  }
+
+  .sheet tbody tr.review-row td[data-col="recommendation"] {
+    order: 4;
+  }
+
+  .sheet tbody tr.review-row td[data-col="playtime_hours"] {
+    order: 5;
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    text-align: left;
+  }
+
+  .sheet tbody tr.review-row td[data-col="votes_helpful"] {
+    order: 6;
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    text-align: left;
+  }
+
+  /* Separadores entre os itens da linha de metadados */
+  .sheet tbody tr.review-row td[data-col="game"]::after,
+  .sheet tbody tr.review-row td[data-col="language"]::after,
+  .sheet tbody tr.review-row td[data-col="recommendation"]::after,
+  .sheet tbody tr.review-row td[data-col="playtime_hours"]::after {
+    content: "·";
+    margin: 0 5px;
+    color: var(--muted);
+  }
+
+  .mobile-meta-votes-label {
+    display: inline;
+  }
+
+  .mobile-meta-sep {
+    display: inline;
+    margin: 0 5px;
+    color: var(--muted);
+  }
+
+  .mobile-meta-date {
+    display: inline;
+    color: var(--secondary);
   }
 }
 
