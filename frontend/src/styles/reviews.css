@@ -40,6 +40,18 @@
   max-width: 72ch;
 }
 
+/* Destaque para o badge de data no trecho quando a tabela está ordenada por created_at */
+.sheet tbody tr.review-row .review-badge-date.is-sorted {
+  color: var(--ink);
+  font-weight: 500;
+  border-color: var(--secondary);
+}
+
+.mobile-meta-date.is-sorted {
+  color: var(--ink);
+  font-weight: 500;
+}
+
 /* Foco visível por teclado na linha de avaliação: outline 2px com offset negativo e fundo --raised */
 .sheet tbody tr.review-row:focus-visible {
   outline: 2px solid var(--accent);
@@ -352,6 +364,12 @@
   .mobile-meta-date {
     display: inline;
     color: var(--secondary);
+  }
+
+  /* Destaque para a data nos metadados compactos quando ordenada por created_at */
+  .mobile-meta-date.is-sorted {
+    color: var(--ink);
+    font-weight: 500;
   }
 }
 

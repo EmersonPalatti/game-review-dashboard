@@ -127,7 +127,8 @@ export class SearchCombo {
       return;
     }
     const match = this.options.find((item) => item.value === this.committed);
-    const label = match?.label ?? '';
+    const label =
+      match?.label ?? (/^\d+$/.test(this.committed) ? `#${this.committed}` : this.committed);
     this.input.value = label;
     this.input.title = label;
     this.syncMirror(label);
@@ -208,7 +209,9 @@ export class SearchCombo {
     const items = this.filtered();
     if (reset) {
       const selected = items.findIndex((item) => item.value === this.committed);
-      this.active = selected >= 0 ? selected : 0;
+      // Com busca digitada, a primeira correspondência fica ativa (Enter a escolhe). Sem busca e com um
+      // valor fora do catálogo (ex.: #1091500), nenhuma opção é pré-selecionada.
+      this.active = selected >= 0 ? selected : this.query.trim() !== '' ? 0 : -1;
     }
     if (this.active >= items.length) this.active = Math.max(0, items.length - 1);
     this.menu.replaceChildren();
@@ -247,7 +250,7 @@ export class SearchCombo {
       this.menu.append(option);
     });
 
-    const current = this.menu.children.item(this.active);
+    const current = this.active >= 0 ? this.menu.children.item(this.active) : null;
     if (current instanceof HTMLElement) {
       this.input.setAttribute('aria-activedescendant', current.id);
       const menuRect = this.menu.getBoundingClientRect();
@@ -257,6 +260,8 @@ export class SearchCombo {
       } else if (optionRect.top < menuRect.top) {
         this.menu.scrollTop -= menuRect.top - optionRect.top;
       }
+    } else {
+      this.input.removeAttribute('aria-activedescendant');
     }
   }
 
@@ -273,7 +278,7 @@ export class SearchCombo {
       this.showCommitted();
       return;
     }
-    if (this.open && this.navigated) {
+    if (this.open && this.navigated && this.active >= 0) {
       const items = this.filtered();
       const picked = items[this.active];
       if (picked) {
@@ -297,19 +302,26 @@ export class SearchCombo {
   private onKey(event: KeyboardEvent): void {
     if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
       event.preventDefault();
-      if (!this.open) this.openMenu(true);
+      if (!this.open) {
+        this.query = '';
+        this.openMenu(true);
+      }
       const count = this.filtered().length;
       if (count === 0) return;
       this.navigated = true;
-      this.active += event.key === 'ArrowDown' ? 1 : -1;
-      if (this.active < 0) this.active = count - 1;
-      if (this.active >= count) this.active = 0;
+      if (this.active < 0) {
+        this.active = event.key === 'ArrowDown' ? 0 : count - 1;
+      } else {
+        this.active += event.key === 'ArrowDown' ? 1 : -1;
+        if (this.active < 0) this.active = count - 1;
+        if (this.active >= count) this.active = 0;
+      }
       this.paint(false);
       return;
     }
     if (event.key === 'Tab' && this.open) {
       window.clearTimeout(this.blurTimer);
-      if (this.navigated) {
+      if (this.navigated && this.active >= 0) {
         const items = this.filtered();
         const picked = items[this.active];
         if (picked) {
@@ -324,8 +336,8 @@ export class SearchCombo {
     if (event.key === 'Enter') {
       event.preventDefault();
       const items = this.filtered();
-      const picked = items[this.active];
-      if (this.open && picked) this.commit(picked.value);
+      const picked = this.open && this.navigated && this.active >= 0 ? items[this.active] : undefined;
+      if (picked) this.commit(picked.value);
       else this.finishEditing();
       return;
     }

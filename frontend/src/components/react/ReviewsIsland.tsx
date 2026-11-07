@@ -102,11 +102,13 @@ function ReviewBadges({
   item,
   isExpanded,
   isTruncated,
+  isDateSorted,
   id,
 }: {
   item: ReviewItem;
   isExpanded: boolean;
   isTruncated: boolean;
+  isDateSorted?: boolean;
   id?: string;
 }) {
   let secondaryCount = 0;
@@ -115,10 +117,14 @@ function ReviewBadges({
   if (item.votes_funny > 0) secondaryCount++;
   if (item.comment_count > 0) secondaryCount++;
 
+  const dateBadgeClass = isDateSorted
+    ? 'review-badge review-badge-date is-sorted'
+    : 'review-badge review-badge-date';
+
   if (!isExpanded) {
     return (
       <div id={id} className="review-badges">
-        <span className="review-badge review-badge-date">{formatDate(item.created_at)}</span>
+        <span className={dateBadgeClass}>{formatDate(item.created_at)}</span>
         {item.early_access ? (
           <span className="review-badge is-accent">Acesso antecipado</span>
         ) : null}
@@ -144,7 +150,7 @@ function ReviewBadges({
 
   return (
     <div id={id} className="review-badges">
-      <span className="review-badge review-badge-date">{formatDate(item.created_at)}</span>
+      <span className={dateBadgeClass}>{formatDate(item.created_at)}</span>
       {item.early_access ? (
         <span className="review-badge is-accent">Acesso antecipado</span>
       ) : null}
@@ -179,10 +185,12 @@ function ReviewBadges({
 function ExcerptCell({
   item,
   isExpanded,
+  isDateSorted,
   onToggle,
 }: {
   item: ReviewItem;
   isExpanded: boolean;
+  isDateSorted?: boolean;
   onToggle: () => void;
 }) {
   const isTruncated = (item.excerpt?.length ?? 0) >= 275;
@@ -228,6 +236,7 @@ function ExcerptCell({
         item={item}
         isExpanded={isExpanded}
         isTruncated={isTruncated}
+        isDateSorted={isDateSorted}
       />
     </div>
   );
@@ -258,19 +267,36 @@ function getNextSortDescription(sortKey: ReviewSortBy, currentSort: ReviewSort):
   return 'Retornar à ordenação padrão (votos úteis, decrescente)';
 }
 
+/**
+ * Rótulo acessível do controle de ordenação por data na coluna Trecho.
+ * Informa tanto a ação do controle quanto o estado atual da ordenação.
+ */
+function getDateSortAriaLabel(currentSort: ReviewSort): string {
+  if (currentSort.sortBy !== 'created_at') {
+    return 'Ordenar por data, mais recentes primeiro';
+  }
+  if (currentSort.sortDir === 'desc') {
+    return 'Ordenado por data, mais recentes primeiro. Ativar inverte a ordem';
+  }
+  return 'Ordenado por data, mais antigas primeiro. Ativar volta à ordem padrão';
+}
+
 function SortHeaderButton({
   label,
   sortKey,
   title,
+  ariaLabel,
   currentSort,
 }: {
   label: ReactNode;
   sortKey: ReviewSortBy;
   title?: string;
+  ariaLabel?: string;
   currentSort: ReviewSort;
 }) {
   const active = currentSort.sortBy === sortKey;
   const nextSortText = title ?? getNextSortDescription(sortKey, currentSort);
+  const buttonAriaLabel = ariaLabel ?? nextSortText;
   return (
     <button
       type="button"
@@ -278,7 +304,7 @@ function SortHeaderButton({
       data-sort-by={sortKey}
       data-sort-dir={active ? currentSort.sortDir : undefined}
       title={nextSortText}
-      aria-label={nextSortText}
+      aria-label={buttonAriaLabel}
       onClick={() => cycleSort(sortKey)}
     >
       <span>{label}</span>
@@ -517,7 +543,15 @@ function ReviewsTableContent() {
             <span className="votes-value">{formatInteger(info.getValue())}</span>
             <span className="mobile-meta-votes-label">{' '}úteis</span>
             <span className="mobile-meta-sep" aria-hidden="true"> · </span>
-            <span className="mobile-meta-date">{formatDate(info.row.original.created_at)}</span>
+            <span
+              className={
+                currentSort.sortBy === 'created_at'
+                  ? 'mobile-meta-date is-sorted'
+                  : 'mobile-meta-date'
+              }
+            >
+              {formatDate(info.row.original.created_at)}
+            </span>
           </>
         ),
       }),
@@ -527,13 +561,14 @@ function ReviewsTableContent() {
           <div className="flex items-center justify-between gap-2">
             <span>Trecho</span>
             <SortHeaderButton
-              label="Data"
+              label="Por data"
               sortKey="created_at"
               currentSort={currentSort}
+              ariaLabel={getDateSortAriaLabel(currentSort)}
             />
           </div>
         ),
-        meta: { thClass: 'w-[41%]', sortKey: 'created_at' as ReviewSortBy },
+        meta: { thClass: 'w-[41%]', ariaLabel: 'Trecho' },
         cell: (info) => {
           const meta = info.table.options.meta;
           const reviewId = info.row.original.review_id;
@@ -542,6 +577,7 @@ function ReviewsTableContent() {
             <ExcerptCell
               item={info.row.original}
               isExpanded={isExpanded}
+              isDateSorted={currentSort.sortBy === 'created_at'}
               onToggle={() => meta?.toggleExpanded?.(reviewId)}
             />
           );
@@ -760,7 +796,7 @@ function ReviewsTableContent() {
                 <tr key={headerGroup.id}>
                   {headerGroup.headers.map((header) => {
                     const meta = header.column.columnDef.meta as
-                      | { thClass?: string; sortKey?: ReviewSortBy }
+                      | { thClass?: string; sortKey?: ReviewSortBy; ariaLabel?: string }
                       | undefined;
                     const sortKey = meta?.sortKey;
                     return (
@@ -768,6 +804,7 @@ function ReviewsTableContent() {
                         key={header.id}
                         scope="col"
                         className={meta?.thClass}
+                        aria-label={meta?.ariaLabel}
                         aria-sort={sortKey ? sortHeaderAria(sortKey, currentSort) : undefined}
                       >
                         {header.isPlaceholder

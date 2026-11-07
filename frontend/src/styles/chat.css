@@ -178,3 +178,73 @@
 .chat-teaser b {
   font-weight: 500;
 }
+
+/* Dicas do compositor: evita corte por reticências e permite quebra limpa com kbd */
+.chat-composer-toolbar {
+  align-items: flex-end;
+}
+
+.chat-input-hint {
+  flex: 1 1 0%;
+  min-width: 0;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+}
+
+.chat-hint-desktop {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 3px 5px;
+  line-height: 18px;
+}
+
+.chat-hint-mobile {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px 5px;
+  line-height: 18px;
+}
+
+@media (min-width: 640px) {
+  .chat-hint-mobile {
+    display: none !important;
+  }
+}
+
+@media (max-width: 639px) {
+  .chat-hint-desktop {
+    display: none !important;
+  }
+}
+
+.chat-hint-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  white-space: nowrap;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.chat-drawer.chat-drawer-docked .chat-hint-desktop {
+  gap: 3px 4px;
+}
+
+.chat-hint-item .shortcut-hint {
+  vertical-align: middle;
+  flex-shrink: 0;
+  padding: 0 4px;
+}
+
+.chat-hint-sep {
+  color: var(--muted);
+  opacity: 0.6;
+  user-select: none;
+}
+
+.chat-drawer.chat-drawer-docked .chat-hint-sep-history {
+  display: none;
+}
+

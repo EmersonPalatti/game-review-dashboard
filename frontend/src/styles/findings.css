@@ -94,7 +94,7 @@
   gap: 8px;
 }
 
-/* Compact row when any filter is active. */
+/* Compact row when any filter is active or chat dock is open on >= 1280px. */
 .findings-compact-row {
   display: flex;
   flex-direction: row;

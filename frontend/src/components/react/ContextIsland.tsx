@@ -59,6 +59,48 @@ type FindingCopy = {
   source: string;
 };
 
+const DOCKED_CHAT_MEDIA_QUERY = '(min-width: 1280px)';
+
+/**
+ * Observa se o SteamBot está acoplado lateralmente (viewport >= 1280px e data-chat-dock="open").
+ * O atributo é controlado pelo ChatIsland no elemento raiz document.documentElement.
+ * SSR-safe: devolve false no servidor e na primeira renderização para bater com o HTML hidratado.
+ */
+function useDockedChat(): boolean {
+  const [isDocked, setIsDocked] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || typeof document === 'undefined') return;
+
+    const mq = window.matchMedia(DOCKED_CHAT_MEDIA_QUERY);
+
+    function update(): void {
+      const isChatDockOpen = document.documentElement.getAttribute('data-chat-dock') === 'open';
+      setIsDocked(isChatDockOpen && mq.matches);
+    }
+
+    update();
+
+    const observer = new MutationObserver(() => {
+      update();
+    });
+
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['data-chat-dock'],
+    });
+
+    mq.addEventListener('change', update);
+
+    return () => {
+      observer.disconnect();
+      mq.removeEventListener('change', update);
+    };
+  }, []);
+
+  return isDocked;
+}
+
 function patchFilters(patch: Partial<Filters>): void {
   filters.set({ ...filters.get(), ...patch });
 }
@@ -171,6 +213,7 @@ function useRecommendationRate(probe: ProbeKey): number | undefined {
 
 function FindingsStrip() {
   const currentFilters = useFilters();
+  const dockedChat = useDockedChat();
   const refundShort = useRecommendationRate('refundShort');
   const refundLong = useRecommendationRate('refundLong');
   const earlyYes = useRecommendationRate('earlyYes');
@@ -250,21 +293,27 @@ function FindingsStrip() {
     currentFilters.earlyAccess !== 'all' ||
     currentFilters.playtime !== 'all';
 
+  const collapsed = hasActiveFilters || dockedChat;
+
+  // Quando o usuário clica num achado, o layout troca entre expandido e compacto. O foco é transferido
+  // para o botão equivalente no layout ativo (compactRef se collapsed, senão expandedRef).
+  // pendingFocusRef só é definido em handlePreset, garantindo que abrir/fechar o dock do chat
+  // nunca roube o foco.
   useEffect(() => {
     const key = pendingFocusRef.current;
     if (key === null) return;
     pendingFocusRef.current = null;
-    const target = (hasActiveFilters ? compactRef.current : expandedRef.current)?.querySelector<HTMLButtonElement>(
+    const target = (collapsed ? compactRef.current : expandedRef.current)?.querySelector<HTMLButtonElement>(
       `button[data-preset="${key}"]`,
     );
     target?.focus();
-  }, [currentFilters, hasActiveFilters]);
+  }, [currentFilters, collapsed]);
 
   return (
     <div
       ref={stripRef}
       id="thesis-presets"
-      className={`findings-strip ${hasActiveFilters ? 'is-collapsed' : 'is-expanded'}`}
+      className={`findings-strip ${collapsed ? 'is-collapsed' : 'is-expanded'}`}
       role="group"
       aria-label={
         hasActiveFilters
@@ -283,8 +332,8 @@ function FindingsStrip() {
         <div
           ref={expandedRef}
           className="findings-slot findings-slot-expanded"
-          inert={hasActiveFilters ? true : undefined}
-          aria-hidden={hasActiveFilters ? 'true' : 'false'}
+          inert={collapsed ? true : undefined}
+          aria-hidden={collapsed ? 'true' : 'false'}
         >
           <div className="findings-slot-inner">
             <div className="findings-grid">
@@ -325,11 +374,14 @@ function FindingsStrip() {
         <div
           ref={compactRef}
           className="findings-slot findings-slot-compact"
-          inert={!hasActiveFilters ? true : undefined}
-          aria-hidden={!hasActiveFilters ? 'true' : 'false'}
+          inert={!collapsed ? true : undefined}
+          aria-hidden={!collapsed ? 'true' : 'false'}
         >
           <div className="findings-slot-inner">
-            <p className="meta findings-scope-note">Achados da base completa · não seguem o filtro</p>
+            {/* Com o chat acoplado e sem filtro, não há recorte a contrastar: a nota só vale com filtro ativo. */}
+            {hasActiveFilters ? (
+              <p className="meta findings-scope-note">Achados da base completa · não seguem o filtro</p>
+            ) : null}
             <div className="findings-compact-row">
               {THESIS_PRESETS.map((preset) => {
                 const tile = copy[preset.key];

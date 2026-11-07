@@ -1877,8 +1877,28 @@ export function ChatIsland() {
                 />
                 <div className="chat-composer-toolbar">
                   <span className="chat-input-hint">
-                    <span className="hidden sm:inline">Enter envia • Shift+Enter quebra linha • Seta para cima: última pergunta</span>
-                    <span className="sm:hidden">Enter envia</span>
+                    <span className="chat-hint-desktop hidden sm:inline-flex">
+                      <span className="chat-hint-item">
+                        <kbd className="shortcut-hint">Enter</kbd>
+                        <span>envia</span>
+                      </span>
+                      <span className="chat-hint-sep" aria-hidden="true">·</span>
+                      <span className="chat-hint-item">
+                        <kbd className="shortcut-hint">Shift+Enter</kbd>
+                        <span>nova linha</span>
+                      </span>
+                      <span className="chat-hint-sep chat-hint-sep-history" aria-hidden="true">·</span>
+                      <span className="chat-hint-item chat-hint-history">
+                        <kbd className="shortcut-hint">↑</kbd>
+                        <span>última pergunta</span>
+                      </span>
+                    </span>
+                    <span className="chat-hint-mobile sm:hidden inline-flex">
+                      <span className="chat-hint-item">
+                        <kbd className="shortcut-hint">Enter</kbd>
+                        <span>envia</span>
+                      </span>
+                    </span>
                   </span>
                   <div className="chat-composer-actions">
                     {isLoading ? (
