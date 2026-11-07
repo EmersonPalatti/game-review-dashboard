@@ -4,8 +4,15 @@
   --chat-dock-w: clamp(360px, 26vw, 420px);
 }
 
-:root[data-chat-dock='open'] #dashboard-main {
-  margin-right: var(--chat-dock-w);
+@media (min-width: 1280px) {
+  #dashboard-main {
+    transition: margin-right var(--menu) var(--ease);
+  }
+
+  :root[data-chat-dock='open'] #dashboard-main {
+    margin-right: var(--chat-dock-w);
+    transition-duration: var(--enter);
+  }
 }
 
 /* Painel acoplado lateral em telas amplas (>= 1280px) */
@@ -107,7 +114,7 @@
 }
 
 .chat-status-dot-pop {
-  animation: chat-status-dot-settle 400ms var(--ease);
+  animation: chat-status-dot-settle var(--enter) var(--ease);
 }
 
 /* Chip de filtro aplicado: assenta até escala 1, sem overshoot (antes, pico de 1,05 com cubic-bezier elástico). */
@@ -121,10 +128,15 @@
 }
 
 .chat-copilot-chip-active {
-  animation: chat-chip-settle 220ms var(--ease);
+  animation: chat-chip-settle var(--exit) var(--ease);
 }
 
 @media (prefers-reduced-motion: reduce) {
+  #dashboard-main,
+  :root[data-chat-dock='open'] #dashboard-main {
+    transition: none !important;
+  }
+
   .chat-teaser,
   .chat-status-dot-pop,
   .chat-copilot-chip-active {

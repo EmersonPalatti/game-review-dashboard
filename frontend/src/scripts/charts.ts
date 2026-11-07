@@ -213,8 +213,8 @@ function motionConfig(animate: boolean) {
     animation: active,
     animationDuration: active ? 360 : 0,
     animationDurationUpdate: active ? 320 : 0,
-    animationEasing: 'cubicOut' as const,
-    animationEasingUpdate: 'cubicOut' as const,
+    animationEasing: 'quarticOut' as const,
+    animationEasingUpdate: 'quarticOut' as const,
   };
 }
 
@@ -267,13 +267,30 @@ function tooltipBase(colors: ReturnType<typeof palette>) {
   };
 }
 
-function resizeCharts(): void {
+let resizeRafId: number | null = null;
+
+function cancelPendingResize(): void {
+  if (resizeRafId !== null) {
+    window.cancelAnimationFrame(resizeRafId);
+    resizeRafId = null;
+  }
+}
+
+function performResize(): void {
   for (const chart of charts.values()) {
     const dom = chart.getDom();
     if (dom && dom.clientWidth > 0 && dom.clientHeight > 0) {
-      chart.resize();
+      chart.resize({ animation: { duration: 0 } });
     }
   }
+}
+
+function resizeCharts(): void {
+  if (resizeRafId !== null) return;
+  resizeRafId = window.requestAnimationFrame(() => {
+    resizeRafId = null;
+    performResize();
+  });
 }
 
 let chartObserver: ResizeObserver | null = null;
@@ -302,6 +319,7 @@ export function initCharts(
   if (onMonthSelect) onSelectMonth = onMonthSelect;
   window.removeEventListener('resize', resizeCharts);
   chartObserver?.disconnect();
+  cancelPendingResize();
   chartObserver = new ResizeObserver(() => resizeCharts());
   for (const id of CHART_IDS) {
     const element = document.getElementById(id);
@@ -544,6 +562,7 @@ export function disposeCharts(): void {
   window.removeEventListener('resize', resizeCharts);
   chartObserver?.disconnect();
   chartObserver = null;
+  cancelPendingResize();
   detachMonthKeyboard();
   announce('');
   for (const id of CHART_IDS) {
@@ -565,7 +584,7 @@ function paint(data: Charts, animate = true): void {
   const colors = palette();
   paintMonth(data, colors, animate);
   paintPlaytime(data, colors, animate);
-  window.requestAnimationFrame(resizeCharts);
+  resizeCharts();
 }
 
 function paintMonth(data: Charts, colors: ReturnType<typeof palette>, animate: boolean): void {

@@ -22,6 +22,7 @@ import { useDelayedFlag } from '../../lib/fetchFeedback';
 import { PLACEHOLDER } from '../../lib/constants';
 import { formatDate, formatHours, formatInteger, languageLabel } from '../../lib/format';
 import { useFilters, useReviewSort } from '../../lib/useNanostore';
+import { useHydrated } from '../../lib/useHydrated';
 import {
   DEFAULT_SORT,
   resetFilters,
@@ -295,10 +296,8 @@ function ReviewsTableContent() {
   const activeIndexRef = useRef(0);
   activeIndexRef.current = activeIndex;
   const shouldFocusRef = useRef(false);
-  const [isMobile, setIsMobile] = useState(() => {
-    if (typeof window === 'undefined') return false;
-    return window.matchMedia('(max-width: 767px)').matches;
-  });
+  const [isMobile, setIsMobile] = useState(false);
+  const mounted = useHydrated();
   const [scrollMargin, setScrollMargin] = useState(0);
 
   useEffect(() => {
@@ -373,8 +372,10 @@ function ReviewsTableContent() {
 
   const cutRefetchActive =
     items.length > 0 && !isFetchingNextPage && (isPlaceholderData || isFetching);
-  const showBusy = useDelayedFlag(isFetching && !isFetchingNextPage);
-  const showUpdating = useDelayedFlag(cutRefetchActive);
+  const showBusyFlag = useDelayedFlag(isFetching && !isFetchingNextPage);
+  const showUpdatingFlag = useDelayedFlag(cutRefetchActive);
+  const showBusy = mounted && showBusyFlag;
+  const showUpdating = mounted && showUpdatingFlag;
 
   useEffect(() => {
     setExpanded(new Set());
@@ -643,10 +644,10 @@ function ReviewsTableContent() {
   );
 
   const rows = table.getRowModel().rows;
-  const showEmpty = !isPending && items.length === 0 && !error;
+  const showEmpty = mounted && !isPending && items.length === 0 && !error;
 
   let statusText: string;
-  if (isPending && items.length === 0) {
+  if (!mounted || (isPending && items.length === 0)) {
     statusText = 'Carregando avaliações…';
   } else if (isFetchingNextPage) {
     statusText = `${formatInteger(items.length)} de ${formatInteger(total)} carregadas · carregando mais…`;
@@ -715,86 +716,87 @@ function ReviewsTableContent() {
               ))}
             </thead>
             <tbody id="reviews-body">
-              {showEmpty ? (
-                <tr>
-                  <td colSpan={6} className="empty-cell">
-                    <div className="empty-state">
-                      <p>Nenhuma avaliação neste recorte.</p>
-                      <button
-                        type="button"
-                        className="btn btn-secondary btn-small"
-                        onClick={() => resetFilters()}
-                      >
-                        Limpar filtros
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ) : (
-                <>
-                  {paddingTop > 0 ? (
-                    <tr aria-hidden="true" className="sheet-spacer">
-                      <td
-                        colSpan={6}
-                        style={{ height: paddingTop, padding: 0, border: 0 }}
-                      />
-                    </tr>
-                  ) : null}
-                  {virtualRows.map((virtualRow) => {
-                    const row = rows[virtualRow.index];
-                    if (!row) return null;
-                    const reviewId = row.original.review_id;
-                    const isExpanded = expanded.has(reviewId);
-                    const isRowActive = virtualRow.index === activeIndex;
-                    return (
-                      <tr
-                        key={reviewId}
-                        data-index={virtualRow.index}
-                        ref={virtualizer.measureElement}
-                        tabIndex={isRowActive ? 0 : -1}
-                        aria-expanded={isExpanded}
-                        aria-label={`${row.original.app_name}, ${row.original.recommended ? 'Recomenda' : 'Não recomenda'}`}
-                        aria-describedby={`review-excerpt-${reviewId}`}
-                        className={isExpanded ? 'review-row is-expanded' : 'review-row'}
-                        onKeyDown={(e) =>
-                          handleRowKeyDown(e, virtualRow.index, reviewId, isExpanded)
-                        }
-                        onFocus={() => {
-                          activeIndexRef.current = virtualRow.index;
-                          setActiveIndex(virtualRow.index);
-                        }}
-                        onClick={(e) => {
-                          const target = e.target as HTMLElement | null;
-                          if (target?.closest('button, a')) {
-                            return;
-                          }
-                          const selection = window.getSelection()?.toString().trim();
-                          if (selection) {
-                            return;
-                          }
-                          activeIndexRef.current = virtualRow.index;
-                          setActiveIndex(virtualRow.index);
-                          toggleExpanded(reviewId);
-                        }}
-                      >
-                        {row.getVisibleCells().map((cell) => (
-                          <td key={cell.id} data-col={cell.column.id}>
-                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                          </td>
-                        ))}
+              {mounted &&
+                (showEmpty ? (
+                  <tr>
+                    <td colSpan={6} className="empty-cell">
+                      <div className="empty-state">
+                        <p>Nenhuma avaliação neste recorte.</p>
+                        <button
+                          type="button"
+                          className="btn btn-secondary btn-small"
+                          onClick={() => resetFilters()}
+                        >
+                          Limpar filtros
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ) : (
+                  <>
+                    {paddingTop > 0 ? (
+                      <tr aria-hidden="true" className="sheet-spacer">
+                        <td
+                          colSpan={6}
+                          style={{ height: paddingTop, padding: 0, border: 0 }}
+                        />
                       </tr>
-                    );
-                  })}
-                  {paddingBottom > 0 ? (
-                    <tr aria-hidden="true" className="sheet-spacer">
-                      <td
-                        colSpan={6}
-                        style={{ height: paddingBottom, padding: 0, border: 0 }}
-                      />
-                    </tr>
-                  ) : null}
-                </>
-              )}
+                    ) : null}
+                    {virtualRows.map((virtualRow) => {
+                      const row = rows[virtualRow.index];
+                      if (!row) return null;
+                      const reviewId = row.original.review_id;
+                      const isExpanded = expanded.has(reviewId);
+                      const isRowActive = virtualRow.index === activeIndex;
+                      return (
+                        <tr
+                          key={reviewId}
+                          data-index={virtualRow.index}
+                          ref={virtualizer.measureElement}
+                          tabIndex={isRowActive ? 0 : -1}
+                          aria-expanded={isExpanded}
+                          aria-label={`${row.original.app_name}, ${row.original.recommended ? 'Recomenda' : 'Não recomenda'}`}
+                          aria-describedby={`review-excerpt-${reviewId}`}
+                          className={isExpanded ? 'review-row is-expanded' : 'review-row'}
+                          onKeyDown={(e) =>
+                            handleRowKeyDown(e, virtualRow.index, reviewId, isExpanded)
+                          }
+                          onFocus={() => {
+                            activeIndexRef.current = virtualRow.index;
+                            setActiveIndex(virtualRow.index);
+                          }}
+                          onClick={(e) => {
+                            const target = e.target as HTMLElement | null;
+                            if (target?.closest('button, a')) {
+                              return;
+                            }
+                            const selection = window.getSelection()?.toString().trim();
+                            if (selection) {
+                              return;
+                            }
+                            activeIndexRef.current = virtualRow.index;
+                            setActiveIndex(virtualRow.index);
+                            toggleExpanded(reviewId);
+                          }}
+                        >
+                          {row.getVisibleCells().map((cell) => (
+                            <td key={cell.id} data-col={cell.column.id}>
+                              {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                            </td>
+                          ))}
+                        </tr>
+                      );
+                    })}
+                    {paddingBottom > 0 ? (
+                      <tr aria-hidden="true" className="sheet-spacer">
+                        <td
+                          colSpan={6}
+                          style={{ height: paddingBottom, padding: 0, border: 0 }}
+                        />
+                      </tr>
+                    ) : null}
+                  </>
+                ))}
             </tbody>
           </table>
         </div>

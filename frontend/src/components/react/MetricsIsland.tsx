@@ -16,7 +16,8 @@ import {
   PLACEHOLDER,
 } from '../../lib/constants';
 import { formatInteger, formatPercent } from '../../lib/format';
-import { useFilters } from '../../lib/useNanostore';
+import { serverFilters, useFilters } from '../../lib/useNanostore';
+import { useHydrated } from '../../lib/useHydrated';
 import { activeFilterCount, type Filters } from '../../stores/filters';
 import { latestMetrics } from '../../stores/metrics';
 import { QueryRoot } from './QueryRoot';
@@ -161,7 +162,9 @@ function MetricsContent() {
     placeholderData: keepPreviousData,
   });
 
-  const showBusy = useDelayedFlag(isFetching);
+  const mounted = useHydrated();
+
+  const showBusyFlag = useDelayedFlag(isFetching);
   const showUpdating = useDelayedFlag(isPlaceholderData);
 
   useEffect(() => {
@@ -178,10 +181,14 @@ function MetricsContent() {
   const settled = settledRef.current;
 
   // Se a busca do recorte novo falhar sem dados, os números exibidos são os do último recorte carregado.
-  const metrics: Metrics | undefined = data ?? settled?.metrics;
-  const shownFilters: Filters = settled?.filters ?? currentFilters;
-  const shownFiltered = activeFilterCount(shownFilters) > 0;
-  const numbersStale = showUpdating || (data === undefined && metrics !== undefined);
+  // Durante o primeiro render (SSR e hidratação do cliente), renderiza os valores de carregamento
+  // estritamente idênticos ao SSR, atualizando em seguida no efeito para evitar falha de hidratação.
+  const rawMetrics: Metrics | undefined = data ?? settled?.metrics;
+  const metrics: Metrics | undefined = mounted ? rawMetrics : undefined;
+  const shownFilters: Filters = mounted ? (settled?.filters ?? currentFilters) : serverFilters;
+  const shownFiltered = mounted && activeFilterCount(shownFilters) > 0;
+  const numbersStale = mounted && (showUpdating || (data === undefined && rawMetrics !== undefined));
+  const showBusy = mounted && showBusyFlag;
 
   if (data && !isPlaceholderData && activeFilterCount(currentFilters) === 0) {
     baselineReviews.current = data.total_reviews;

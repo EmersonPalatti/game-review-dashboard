@@ -16,6 +16,7 @@ import { fetchFacets } from '../../lib/api';
 import { PLAYTIME_OPTIONS } from '../../lib/constants';
 import { formatCount, languageLabel } from '../../lib/format';
 import { useFilters, useLatestMetrics } from '../../lib/useNanostore';
+import { useHydrated } from '../../lib/useHydrated';
 import { SearchCombo, type ComboOption } from '../../scripts/combo';
 import {
   activeFilterCount,
@@ -300,6 +301,8 @@ type CombosRef = {
 };
 
 function FiltersContent() {
+  const mounted = useHydrated();
+
   const currentFilters = useFilters();
   const metrics = useLatestMetrics();
   // Contagens por faceta: cada combo ignora o próprio filtro (ver backend `facets()`).
@@ -514,7 +517,7 @@ function FiltersContent() {
           className="btn btn-primary w-full md:hidden"
           onClick={() => document.dispatchEvent(new CustomEvent('close-mobile-sidebar'))}
         >
-          {metrics
+          {mounted && metrics
             ? `Ver ${formatCount(metrics.total_reviews, 'avaliação', 'avaliações')}`
             : 'Ver resultados'}
         </button>

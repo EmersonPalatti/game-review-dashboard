@@ -12,6 +12,7 @@ import {
 } from '../../lib/constants';
 import { formatDate, formatPercent, languageLabel } from '../../lib/format';
 import { useFilters, useLatestMetrics } from '../../lib/useNanostore';
+import { useHydrated } from '../../lib/useHydrated';
 import { renderFilterChips, type FilterChip } from '../../scripts/renderers';
 import {
   DEFAULT_SORT,
@@ -158,12 +159,14 @@ function applyPreset(preset: PresetKey): boolean {
 }
 
 function useRecommendationRate(probe: ProbeKey): number | undefined {
+  // O cache é compartilhado entre ilhas: até hidratar, devolve o mesmo vazio do SSR.
+  const hydrated = useHydrated();
   const probeFilters = PRESET_FILTERS[probe];
   const { data } = useQuery({
     queryKey: ['metrics', probeFilters],
     queryFn: () => fetchMetrics(probeFilters),
   });
-  return data?.recommendation_rate;
+  return hydrated ? data?.recommendation_rate : undefined;
 }
 
 function FindingsStrip() {
@@ -173,8 +176,10 @@ function FindingsStrip() {
   const earlyYes = useRecommendationRate('earlyYes');
   const earlyNo = useRecommendationRate('earlyNo');
   const stripRef = useRef<HTMLDivElement>(null);
+  const expandedRef = useRef<HTMLDivElement>(null);
+  const compactRef = useRef<HTMLDivElement>(null);
   // A grade e a linha compacta trocam de lugar ao aplicar ou limpar um achado; o botão clicado
-  // desmonta, então o foco é devolvido ao botão equivalente do novo layout.
+  // desmonta ou fica inerte, então o foco é devolvido ao botão equivalente do novo layout visível.
   const pendingFocusRef = useRef<PresetKey | null>(null);
   const [announcement, setAnnouncement] = useState('');
 
@@ -249,10 +254,11 @@ function FindingsStrip() {
     const key = pendingFocusRef.current;
     if (key === null) return;
     pendingFocusRef.current = null;
-    const strip = stripRef.current;
-    if (!strip || strip.contains(document.activeElement)) return;
-    strip.querySelector<HTMLButtonElement>(`button[data-preset="${key}"]`)?.focus();
-  }, [currentFilters]);
+    const target = (hasActiveFilters ? compactRef.current : expandedRef.current)?.querySelector<HTMLButtonElement>(
+      `button[data-preset="${key}"]`,
+    );
+    target?.focus();
+  }, [currentFilters, hasActiveFilters]);
 
   return (
     <div
@@ -273,66 +279,81 @@ function FindingsStrip() {
         {announcement}
       </p>
 
-      {hasActiveFilters && (
-        <p className="meta findings-scope-note">Achados da base completa · não seguem o filtro</p>
-      )}
+      <div className="findings-drawer">
+        <div
+          ref={expandedRef}
+          className="findings-slot findings-slot-expanded"
+          inert={hasActiveFilters ? true : undefined}
+          aria-hidden={hasActiveFilters ? 'true' : 'false'}
+        >
+          <div className="findings-slot-inner">
+            <div className="findings-grid">
+              {THESIS_PRESETS.map((preset) => {
+                const tile = copy[preset.key];
+                const isActive = isPresetActive(currentFilters, preset.key);
+                return (
+                  <button
+                    key={preset.key}
+                    type="button"
+                    className="finding-tile"
+                    data-preset={preset.key}
+                    aria-pressed={isActive ? 'true' : 'false'}
+                    aria-describedby="findings-preset-desc"
+                    title={preset.title}
+                    onClick={() => handlePreset(preset.key)}
+                  >
+                    <span className="finding-claim">{tile.claim}</span>
+                    <span className="finding-figure">{tile.figure}</span>
+                    <span className="finding-source">{tile.source}</span>
+                    <span className="finding-action">
+                      {isActive ? (
+                        'Limpar recorte'
+                      ) : (
+                        <>
+                          Ver recorte
+                          <RailIcon icon={ArrowRight} className="finding-action-icon" />
+                        </>
+                      )}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
 
-      {hasActiveFilters ? (
-        <div className="findings-compact-row">
-          {THESIS_PRESETS.map((preset) => {
-            const tile = copy[preset.key];
-            const isActive = isPresetActive(currentFilters, preset.key);
-            return (
-              <button
-                key={preset.key}
-                type="button"
-                className="finding-compact-btn"
-                data-preset={preset.key}
-                aria-pressed={isActive ? 'true' : 'false'}
-                aria-describedby="findings-preset-desc"
-                title={preset.title}
-                onClick={() => handlePreset(preset.key)}
-              >
-                <span className="finding-compact-claim">{tile.claim}</span>
-                <span className="finding-compact-figure">{tile.figure}</span>
-              </button>
-            );
-          })}
+        <div
+          ref={compactRef}
+          className="findings-slot findings-slot-compact"
+          inert={!hasActiveFilters ? true : undefined}
+          aria-hidden={!hasActiveFilters ? 'true' : 'false'}
+        >
+          <div className="findings-slot-inner">
+            <p className="meta findings-scope-note">Achados da base completa · não seguem o filtro</p>
+            <div className="findings-compact-row">
+              {THESIS_PRESETS.map((preset) => {
+                const tile = copy[preset.key];
+                const isActive = isPresetActive(currentFilters, preset.key);
+                return (
+                  <button
+                    key={preset.key}
+                    type="button"
+                    className="finding-compact-btn"
+                    data-preset={preset.key}
+                    aria-pressed={isActive ? 'true' : 'false'}
+                    aria-describedby="findings-preset-desc"
+                    title={preset.title}
+                    onClick={() => handlePreset(preset.key)}
+                  >
+                    <span className="finding-compact-claim">{tile.claim}</span>
+                    <span className="finding-compact-figure">{tile.figure}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         </div>
-      ) : (
-        <div className="findings-grid">
-          {THESIS_PRESETS.map((preset) => {
-            const tile = copy[preset.key];
-            const isActive = isPresetActive(currentFilters, preset.key);
-            return (
-              <button
-                key={preset.key}
-                type="button"
-                className="finding-tile"
-                data-preset={preset.key}
-                aria-pressed={isActive ? 'true' : 'false'}
-                aria-describedby="findings-preset-desc"
-                title={preset.title}
-                onClick={() => handlePreset(preset.key)}
-              >
-                <span className="finding-claim">{tile.claim}</span>
-                <span className="finding-figure">{tile.figure}</span>
-                <span className="finding-source">{tile.source}</span>
-                <span className="finding-action">
-                  {isActive ? (
-                    'Limpar recorte'
-                  ) : (
-                    <>
-                      Ver recorte
-                      <RailIcon icon={ArrowRight} className="finding-action-icon" />
-                    </>
-                  )}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      )}
+      </div>
     </div>
   );
 }

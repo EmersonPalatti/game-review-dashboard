@@ -9,7 +9,7 @@ import {
 } from '../stores/filters';
 import { latestMetrics } from '../stores/metrics';
 
-const serverFilters: Filters = {
+export const serverFilters: Filters = {
   appId: null,
   language: null,
   dateFrom: null,

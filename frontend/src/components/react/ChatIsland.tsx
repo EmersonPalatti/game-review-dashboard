@@ -218,6 +218,30 @@ function getReducedMotionServerSnapshot(): boolean {
   return false;
 }
 
+function parseDurationMs(raw: string, fallback: number): number {
+  const trimmed = raw.trim();
+  if (trimmed.endsWith('ms')) {
+    const val = parseFloat(trimmed);
+    return Number.isFinite(val) && val > 0 ? val : fallback;
+  }
+  if (trimmed.endsWith('s')) {
+    const val = parseFloat(trimmed) * 1000;
+    return Number.isFinite(val) && val > 0 ? val : fallback;
+  }
+  return fallback;
+}
+
+function getSlideOutDuration(): number {
+  if (typeof window === 'undefined') return 180;
+  if (window.matchMedia(REDUCED_MOTION_QUERY).matches) return 0;
+  try {
+    const raw = getComputedStyle(document.documentElement).getPropertyValue('--menu');
+    return parseDurationMs(raw, 180);
+  } catch {
+    return 180;
+  }
+}
+
 const FOCUSABLE_SELECTOR = 'button, textarea, input, select, a[href], [tabindex]';
 
 type FilterAction = {
@@ -915,11 +939,15 @@ export function ChatIsland() {
     // Devolve o foco ao botão FAB ao fechar
     restoreFocusRef.current = true;
     setIsClosing(true);
+    if (typeof document !== 'undefined') {
+      delete document.documentElement.dataset.chatDock;
+    }
+    const duration = getSlideOutDuration();
     closeTimerRef.current = setTimeout(() => {
       setIsOpen(false);
       setIsClosing(false);
       closeTimerRef.current = null;
-    }, 220);
+    }, duration);
   }, [isOpen, isClosing]);
 
   const dismissTeaser = useCallback(() => {
@@ -951,7 +979,7 @@ export function ChatIsland() {
   useEffect(() => {
     if (typeof document === 'undefined') return;
 
-    if (isOpen && isDockedViewport) {
+    if (isOpen && !isClosing && isDockedViewport) {
       document.documentElement.dataset.chatDock = 'open';
     } else {
       delete document.documentElement.dataset.chatDock;
@@ -960,7 +988,7 @@ export function ChatIsland() {
     return () => {
       delete document.documentElement.dataset.chatDock;
     };
-  }, [isOpen, isDockedViewport]);
+  }, [isOpen, isClosing, isDockedViewport]);
 
   // Balão de dica: exibido após ~10s de ociosidade, no máximo uma vez por visitante.
   useEffect(() => {

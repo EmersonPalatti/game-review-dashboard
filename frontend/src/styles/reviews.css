@@ -33,9 +33,11 @@
   text-wrap: pretty;
 }
 
-/* Trecho da avaliação: cursor de texto para facilitar seleção sem alternar linha */
-.sheet tbody tr.review-row .excerpt-text {
+/* Trecho da avaliação: cursor de texto e medida de leitura limitada a 72ch */
+.sheet tbody tr.review-row .excerpt-text,
+[id^="review-excerpt-"] {
   cursor: text;
+  max-width: 72ch;
 }
 
 /* Foco visível por teclado na linha de avaliação: outline 2px com offset negativo e fundo --raised */

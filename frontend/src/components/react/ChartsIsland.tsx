@@ -13,6 +13,8 @@ import { useDelayedFlag } from '../../lib/fetchFeedback';
 import { BASELINE_RATE, PLACEHOLDER, REFUND_BUCKETS } from '../../lib/constants';
 import { formatCount, formatInteger, formatPercent, languageLabel } from '../../lib/format';
 import { useFilters } from '../../lib/useNanostore';
+import { useHydrated } from '../../lib/useHydrated';
+import { useGridReflowMotion } from '../../lib/useGridReflowMotion';
 import {
   disposeCharts,
   formatMonth,
@@ -305,6 +307,8 @@ function ChartsContent() {
   const chartsKey = useMemo(() => ['charts', currentFilters] as const, [currentFilters]);
   const gameRanksRef = useRef<HTMLOListElement>(null);
   const languageRanksRef = useRef<HTMLOListElement>(null);
+  const gridRef = useRef<HTMLElement>(null);
+  useGridReflowMotion(gridRef);
 
   const { data: metricsData } = useQuery({
     queryKey: metricsKey,
@@ -329,27 +333,33 @@ function ChartsContent() {
     placeholderData: keepPreviousData,
   });
 
-  const showBusy = useDelayedFlag(chartsFetching);
+  const mounted = useHydrated();
+
+  const showBusyFlag = useDelayedFlag(chartsFetching);
+  const showBusy = mounted && showBusyFlag;
   const activeMonth = getActiveMonth(currentFilters.dateFrom, currentFilters.dateTo);
   const dateFilterActive = currentFilters.dateFrom !== null || currentFilters.dateTo !== null;
 
+  const effectiveChartsData = mounted ? chartsData : undefined;
+  const effectiveFacetsData = mounted ? facetsData : undefined;
+
   // Empty states are derived here once; each card collapses its chart area and shows one line.
-  const monthEmpty = chartsData !== undefined && chartsData.months.length === 0;
+  const monthEmpty = effectiveChartsData !== undefined && effectiveChartsData.months.length === 0;
   const playtimeEmpty =
-    chartsData !== undefined && !chartsData.playtime.some((point) => point.review_count > 0);
+    effectiveChartsData !== undefined && !effectiveChartsData.playtime.some((point) => point.review_count > 0);
   const gamesEmpty =
-    currentFilters.appId !== null && facetsData !== undefined
-      ? !facetsData.games.some((point) => point.review_count > 0)
-      : chartsData !== undefined && chartsData.games.length === 0;
+    currentFilters.appId !== null && effectiveFacetsData !== undefined
+      ? !effectiveFacetsData.games.some((point) => point.review_count > 0)
+      : effectiveChartsData !== undefined && effectiveChartsData.games.length === 0;
   const languagesEmpty =
-    chartsData !== undefined && !chartsData.languages.some((point) => point.review_count > 0);
+    effectiveChartsData !== undefined && !effectiveChartsData.languages.some((point) => point.review_count > 0);
 
   const gameRankNote = useMemo(() => {
-    if (currentFilters.appId === null) return null;
-    if (!facetsData) {
+    if (!mounted || currentFilters.appId === null) return null;
+    if (!effectiveFacetsData) {
       return 'Filtro de jogo ativo · clique para voltar ao ranking completo';
     }
-    const withReviews = facetsData.games
+    const withReviews = effectiveFacetsData.games
       .filter((game) => game.review_count > 0)
       .sort((a, b) => b.review_count - a.review_count);
     const total = withReviews.length;
@@ -359,14 +369,14 @@ function ChartsContent() {
       return 'Jogo destacado sem avaliações neste recorte · clique nele para limpar';
     }
     return `${formatInteger(index + 1)}º de ${formatInteger(total)} em volume · clique no jogo destacado para limpar`;
-  }, [currentFilters.appId, facetsData]);
+  }, [mounted, currentFilters.appId, effectiveFacetsData]);
 
   const languageRankNote = useMemo(() => {
-    if (currentFilters.language === null) return null;
-    if (!chartsData) {
+    if (!mounted || currentFilters.language === null) return null;
+    if (!effectiveChartsData) {
       return 'Filtro de idioma ativo · clique para voltar ao ranking completo';
     }
-    const withReviews = chartsData.languages
+    const withReviews = effectiveChartsData.languages
       .filter((lang) => lang.review_count > 0 && lang.recommendation_rate !== null)
       .sort(compareLanguagesByApproval);
     const total = withReviews.length;
@@ -376,7 +386,7 @@ function ChartsContent() {
       return 'Idioma destacado sem avaliações neste recorte · clique nele para limpar';
     }
     return `${formatInteger(index + 1)}º de ${formatInteger(total)} em aprovação · clique no idioma destacado para limpar`;
-  }, [currentFilters.language, chartsData]);
+  }, [mounted, currentFilters.language, effectiveChartsData]);
 
   useEffect(() => {
     initCharts(togglePlaytime, toggleMonth);
@@ -454,6 +464,7 @@ function ChartsContent() {
   return (
     <div className="charts-shell">
       <section
+        ref={gridRef}
         className="charts-grid"
         aria-label="Gráficos"
         data-fetching={showBusy ? 'true' : 'false'}
@@ -480,7 +491,7 @@ function ChartsContent() {
             remove o filtro de mês.
           </p>
           <p id="chart-month-live" className="sr-only" aria-live="polite" />
-          {chartsData !== undefined && !monthEmpty ? <MonthTable months={chartsData.months} /> : null}
+          {effectiveChartsData !== undefined && !monthEmpty ? <MonthTable months={effectiveChartsData.months} /> : null}
         </article>
 
         <article className="card">
@@ -513,9 +524,9 @@ function ChartsContent() {
             <p className="meta mt-4" hidden={!playtimeEmpty}>
               {EMPTY_TEXT}
             </p>
-            {chartsData !== undefined && !playtimeEmpty ? (
+            {effectiveChartsData !== undefined && !playtimeEmpty ? (
               <PlaytimeLegend
-                rows={chartsData.playtime}
+                rows={effectiveChartsData.playtime}
                 active={currentFilters.playtime}
                 onToggle={togglePlaytime}
               />
@@ -529,9 +540,9 @@ function ChartsContent() {
             <p className="meta mt-4" hidden={!playtimeEmpty}>
               {EMPTY_TEXT}
             </p>
-            {chartsData !== undefined && !playtimeEmpty ? (
+            {effectiveChartsData !== undefined && !playtimeEmpty ? (
               <PlaytimeRanks
-                rows={chartsData.playtime}
+                rows={effectiveChartsData.playtime}
                 active={currentFilters.playtime}
                 onToggle={togglePlaytime}
               />
@@ -560,7 +571,7 @@ function ChartsContent() {
           ) : null}
         </article>
 
-        {error && chartsData !== undefined ? (
+        {error && effectiveChartsData !== undefined ? (
           <div
             className="charts-col-span-3 flex flex-wrap items-center gap-3"
             role="alert"

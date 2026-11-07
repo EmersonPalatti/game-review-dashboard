@@ -44,6 +44,43 @@
   container-type: inline-size;
 }
 
+/* Drawer wrapper for height animation between expanded grid and compact row. */
+.findings-drawer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  width: 100%;
+}
+
+.findings-slot {
+  display: grid;
+  grid-template-rows: 0fr;
+  min-width: 0;
+  transition: grid-template-rows var(--settle, 340ms) var(--ease);
+}
+
+.findings-strip.is-expanded .findings-slot-expanded {
+  grid-template-rows: 1fr;
+}
+
+.findings-strip.is-collapsed .findings-slot-compact {
+  grid-template-rows: 1fr;
+}
+
+.findings-slot-inner {
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: opacity var(--fast) var(--ease);
+}
+
+/* Incoming view fades in smoothly */
+.findings-strip.is-expanded .findings-slot-expanded .findings-slot-inner,
+.findings-strip.is-collapsed .findings-slot-compact .findings-slot-inner {
+  opacity: 1;
+  transition: opacity var(--menu) var(--ease);
+}
+
 .findings-scope-note {
   margin: 0 0 8px;
   font-size: 12px;
@@ -55,7 +92,6 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: 8px;
-  animation: findings-enter var(--menu) var(--ease) both;
 }
 
 /* Compact row when any filter is active. */
@@ -65,7 +101,6 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 8px;
-  animation: findings-enter var(--menu) var(--ease) both;
 }
 
 .finding-compact-btn {
@@ -73,6 +108,7 @@
   align-items: baseline;
   gap: 6px;
   min-height: 28px;
+  max-width: 100%;
   padding: 4px 12px;
   border: 1px solid var(--line);
   border-radius: 9999px;
@@ -81,7 +117,8 @@
   font-family: inherit;
   text-align: left;
   cursor: pointer;
-  white-space: nowrap;
+  white-space: normal;
+  flex-wrap: wrap;
   transition:
     background-color var(--fast) var(--ease),
     border-color var(--fast) var(--ease),
@@ -119,6 +156,7 @@
   font-variant-numeric: tabular-nums;
   letter-spacing: 0;
   color: var(--secondary);
+  white-space: nowrap;
 }
 
 .finding-compact-btn[aria-pressed='true'] .finding-compact-figure {
@@ -319,8 +357,10 @@
   .finding-tile,
   .finding-compact-btn,
   .finding-action,
-  .context-audit-link {
-    transition: none;
+  .context-audit-link,
+  .findings-slot,
+  .findings-slot-inner {
+    transition: none !important;
   }
 
   .findings-grid,
