@@ -45,6 +45,7 @@ O `explorer` devolve caminhos, linhas, trechos e um resumo. O `executor` devolve
 - Pydantic
 - SQLAlchemy
 - SQLite (prototipação) → Supabase ou PostgreSQL (produção)
+- DuckDB em memória — agregações de `/api/summary`, `/api/charts`, `/api/facets` e filtro/ordenação de `/api/reviews`, carregadas de `backend/app/reviews.parquet`. O texto (`excerpt`) continua no banco relacional. Regenere o Parquet com `scripts/export_analytics_parquet.py` quando o acervo mudar.
 
 ## Preferências
 
