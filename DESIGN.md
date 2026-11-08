@@ -279,6 +279,7 @@ Definidos em `:root` de `global.css`. Use só estes.
 - Fora da escala: a gaveta mobile da sidebar usa 0,3s fixo (`.is-open`).
 
 ### Rules
+- Única animação de loop curto disparada por estado: o border spin do achado aplicado (uma volta, ver Achados).
 - Anime opacidade, transform, cor e fundo. Largura e altura só no movimento que é o próprio painel (dock do chat, barras do ranking).
 - Nunca anime a largura de algo por acidente: uma barra de rolagem que aparece, um texto que muda de tamanho, uma coluna que cresce no meio da transição.
 - Entradas partem de um estado já visível (deslocamento curto ou a opacidade atual), nunca do zero. Curva `--ease`, sem bounce nem overshoot.
@@ -384,10 +385,12 @@ Link para o repositório da auditoria. Aparece no rodapé da sidebar (`.sidebar-
 - **Ordenação:** `.th-sort` com seta; ativa em `--accent` 500. Sem ordenação ativa, a seta fica a 55% de opacidade.
 - **Colunas numéricas:** mono, `tabular-nums`, alinhadas à direita.
 
-### Achados (`.finding-tile`, `.finding-compact-btn`, `.findings-undo`)
-- **Tile expandido:** superfície `--surface`, raio 12px, padding 12px 14px, `--shadow-card`. Hover: fundo `--raised`, `--shadow-lift` e 1px para cima (sem movimento com movimento reduzido). Aplicado (`aria-pressed='true'`): fundo `--selected-card` (hover: `--selected-card-hover`), sem contorno; o estado vai no véu e no `aria-pressed`, porque aplicar um achado é filtrar.
+### Achados (`.findings-band`, `.finding-tile`, `.finding-compact-btn`, `.findings-undo`)
+- **Posição e faixa (`.findings-band`):** primeira seção do conteúdo, acima dos KPIs. Os achados são da base completa e não seguem o filtro; no topo eles ficam separados de tudo o que segue (KPIs, gráficos, tabela). A faixa é um plano rebaixado em `--band` (claro: `--well`; escuro: `#080807`, entre paper e sidebar), raio 16px, padding 12px, sem borda nem sombra. Neutra, nunca verde: véu verde é estado. O cabeçalho traz o título "Achados do estudo" e, à direita, a nota "Base completa · não seguem o filtro" em meta `--secondary`.
+- **Tile expandido:** superfície `--surface`, raio 12px, padding 12px 14px, `--shadow-card`. Ordem: número (mono 20px/24px) com a seta de 14px em `--secondary` no canto, afirmação em 14px/20px 500, fonte em 12px. Sem texto de ação: o tile inteiro é o botão, e a seta anda 2px no hover. Hover: fundo `--raised`, `--shadow-lift` e 1px para cima (sem movimento com movimento reduzido). Aplicado (`aria-pressed='true'`): fundo `--selected-card` (hover: `--selected-card-hover`), sem contorno; o estado vai no véu e no `aria-pressed`, porque aplicar um achado é filtrar.
 - **Compacto (`.finding-compact-btn`):** retângulo de raio 8px, não pílula. Tom de campo, sem borda em repouso, 28px (36px em toque), padding 4px 12px. Título em 13px 500; número em mono de 14px em `--secondary`, `--accent` quando aplicado. Aplicado: véu `--selected`, texto em `--accent` e peso 500, sem borda.
-- **Quando o compacto aparece:** com qualquer filtro ativo ou com o chat acoplado (≥1440px). A nota acima da linha diz "Achados da base completa · não seguem o filtro". Com filtro ativo e nenhum achado aplicado, a nota ganha o aviso visível "clicar em um achado substitui seus filtros".
+- **Quando o compacto aparece:** com qualquer filtro ativo ou com o chat acoplado (≥1440px). O escopo fica no cabeçalho da faixa. Com filtro ativo e nenhum achado aplicado, uma nota acima da linha avisa "Clicar em um achado substitui seus filtros".
+- **Border spin (`.finding-compact-btn.is-spinning`):** ao aplicar um achado pelo clique, um traço `conic-gradient` em `--accent` (ângulo `--gradient-angle` via `@property`) dá uma volta na borda do botão aplicado em 2,5s linear, e some em 400ms a partir de 2,1s, deixando só o véu. Uma volta, nunca loop, nunca no carregamento; com movimento reduzido não aparece. É verde porque é estado ativo (One Green Rule).
 - **Recorte guardado:** aplicar um achado com nenhum outro ativo guarda o recorte e a ordenação do analista (`findingSnapshot`, em memória: recarregar a página descarta). Trocar de um achado para outro (A → B) mantém o recorte original. Clicar de novo no achado aplicado, ou em "Desfazer · voltar ao seu recorte" (`.findings-undo`, tom de campo, 28px, 36px em toque), restaura o recorte guardado. Sem recorte guardado (por exemplo, depois de uma edição manual), desligar limpa os filtros. Uma edição manual que tira o achado do ar descarta o recorte guardado.
 
 ### Alternância de tema (`.theme-switch`)

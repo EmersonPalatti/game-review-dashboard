@@ -1,16 +1,53 @@
-import * as echarts from 'echarts';
-import type { ECharts, EChartsOption } from 'echarts';
+import * as echarts from 'echarts/core';
+import type { ComposeOption, ECharts } from 'echarts/core';
+import { BarChart, LineChart, ScatterChart } from 'echarts/charts';
+import type { BarSeriesOption, LineSeriesOption, ScatterSeriesOption } from 'echarts/charts';
+import {
+  DataZoomComponent,
+  GridComponent,
+  MarkAreaComponent,
+  MarkLineComponent,
+  TooltipComponent,
+} from 'echarts/components';
+import type {
+  DataZoomComponentOption,
+  GridComponentOption,
+  MarkAreaComponentOption,
+  MarkLineComponentOption,
+  TooltipComponentOption,
+} from 'echarts/components';
+import { CanvasRenderer } from 'echarts/renderers';
+
+echarts.use([
+  BarChart,
+  LineChart,
+  ScatterChart,
+  DataZoomComponent,
+  GridComponent,
+  MarkAreaComponent,
+  MarkLineComponent,
+  TooltipComponent,
+  CanvasRenderer,
+]);
+
+type EChartsOption = ComposeOption<
+  | BarSeriesOption
+  | LineSeriesOption
+  | ScatterSeriesOption
+  | DataZoomComponentOption
+  | GridComponentOption
+  | MarkAreaComponentOption
+  | MarkLineComponentOption
+  | TooltipComponentOption
+>;
 import type { Charts, MonthPoint, PlaytimePoint } from '../lib/api';
 import { BASELINE_RATE, REFUND_BUCKETS } from '../lib/constants';
 import { formatCount, formatInteger, formatPercent } from '../lib/format';
 import type { PlaytimeBucket } from '../stores/filters';
 
 export type MonthMetric = 'volume' | 'approval';
+// Último valor recebido do React (renderCharts/setMonthMetric). Nunca é decidido aqui.
 let currentMonthMetric: MonthMetric = 'volume';
-
-export function getMonthMetric(): MonthMetric {
-  return currentMonthMetric;
-}
 
 export function setMonthMetric(metric: MonthMetric): void {
   currentMonthMetric = metric;
@@ -57,6 +94,7 @@ let suppressZoomEvent = false;
 let lastAppliedZoom: ZoomWindow | null = null;
 let onSelectPlaytime: ((bucket: PlaytimeBucket) => void) | null = null;
 let onSelectMonth: ((month: string) => void) | null = null;
+let onAnnounce: ((message: string) => void) | null = null;
 
 function isFullWindow(zoom: ZoomWindow | null | undefined): boolean {
   if (!zoom) return true;
@@ -348,9 +386,11 @@ function isClickableMonthPoint(
 export function initCharts(
   onPlaytimeSelect?: (bucket: PlaytimeBucket) => void,
   onMonthSelect?: (month: string) => void,
+  onAnnounceMessage?: (message: string) => void,
 ): void {
   if (onPlaytimeSelect) onSelectPlaytime = onPlaytimeSelect;
   if (onMonthSelect) onSelectMonth = onMonthSelect;
+  if (onAnnounceMessage) onAnnounce = onAnnounceMessage;
   window.removeEventListener('resize', resizeCharts);
   chartObserver?.disconnect();
   cancelPendingResize();
@@ -422,8 +462,7 @@ export function initCharts(
 }
 
 function announce(message: string): void {
-  const region = document.getElementById('chart-month-live');
-  if (region) region.textContent = message;
+  onAnnounce?.(message);
 }
 
 function peakMonthIndex(months: MonthPoint[]): number {
@@ -454,6 +493,25 @@ function lowestApprovalMonthIndex(months: MonthPoint[]): number {
     }
   }
   return lowest;
+}
+
+/** Rótulo acessível do gráfico mensal. Undefined sem meses: o JSX mostra o rótulo de fallback. */
+export function monthAriaLabel(data: Charts, metric: MonthMetric): string | undefined {
+  if (data.months.length === 0) return undefined;
+  if (metric === 'approval') {
+    const lowestIndex = lowestApprovalMonthIndex(data.months);
+    const lowestMonth = lowestIndex >= 0 ? data.months[lowestIndex] : null;
+    const lowestInfo =
+      lowestMonth &&
+      lowestMonth.recommendation_rate !== null &&
+      lowestMonth.recommendation_rate !== undefined
+        ? `, menor aprovação em ${formatMonth(lowestMonth.month)} (${formatApprovalRate(lowestMonth.recommendation_rate)})`
+        : '';
+    return `Aprovação por mês: ${data.months.length} meses no recorte${lowestInfo}. Use as setas ou PageUp/PageDown para percorrer os meses.`;
+  }
+  const best = data.months[peakMonthIndex(data.months)];
+  if (!best) return undefined;
+  return `Avaliações por mês: ${data.months.length} meses no recorte, pico em ${formatMonth(best.month)} com ${formatInteger(best.review_count)} avaliações. Use as setas ou PageUp/PageDown para percorrer os meses.`;
 }
 
 function defaultMonthIndex(): number {
@@ -615,6 +673,7 @@ export function renderCharts(
   activePlaytime: PlaytimeBucket = lastActivePlaytime,
   activeMonth: string | null = lastActiveMonth,
   dateFilterActive = false,
+  monthMetric: MonthMetric = currentMonthMetric,
 ): void {
   const key = axisKey(data.months);
   if (focusAxisKey && key !== focusAxisKey && monthZoomBeforeFocus !== undefined) {
@@ -623,6 +682,7 @@ export function renderCharts(
     restoreFocusZoom();
   }
   lastData = data;
+  currentMonthMetric = monthMetric;
   lastActivePlaytime = activePlaytime;
   lastActiveMonth = activeMonth;
   paint(data, true);
@@ -653,6 +713,7 @@ export function disposeCharts(): void {
   releaseFocusZoom();
   onSelectPlaytime = null;
   onSelectMonth = null;
+  onAnnounce = null;
 }
 
 function paint(data: Charts, animate = true): void {
@@ -666,34 +727,12 @@ function paintMonth(data: Charts, colors: ReturnType<typeof palette>, animate: b
   if (data.months.length === 0) return;
 
   const peakIndex = peakMonthIndex(data.months);
-  const best = data.months[peakIndex];
   const lowestIndex = lowestApprovalMonthIndex(data.months);
   const lowestMonth = lowestIndex >= 0 ? data.months[lowestIndex] : null;
   const activeIndex =
     lastActiveMonth !== null
       ? data.months.findIndex((point) => point.month === lastActiveMonth)
       : -1;
-
-  const monthNode = document.getElementById('chart-month');
-  if (monthNode) {
-    if (currentMonthMetric === 'approval') {
-      const lowestInfo =
-        lowestMonth &&
-        lowestMonth.recommendation_rate !== null &&
-        lowestMonth.recommendation_rate !== undefined
-          ? `, menor aprovação em ${formatMonth(lowestMonth.month)} (${formatApprovalRate(lowestMonth.recommendation_rate)})`
-          : '';
-      monthNode.setAttribute(
-        'aria-label',
-        `Aprovação por mês: ${data.months.length} meses no recorte${lowestInfo}. Use as setas ou PageUp/PageDown para percorrer os meses.`,
-      );
-    } else if (best) {
-      monthNode.setAttribute(
-        'aria-label',
-        `Avaliações por mês: ${data.months.length} meses no recorte, pico em ${formatMonth(best.month)} com ${formatInteger(best.review_count)} avaliações. Use as setas ou PageUp/PageDown para percorrer os meses.`,
-      );
-    }
-  }
 
   if (data.months.length <= 12) {
     lastMonthZoom = null;
@@ -1046,7 +1085,9 @@ function hasPlaytimeReviews(data: Charts): boolean {
   return data.playtime.some((point) => point.review_count > 0);
 }
 
-function playtimeAriaLabel(data: Charts): string {
+/** Rótulo acessível do gráfico de tempo de jogo; undefined sem avaliações (o gráfico fica oculto). */
+export function playtimeAriaLabel(data: Charts): string | undefined {
+  if (!hasPlaytimeReviews(data)) return undefined;
   const rates = data.playtime
     .map((point) =>
       point.recommendation_rate === null
@@ -1062,7 +1103,6 @@ function playtimeAriaLabel(data: Charts): string {
 function paintPlaytime(data: Charts, colors: ReturnType<typeof palette>, animate: boolean): void {
   if (!hasPlaytimeReviews(data)) return;
 
-  document.getElementById('chart-playtime')?.setAttribute('aria-label', playtimeAriaLabel(data));
   const refund = refundStep(data.playtime);
 
   chart('chart-playtime').setOption(

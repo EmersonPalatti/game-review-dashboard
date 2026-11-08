@@ -17,6 +17,7 @@ import { PLAYTIME_OPTIONS } from '../../lib/constants';
 import { formatCount, languageLabel } from '../../lib/format';
 import { useFilters, useLatestMetrics } from '../../lib/useNanostore';
 import { useHydrated } from '../../lib/useHydrated';
+import { mobileSidebarOpen } from '../../stores/ui';
 import { SearchCombo, type ComboOption } from '../../scripts/combo';
 import {
   activeFilterCount,
@@ -515,7 +516,7 @@ function FiltersContent() {
           id="apply-filters-mobile"
           type="button"
           className="btn btn-primary w-full md:hidden"
-          onClick={() => document.dispatchEvent(new CustomEvent('close-mobile-sidebar'))}
+          onClick={() => mobileSidebarOpen.set(false)}
         >
           {mounted && metrics
             ? `Ver ${formatCount(metrics.total_reviews, 'avaliação', 'avaliações')}`

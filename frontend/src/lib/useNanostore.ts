@@ -8,6 +8,7 @@ import {
   type ReviewSort,
 } from '../stores/filters';
 import { latestMetrics } from '../stores/metrics';
+import { chatDocked } from '../stores/ui';
 
 export const serverFilters: Filters = {
   appId: null,
@@ -31,4 +32,8 @@ export function useReviewSort(): ReviewSort {
 
 export function useLatestMetrics(): Metrics | null {
   return useSyncExternalStore(latestMetrics.subscribe, latestMetrics.get, () => null);
+}
+
+export function useChatDocked(): boolean {
+  return useSyncExternalStore(chatDocked.subscribe, chatDocked.get, () => false);
 }

@@ -30,6 +30,7 @@ import {
   type Filters,
   type PlaytimeBucket,
 } from '../../stores/filters';
+import { chatDocked } from '../../stores/ui';
 import { BotGlyph } from './BotGlyph';
 import { RailIcon } from './RailIcon';
 
@@ -203,7 +204,7 @@ function isInputOrComboboxFocused(): boolean {
 
 const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)';
 // Acoplado só em >= 1440px. Entre 1280 e 1439px o painel segue flutuante, sem reduzir o #dashboard-main.
-// Mantido igual a DOCKED_CHAT_MEDIA_QUERY (ContextIsland.tsx) e aos @media de chat.css.
+// Mantido igual aos @media de chat.css. Outras ilhas leem o resultado em `chatDocked` (stores/ui.ts).
 const DOCKED_MEDIA_QUERY = '(min-width: 1440px)';
 // Rolagem da janela (px) a partir da qual o botão flutuante vira círculo compacto.
 const FAB_COMPACT_SCROLL_PX = 120;
@@ -970,9 +971,7 @@ export function ChatIsland() {
     // Devolve o foco ao botão FAB ao fechar
     restoreFocusRef.current = true;
     setIsClosing(true);
-    if (typeof document !== 'undefined') {
-      delete document.documentElement.dataset.chatDock;
-    }
+    chatDocked.set(false);
     const duration = getSlideOutDuration();
     closeTimerRef.current = setTimeout(() => {
       setIsOpen(false);
@@ -1006,20 +1005,31 @@ export function ChatIsland() {
     return () => mq.removeEventListener('change', handler);
   }, []);
 
-  // Sinaliza no elemento raiz quando o painel estiver acoplado para reservar espaço no #dashboard-main
+  // Fonte do estado acoplado: painel aberto e não fechando em viewport >= 1440px.
   useEffect(() => {
-    if (typeof document === 'undefined') return;
-
-    if (isOpen && !isClosing && isDockedViewport) {
-      document.documentElement.dataset.chatDock = 'open';
-    } else {
-      delete document.documentElement.dataset.chatDock;
-    }
-
+    chatDocked.set(isOpen && !isClosing && isDockedViewport);
     return () => {
-      delete document.documentElement.dataset.chatDock;
+      chatDocked.set(false);
     };
   }, [isOpen, isClosing, isDockedViewport]);
+
+  // Espelho do atom no <html> para o CSS (`:root[data-chat-dock='open']`). Único ponto que escreve o atributo.
+  useEffect(() => {
+    const root = document.documentElement;
+    const sync = (docked: boolean) => {
+      if (docked) {
+        root.dataset.chatDock = 'open';
+      } else {
+        delete root.dataset.chatDock;
+      }
+    };
+    // subscribe já chama sync com o valor atual.
+    const unsubscribe = chatDocked.subscribe(sync);
+    return () => {
+      unsubscribe();
+      delete root.dataset.chatDock;
+    };
+  }, []);
 
   // Balão de dica: exibido após ~10s de ociosidade, no máximo uma vez por visitante.
   useEffect(() => {

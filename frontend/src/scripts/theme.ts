@@ -1,4 +1,5 @@
 import { THEME_KEY, THEME_REVEAL_MS } from '../lib/constants';
+import { theme as themeStore } from '../stores/theme';
 
 export function currentTheme(): 'dark' | 'light' {
   return document.documentElement.classList.contains('dark') ? 'dark' : 'light';
@@ -7,7 +8,6 @@ export function currentTheme(): 'dark' | 'light' {
 export function applyTheme(
   theme: 'dark' | 'light',
   themeToggle?: HTMLButtonElement,
-  onRepaintCharts?: () => void,
   persist = true,
 ): void {
   document.documentElement.classList.toggle('dark', theme === 'dark');
@@ -26,9 +26,7 @@ export function applyTheme(
     themeToggle.setAttribute('aria-label', label);
     themeToggle.title = label;
   }
-  if (onRepaintCharts) {
-    onRepaintCharts();
-  }
+  themeStore.set(theme);
 }
 
 let themeReveal: Animation | null = null;
@@ -70,7 +68,6 @@ export function circleClip(
 
 export function revealTheme(
   themeToggle: HTMLButtonElement,
-  onRepaintCharts: () => void,
   targetTheme?: 'dark' | 'light',
 ): void {
   const next = targetTheme ?? (currentTheme() === 'dark' ? 'light' : 'dark');
@@ -85,7 +82,7 @@ export function revealTheme(
     typeof document.startViewTransition !== 'function'
   ) {
     clearRevealState(root);
-    applyTheme(next, themeToggle, onRepaintCharts);
+    applyTheme(next, themeToggle);
     return;
   }
 
@@ -109,12 +106,12 @@ export function revealTheme(
   let transition: ViewTransition;
   try {
     transition = document.startViewTransition(() => {
-      applyTheme(next, themeToggle, onRepaintCharts);
+      applyTheme(next, themeToggle);
     });
     (window as unknown as { __themeTransition?: ViewTransition }).__themeTransition = transition;
   } catch {
     cleanup();
-    if (currentTheme() !== next) applyTheme(next, themeToggle, onRepaintCharts);
+    if (currentTheme() !== next) applyTheme(next, themeToggle);
     return;
   }
 
@@ -156,16 +153,16 @@ function savedTheme(): 'dark' | 'light' | null {
   }
 }
 
-export function setupTheme(themeToggle: HTMLButtonElement, onRepaintCharts: () => void): void {
-  applyTheme(currentTheme(), themeToggle, undefined, false);
+export function setupTheme(themeToggle: HTMLButtonElement): void {
+  applyTheme(currentTheme(), themeToggle, false);
   const systemDark = window.matchMedia('(prefers-color-scheme: dark)');
   systemDark.addEventListener('change', (event) => {
     if (savedTheme() !== null) return;
-    applyTheme(event.matches ? 'dark' : 'light', themeToggle, onRepaintCharts, false);
+    applyTheme(event.matches ? 'dark' : 'light', themeToggle, false);
   });
   themeToggle.addEventListener('click', () => {
     // Liga a animação de entrada do ícone só a partir do primeiro clique, nunca no carregamento.
     themeToggle.dataset.switched = '';
-    revealTheme(themeToggle, onRepaintCharts);
+    revealTheme(themeToggle);
   });
 }

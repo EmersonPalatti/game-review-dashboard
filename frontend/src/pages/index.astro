@@ -8,6 +8,7 @@ import { FindingsIsland } from '../components/react/ContextIsland';
 import { MetricsIsland } from '../components/react/MetricsIsland';
 import { ReviewsIsland } from '../components/react/ReviewsIsland';
 import { ChatIsland } from '../components/react/ChatIsland';
+import { LoadErrorIsland } from '../components/react/LoadErrorIsland';
 ---
 
 <Base>
@@ -19,18 +20,17 @@ import { ChatIsland } from '../components/react/ChatIsland';
       <div class="stage mx-auto flex w-full max-w-[1320px] flex-col gap-8 px-6 py-6">
         <ContextBar />
 
-        <div id="load-error" role="alert" aria-hidden="true" hidden class="card">
-          <p class="title">Não conseguimos carregar as avaliações.</p>
-          <p id="load-error-detail" class="meta mt-1">O serviço de dados não respondeu. Tente de novo em alguns segundos; se continuar, o servidor local pode estar desligado.</p>
-          <button id="retry" type="button" class="btn btn-primary mt-4">Tentar de novo</button>
-        </div>
+        <LoadErrorIsland client:load />
 
-        <MetricsIsland client:load />
-
-        <section aria-labelledby="findings-heading" class="flex flex-col gap-3">
-          <h2 id="findings-heading" class="title">Achados do estudo</h2>
+        <section aria-labelledby="findings-heading" class="findings-band">
+          <header class="findings-band-header">
+            <h2 id="findings-heading" class="title">Achados do estudo</h2>
+            <p class="meta findings-band-note">Base completa · não seguem o filtro</p>
+          </header>
           <FindingsIsland client:load />
         </section>
+
+        <MetricsIsland client:load />
 
         <ChartsIsland client:visible />
 

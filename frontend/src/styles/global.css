@@ -51,6 +51,8 @@
   --well-hover: #e0e0dc;
   --field: var(--well);
   --field-hover: var(--well-hover);
+  /* Faixa dos achados: plano rebaixado sob os tiles. Neutro, nunca verde: véu verde é estado (One Green Rule). */
+  --band: var(--well);
   /* Controles se identificam pelo texto e pelo tom. A borda fica transparente (1px mantido para não mudar a geometria) e nunca carrega estado: selecionado é véu verde (--selected), foco é o outline. */
   --field-border: transparent;
   --field-border-hover: transparent;
@@ -101,6 +103,8 @@ html.dark {
   --selected-hover: color-mix(in srgb, var(--accent) 24%, var(--field));
   --selected-card: color-mix(in srgb, var(--accent) 14%, var(--surface));
   --selected-card-hover: color-mix(in srgb, var(--accent) 19%, var(--surface));
+  /* Faixa dos achados: rebaixada em relação ao paper, como a sidebar, para os tiles (surface) subirem dela. */
+  --band: #080807;
   --line: #34302b;
   --ink: #efe9de;
   --secondary: #aaa398;

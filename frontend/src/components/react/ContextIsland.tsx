@@ -1,7 +1,15 @@
 import { useQuery } from '@tanstack/react-query';
 import { ArrowRight } from 'lucide';
 import { atom } from 'nanostores';
-import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
+import {
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  type ReactNode,
+} from 'react';
 import { fetchMetrics } from '../../lib/api';
 import { RailIcon } from './RailIcon';
 import {
@@ -12,9 +20,8 @@ import {
   type PresetKey,
 } from '../../lib/constants';
 import { formatDate, formatPercent, languageLabel } from '../../lib/format';
-import { useFilters, useLatestMetrics } from '../../lib/useNanostore';
+import { useChatDocked, useFilters, useLatestMetrics } from '../../lib/useNanostore';
 import { useHydrated } from '../../lib/useHydrated';
-import { renderFilterChips, type FilterChip } from '../../scripts/renderers';
 import {
   DEFAULT_SORT,
   PLAYTIME_LABELS,
@@ -62,48 +69,11 @@ type FindingCopy = {
   source: string;
 };
 
-// Mesmo valor de DOCKED_MEDIA_QUERY em ChatIsland.tsx: manter sincronizado.
-const DOCKED_CHAT_MEDIA_QUERY = '(min-width: 1440px)';
-
-/**
- * Observa se o SteamBot está acoplado lateralmente (viewport >= 1440px e data-chat-dock="open").
- * O atributo é controlado pelo ChatIsland no elemento raiz document.documentElement.
- * SSR-safe: devolve false no servidor e na primeira renderização para bater com o HTML hidratado.
- */
-function useDockedChat(): boolean {
-  const [isDocked, setIsDocked] = useState(false);
-
-  useEffect(() => {
-    if (typeof window === 'undefined' || typeof document === 'undefined') return;
-
-    const mq = window.matchMedia(DOCKED_CHAT_MEDIA_QUERY);
-
-    function update(): void {
-      const isChatDockOpen = document.documentElement.getAttribute('data-chat-dock') === 'open';
-      setIsDocked(isChatDockOpen && mq.matches);
-    }
-
-    update();
-
-    const observer = new MutationObserver(() => {
-      update();
-    });
-
-    observer.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ['data-chat-dock'],
-    });
-
-    mq.addEventListener('change', update);
-
-    return () => {
-      observer.disconnect();
-      mq.removeEventListener('change', update);
-    };
-  }, []);
-
-  return isDocked;
-}
+type FilterChip = {
+  label: string;
+  value: string;
+  clear: () => void;
+};
 
 function patchFilters(patch: Partial<Filters>): void {
   filters.set({ ...filters.get(), ...patch });
@@ -262,7 +232,7 @@ function useRecommendationRate(probe: ProbeKey): number | undefined {
 
 function FindingsStrip() {
   const currentFilters = useFilters();
-  const dockedChat = useDockedChat();
+  const dockedChat = useChatDocked();
   const refundShort = useRecommendationRate('refundShort');
   const refundLong = useRecommendationRate('refundLong');
   const earlyYes = useRecommendationRate('earlyYes');
@@ -274,6 +244,7 @@ function FindingsStrip() {
   // desmonta ou fica inerte, então o foco é devolvido ao botão equivalente do novo layout visível.
   const pendingFocusRef = useRef<PresetKey | null>(null);
   const [announcement, setAnnouncement] = useState('');
+  const [spinKey, setSpinKey] = useState<PresetKey | null>(null);
   const snapshot = useSyncExternalStore(findingSnapshot.subscribe, findingSnapshot.get, () => null);
 
   // Só os números usam a fonte mono; o conector (→, vs.) fica na fonte do texto para caber no tile.
@@ -325,6 +296,8 @@ function FindingsStrip() {
   const handlePreset = (key: PresetKey): void => {
     const outcome = toggleFinding(key);
     pendingFocusRef.current = key;
+    // Border spin: uma volta só, disparada pelo clique (nunca no carregamento com o achado já aplicado).
+    setSpinKey(outcome === 'applied' ? key : null);
     if (outcome === 'applied') {
       setAnnouncement(
         `Recorte aplicado: ${copy[key].claim.replace(/\.$/, '')}. Os achados continuam mostrando a base completa.`,
@@ -422,23 +395,11 @@ function FindingsStrip() {
                     title={preset.title}
                     onClick={() => handlePreset(preset.key)}
                   >
-                    <span className="finding-claim">{tile.claim}</span>
                     <span className="finding-figure">{tile.figure}</span>
+                    <span className="finding-claim">{tile.claim}</span>
                     <span className="finding-source">{tile.source}</span>
-                    <span className="finding-action">
-                      {isActive ? (
-                        'Limpar recorte'
-                      ) : (
-                        <>
-                          <span>
-                            {hasActiveFilters && !findingActive
-                              ? 'Ver recorte · substitui seus filtros'
-                              : 'Ver recorte'}
-                          </span>
-                          <RailIcon icon={ArrowRight} className="finding-action-icon" />
-                        </>
-                      )}
-                    </span>
+                    {/* O tile inteiro é o botão; a seta só sinaliza que ele aplica um recorte. */}
+                    <RailIcon icon={ArrowRight} className="finding-action-icon" />
                   </button>
                 );
               })}
@@ -455,13 +416,12 @@ function FindingsStrip() {
           <div className="findings-slot-inner">
             {/* Com o chat acoplado e sem filtro, não há recorte a contrastar: a nota só vale com filtro ativo. */}
             {/* Os tiles expandidos ficam inertes com filtro ativo, então o aviso de substituição vive aqui. */}
-            {hasActiveFilters ? (
+            {/* O escopo (base completa) fica no cabeçalho da faixa; aqui só o aviso de substituição e o Desfazer. */}
+            {(hasActiveFilters && !findingActive) || undoAvailable ? (
               <div className="findings-scope-row">
-                <p className="meta findings-scope-note">
-                  {findingActive
-                    ? 'Achados da base completa · não seguem o filtro'
-                    : 'Achados da base completa · não seguem o filtro · clicar em um achado substitui seus filtros'}
-                </p>
+                {!findingActive ? (
+                  <p className="meta findings-scope-note">Clicar em um achado substitui seus filtros</p>
+                ) : null}
                 {undoAvailable ? (
                   <button type="button" className="findings-undo" onClick={handleUndo}>
                     Desfazer · voltar ao seu recorte
@@ -477,12 +437,15 @@ function FindingsStrip() {
                   <button
                     key={preset.key}
                     type="button"
-                    className="finding-compact-btn"
+                    className={`finding-compact-btn${isActive && spinKey === preset.key ? ' is-spinning' : ''}`}
                     data-preset={preset.key}
                     aria-pressed={isActive ? 'true' : 'false'}
                     aria-describedby="findings-preset-desc"
                     title={preset.title}
                     onClick={() => handlePreset(preset.key)}
+                    onAnimationEnd={(event) => {
+                      if (event.animationName === 'border-spin-fade') setSpinKey(null);
+                    }}
                   >
                     <span className="finding-compact-claim">{tile.claim}</span>
                     <span className="finding-compact-figure">{tile.figure}</span>
@@ -497,10 +460,82 @@ function FindingsStrip() {
   );
 }
 
+function chipKey(chip: FilterChip): string {
+  return `${chip.label}:${chip.value}`;
+}
+
+const EMPTY_KEYS: ReadonlySet<string> = new Set();
+
+/**
+ * Chips de filtro ativos. Os que já estão no primeiro commit pós-hidratação (ex.: filtros vindos da URL)
+ * não animam; os que entram depois, por interação, recebem `is-entering` até o fim da animação.
+ */
+function FilterChips({ chips, onResetAll }: { chips: FilterChip[]; onResetAll: () => void }) {
+  // Chaves do commit anterior. null até o primeiro commit: é o "já assentou", e esse commit não anima.
+  const previousKeysRef = useRef<ReadonlySet<string> | null>(null);
+  const [enteringKeys, setEnteringKeys] = useState<ReadonlySet<string>>(EMPTY_KEYS);
+
+  // Layout effect: a classe entra antes da pintura, então o chip novo não aparece por um frame sem animação.
+  useLayoutEffect(() => {
+    const keys = new Set(chips.map(chipKey));
+    const previousKeys = previousKeysRef.current;
+    previousKeysRef.current = keys;
+    if (previousKeys === null) return;
+
+    const added = [...keys].filter((key) => !previousKeys.has(key));
+    if (added.length === 0) return;
+    setEnteringKeys((current) => new Set([...current, ...added]));
+  }, [chips]);
+
+  const finishEntering = (key: string): void => {
+    setEnteringKeys((current) => {
+      if (!current.has(key)) return current;
+      const next = new Set(current);
+      next.delete(key);
+      return next;
+    });
+  };
+
+  if (chips.length === 0) {
+    return <span className="meta">Base completa · nenhum filtro ativo</span>;
+  }
+
+  return (
+    <>
+      {chips.map((chip) => {
+        const key = chipKey(chip);
+        return (
+          <button
+            key={key}
+            type="button"
+            className={enteringKeys.has(key) ? 'filter-chip is-entering' : 'filter-chip'}
+            aria-label={`Remover filtro ${chip.label}: ${chip.value}`}
+            onClick={() => chip.clear()}
+            onAnimationEnd={() => finishEntering(key)}
+          >
+            <span className="filter-chip-label">{`${chip.label}:`}</span>
+            <span className="filter-chip-value">{chip.value}</span>
+            <span className="filter-chip-remove" aria-hidden="true">
+              ×
+            </span>
+          </button>
+        );
+      })}
+      {chips.length >= 2 ? (
+        <button type="button" className="filter-chip is-reset" onClick={() => onResetAll()}>
+          Limpar todos
+        </button>
+      ) : null}
+    </>
+  );
+}
+
 function ContextContent() {
   const currentFilters = useFilters();
   const metrics = useLatestMetrics();
-  const chipsRef = useRef<HTMLDivElement>(null);
+  // Antes de hidratar o container sai vazio, como no HTML do servidor: sem "Base completa" piscando
+  // quando a URL já traz filtros.
+  const hydrated = useHydrated();
 
   const gameNameById = useMemo(() => {
     const map = new Map<number, string>();
@@ -512,17 +547,15 @@ function ContextContent() {
     return map;
   }, [metrics]);
 
-  useEffect(() => {
-    const container = chipsRef.current;
-    if (!container) return;
-    const chips = buildFilterChips(currentFilters, gameNameById);
-    renderFilterChips(container, chips, () => {
-      resetFilters();
-    });
-  }, [currentFilters, gameNameById]);
+  const chips = useMemo(
+    () => buildFilterChips(currentFilters, gameNameById),
+    [currentFilters, gameNameById],
+  );
 
   return (
-    <div ref={chipsRef} id="active-chips" className="active-chips" aria-live="polite" />
+    <div id="active-chips" className="active-chips" aria-live="polite">
+      {hydrated ? <FilterChips chips={chips} onResetAll={resetFilters} /> : null}
+    </div>
   );
 }
 

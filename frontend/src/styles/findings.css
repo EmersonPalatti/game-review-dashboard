@@ -38,7 +38,35 @@
   }
 }
 
-/* Findings strip: layout in its own section below MetricsIsland. */
+/* Faixa dos achados: plano rebaixado (--band) no topo do conteúdo, acima dos KPIs.
+   Separa as conclusões fixas da base completa do que segue o filtro (KPIs, gráficos, tabela). */
+.findings-band {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 16px;
+  background: var(--band);
+  transition: background-color var(--fast) var(--ease);
+}
+
+.findings-band-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 2px 12px;
+  padding: 2px 4px 0;
+}
+
+.findings-band-note {
+  margin: 0;
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--secondary);
+}
+
+/* Findings strip: grid expandido ou linha compacta dentro da faixa. */
 .findings-strip {
   width: 100%;
   min-width: 0;
@@ -236,17 +264,16 @@
   }
 }
 
-/* Tile: borderless surface card, shadow-card elevation, shadow-lift hover. */
+/* Tile: superfície sem borda sobre a faixa. Número primeiro, afirmação e fonte abaixo, seta no canto. */
 .finding-tile {
   display: grid;
   grid-template-areas:
-    "claim"
-    "figure"
-    "source"
-    "action";
-  grid-template-columns: minmax(0, 1fr);
+    "figure action"
+    "claim claim"
+    "source source";
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: start;
-  gap: 6px;
+  gap: 2px 8px;
   min-width: 0;
   margin: 0;
   padding: 12px 14px;
@@ -273,6 +300,10 @@
   .finding-tile:hover {
     transform: translateY(-1px);
   }
+
+  .finding-tile:hover .finding-action-icon {
+    transform: translateX(2px);
+  }
 }
 
 /* Aplicado = véu verde sobre o card; a sombra continua sendo a do card, sem anel. */
@@ -286,21 +317,12 @@
   box-shadow: var(--shadow-lift);
 }
 
-.finding-claim {
-  grid-area: claim;
-  font-size: 16px;
-  line-height: 24px;
-  font-weight: 500;
-  letter-spacing: 0;
-  color: var(--ink);
-  text-wrap: balance;
-}
-
 .finding-figure {
   grid-area: figure;
+  margin-bottom: 4px;
   font-family: var(--font-mono);
   font-size: 20px;
-  line-height: 1.2;
+  line-height: 24px;
   font-weight: 500;
   font-variant-numeric: tabular-nums;
   letter-spacing: 0;
@@ -317,6 +339,16 @@
   color: var(--secondary);
 }
 
+.finding-claim {
+  grid-area: claim;
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 500;
+  letter-spacing: 0;
+  color: var(--ink);
+  text-wrap: balance;
+}
+
 .finding-source {
   grid-area: source;
   font-size: 12px;
@@ -326,70 +358,117 @@
   text-wrap: pretty;
 }
 
-.finding-action {
-  grid-area: action;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  margin-top: 4px;
-  font-size: 13px;
-  line-height: 18px;
-  font-weight: 500;
-  color: var(--secondary);
-  transition: color var(--fast) var(--ease);
-}
-
-.finding-tile:hover .finding-action {
-  color: var(--ink);
-}
-
-.finding-tile[aria-pressed='true'] .finding-action {
-  color: var(--ink);
-}
-
 .finding-action-icon {
+  grid-area: action;
   width: 14px;
   height: 14px;
+  margin-top: 5px;
   flex: none;
+  color: var(--secondary);
+  transition:
+    color var(--fast) var(--ease),
+    transform var(--fast) var(--ease);
 }
 
-/* Medium strip: claim and source on the left, figure on the right, one tile per row. */
+.finding-tile:hover .finding-action-icon {
+  color: var(--ink);
+}
+
+/* Faixa média: um tile por linha, número à esquerda, texto ao centro, seta à direita. */
 @container (min-width: 560px) {
   .finding-tile {
     grid-template-areas:
-      "claim figure"
-      "source figure"
-      "action figure";
-    grid-template-columns: minmax(0, 1fr) auto;
+      "figure claim action"
+      "figure source action";
+    grid-template-columns: 11.5rem minmax(0, 1fr) auto;
     align-items: center;
     column-gap: 16px;
   }
 
   .finding-figure {
-    justify-self: end;
+    margin-bottom: 0;
+  }
+
+  .finding-action-icon {
+    margin-top: 0;
   }
 }
 
-/* Wide strip: three equal columns, each tile stacked claim / figure / source / action. */
+/* Faixa larga: três colunas, cada tile empilhado número / afirmação / fonte. */
 @container (min-width: 880px) {
   .findings-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 12px;
+    gap: 10px;
   }
 
   .finding-tile {
     grid-template-areas:
-      "claim"
-      "figure"
-      "source"
-      "action";
-    grid-template-columns: minmax(0, 1fr);
+      "figure action"
+      "claim claim"
+      "source source";
+    grid-template-columns: minmax(0, 1fr) auto;
     align-items: start;
-    column-gap: 0;
+    column-gap: 8px;
   }
 
   .finding-figure {
-    justify-self: start;
+    margin-bottom: 4px;
+  }
+
+  .finding-action-icon {
+    margin-top: 5px;
+  }
+}
+
+/* Border spin: ao aplicar um achado, um traço verde dá uma volta na borda do botão aplicado
+   e se dissolve no véu. Uma volta só (nunca loop): o verde aqui é estado ativo (One Green Rule). */
+@property --gradient-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+.finding-compact-btn {
+  position: relative;
+}
+
+.finding-compact-btn.is-spinning::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  padding: 1.5px;
+  border-radius: inherit;
+  background: conic-gradient(
+    from var(--gradient-angle),
+    transparent 0 55%,
+    color-mix(in srgb, var(--accent) 40%, transparent) 80%,
+    var(--accent) 100%
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box exclude,
+    linear-gradient(#000 0 0);
+  pointer-events: none;
+  animation:
+    border-spin 2.5s linear 1 both,
+    border-spin-fade 400ms var(--ease) 2.1s both;
+}
+
+@keyframes border-spin {
+  to {
+    --gradient-angle: 360deg;
+  }
+}
+
+@keyframes border-spin-fade {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
   }
 }
 
@@ -432,7 +511,7 @@
   .finding-tile,
   .finding-compact-btn,
   .findings-undo,
-  .finding-action,
+  .finding-action-icon,
   .source-link,
   .findings-slot,
   .findings-slot-inner {
@@ -443,5 +522,10 @@
   .findings-compact-row,
   .filter-chip.is-entering {
     animation: none;
+  }
+
+  /* Sem movimento, o spin some: fica só a troca para o véu verde. */
+  .finding-compact-btn.is-spinning::before {
+    display: none;
   }
 }

@@ -1,5 +1,5 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type RefObject } from 'react';
 import {
   fetchCharts,
   fetchFacets,
@@ -19,11 +19,13 @@ import {
   disposeCharts,
   formatMonth,
   initCharts,
+  monthAriaLabel,
+  playtimeAriaLabel,
   renderCharts,
+  repaintCharts,
   setMonthMetric,
   type MonthMetric,
 } from '../../scripts/charts';
-import { rankRow } from '../../scripts/renderers';
 import {
   filters,
   getActiveMonth,
@@ -32,6 +34,7 @@ import {
   type Filters,
   type PlaytimeBucket,
 } from '../../stores/filters';
+import { theme } from '../../stores/theme';
 import { QueryRoot } from './QueryRoot';
 import { EmptyState } from './EmptyState';
 
@@ -62,37 +65,6 @@ type GameRankItem = {
   reviewCount: number;
 };
 
-function renderGameRanks(
-  container: HTMLOListElement,
-  games: GameRankItem[],
-  currentAppId: number | null,
-): void {
-  container.replaceChildren();
-  const max = Math.max(...games.map((game) => game.reviewCount), 1);
-  games.forEach((game, index) => {
-    const selected = game.appId !== null && currentAppId === game.appId;
-    container.append(
-      rankRow(
-        `game:${game.appName}`,
-        index,
-        game.appName,
-        formatInteger(game.reviewCount),
-        (game.reviewCount / max) * 100,
-        {
-          title: game.appName,
-          selected,
-          ariaLabel: `${game.appName}: ${formatCount(game.reviewCount, 'avaliação', 'avaliações')}`,
-          onSelect: () => {
-            if (game.appId !== null) {
-              patchFilters({ appId: selected ? null : game.appId });
-            }
-          },
-        },
-      ),
-    );
-  });
-}
-
 function compareLanguagesByApproval(a: LanguageBar, b: LanguageBar): number {
   return (
     (b.recommendation_rate ?? -1) - (a.recommendation_rate ?? -1) ||
@@ -106,59 +78,106 @@ const ppFormat = new Intl.NumberFormat('pt-BR', {
   signDisplay: 'exceptZero',
 });
 
-function renderLanguageRanks(
-  container: HTMLOListElement,
-  languages: LanguageBar[],
-  currentLanguage: string | null,
-): void {
-  container.replaceChildren();
-  const sorted = [...languages].sort(compareLanguagesByApproval);
-  const deltas = sorted
-    .filter((item) => item.recommendation_rate !== null)
-    .map((item) => Math.abs(item.recommendation_rate! - BASELINE_RATE));
-  const maxDelta = deltas.length > 0 ? Math.max(...deltas) : 0;
-  // Escala pelo maior |delta|, com piso de 5 p.p. (0.05) para não distorcer variações mínimas.
-  const scaleMax = Math.max(maxDelta, 0.05);
+type RankRowModel = {
+  /** Chave estável: identifica a linha e a escala anterior guardada para animar. */
+  rowKey: string;
+  name: string;
+  valueText: string;
+  /** Divergente: valor com sinal em [-1, 1]. Padrão: fração da largura em [0, 1]. */
+  scale: number;
+  diverging: boolean;
+  selected: boolean;
+  title: string;
+  ariaLabel: string;
+  onSelect: () => void;
+};
 
-  sorted.forEach((item, index) => {
-    const selected = currentLanguage === item.language;
-    const rate = item.recommendation_rate;
-    const name = languageLabel(item.language);
+type RankRowProps = RankRowModel & {
+  index: number;
+  scalesRef: RefObject<Map<string, number>>;
+};
 
-    let valueText = PLACEHOLDER;
-    let signedValue = 0;
-    if (rate !== null) {
-      const diffPp = (rate - BASELINE_RATE) * 100;
-      const formattedPp = ppFormat.format(Math.abs(diffPp) < 0.005 ? 0 : diffPp);
-      valueText = `${formatPercent(rate)} · ${formattedPp} p.p.`;
-      signedValue = Math.max(-1, Math.min(1, (rate - BASELINE_RATE) / scaleMax));
+function RankRow({
+  rowKey,
+  index,
+  name,
+  valueText,
+  scale,
+  diverging,
+  selected,
+  title,
+  ariaLabel,
+  onSelect,
+  scalesRef,
+}: RankRowProps) {
+  const fillRef = useRef<HTMLDivElement>(null);
+
+  let fillClass = 'rank-fill';
+  if (diverging && scale > 0) fillClass = 'rank-fill rank-fill-positive';
+  else if (diverging && scale < 0) fillClass = 'rank-fill rank-fill-negative';
+
+  // A barra anima da escala anterior (lembrada por chave) até a atual. O transform fica sob
+  // controle deste efeito, não do React, porque a animação passa por dois quadros.
+  useLayoutEffect(() => {
+    const fill = fillRef.current;
+    if (!fill) return;
+    const scales = scalesRef.current;
+
+    let fromScale: number;
+    let targetScale: number;
+    if (diverging) {
+      const prevSigned = scales.get(rowKey) ?? 0;
+      scales.set(rowKey, scale);
+      targetScale = Math.min(1, Math.abs(scale));
+      // Só herda a escala anterior se o sinal não mudou; senão a barra parte do zero.
+      const sameSign = (scale > 0 && prevSigned > 0) || (scale < 0 && prevSigned < 0);
+      fromScale = sameSign ? Math.min(1, Math.abs(prevSigned)) : 0;
+    } else {
+      fromScale = scales.get(rowKey) ?? 0;
+      targetScale = Math.max(0, Math.min(1, scale));
+      scales.set(rowKey, targetScale);
     }
 
-    const reviewText = formatCount(item.review_count, 'avaliação', 'avaliações');
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduced || Math.abs(fromScale - targetScale) < 1e-4) {
+      fill.style.transform = `scaleX(${targetScale})`;
+      return;
+    }
 
-    container.append(
-      rankRow(
-        `lang:${item.language}`,
-        index,
-        name,
-        valueText,
-        0,
-        {
-          title: `${name}: ${reviewText}`,
-          selected,
-          ariaLabel:
-            rate === null
-              ? `${name}: sem avaliações, ${reviewText}`
-              : `${name}: ${valueText}, ${reviewText}`,
-          onSelect: () => {
-            patchFilters({ language: selected ? null : item.language });
-          },
-          variant: 'diverging',
-          signedValue,
-        },
-      ),
-    );
-  });
+    fill.style.transform = `scaleX(${fromScale})`;
+    fill.style.transitionDelay = `${Math.min(index * 20, 140)}ms`;
+    let inner = 0;
+    const outer = requestAnimationFrame(() => {
+      inner = requestAnimationFrame(() => {
+        fill.style.transform = `scaleX(${targetScale})`;
+      });
+    });
+    return () => {
+      cancelAnimationFrame(outer);
+      cancelAnimationFrame(inner);
+    };
+  }, [rowKey, index, scale, diverging, scalesRef]);
+
+  return (
+    <li className="rank-item">
+      <button
+        type="button"
+        className={selected ? 'rank-row is-selected w-full text-left' : 'rank-row w-full text-left'}
+        title={title}
+        aria-pressed={selected}
+        aria-label={ariaLabel}
+        onClick={onSelect}
+      >
+        <div className="rank-line">
+          <span className="min-w-0 flex-1 truncate">{name}</span>
+          <span className="rank-value">{valueText}</span>
+        </div>
+        <div className={diverging ? 'rank-track rank-track-diverging' : 'rank-track'} aria-hidden="true">
+          <div ref={fillRef} className={fillClass} />
+        </div>
+      </button>
+    </li>
+  );
 }
 
 type PlaytimeLegendProps = {
@@ -342,16 +361,12 @@ const MONTH_METRIC_SUBTITLES: ReadonlyArray<{ metric: MonthMetric; text: string 
 function ChartsContent() {
   const currentFilters = useFilters();
   const [monthMetric, setMonthMetricState] = useState<MonthMetric>('volume');
-
-  const handleMonthMetricChange = (metric: MonthMetric) => {
-    setMonthMetricState(metric);
-    setMonthMetric(metric);
-  };
+  const [liveMessage, setLiveMessage] = useState('');
+  // Escalas anteriores das barras de ranking, por chave, para animar a transição entre atualizações.
+  const rankScalesRef = useRef(new Map<string, number>());
 
   const metricsKey = useMemo(() => ['metrics', currentFilters] as const, [currentFilters]);
   const chartsKey = useMemo(() => ['charts', currentFilters] as const, [currentFilters]);
-  const gameRanksRef = useRef<HTMLOListElement>(null);
-  const languageRanksRef = useRef<HTMLOListElement>(null);
   const gridRef = useRef<HTMLElement>(null);
   useGridReflowMotion(gridRef);
 
@@ -388,6 +403,10 @@ function ChartsContent() {
   const effectiveChartsData = mounted ? chartsData : undefined;
   const effectiveFacetsData = mounted ? facetsData : undefined;
   const effectiveMetricsData = mounted ? metricsData : undefined;
+  const monthLabel =
+    effectiveChartsData !== undefined ? monthAriaLabel(effectiveChartsData, monthMetric) : undefined;
+  const playtimeLabel =
+    effectiveChartsData !== undefined ? playtimeAriaLabel(effectiveChartsData) : undefined;
 
   // Recorte sem nenhuma avaliação: um único estado vazio substitui os cards, que seguem montados
   // (ocultos) para que as instâncias do ECharts e as listas de ranking não percam o alvo.
@@ -438,40 +457,42 @@ function ChartsContent() {
   }, [mounted, currentFilters.language, effectiveChartsData]);
 
   useEffect(() => {
-    initCharts(togglePlaytime, toggleMonth);
+    initCharts(togglePlaytime, toggleMonth, setLiveMessage);
     return () => {
       disposeCharts();
     };
   }, []);
 
+  // Os tokens de cor são lidos do CSS na pintura: a troca de tema exige repintar.
+  useEffect(() => theme.listen(() => repaintCharts()), []);
+
+  // A métrica mensal vem do React e repinta só o gráfico mensal. Fica fora das dependências do
+  // renderCharts abaixo: trocar a métrica não deve repintar os outros gráficos.
+  useEffect(() => {
+    setMonthMetric(monthMetric);
+  }, [monthMetric]);
+
   useEffect(() => {
     if (chartsData) {
-      renderCharts(chartsData, currentFilters.playtime, activeMonth, dateFilterActive);
+      renderCharts(chartsData, currentFilters.playtime, activeMonth, dateFilterActive, monthMetric);
     }
   }, [chartsData, currentFilters.playtime, activeMonth, dateFilterActive]);
 
-  useEffect(() => {
-    const rankGames = gameRanksRef.current;
-    const rankLanguages = languageRanksRef.current;
-    if (!rankGames || !rankLanguages) return;
-    if (!chartsData) {
-      rankGames.replaceChildren();
-      rankLanguages.replaceChildren();
-      return;
-    }
+  const gameRankRows = useMemo<RankRowModel[]>(() => {
+    if (!effectiveChartsData) return [];
 
     const appIdByName = new Map<string, number>();
     const appNameById = new Map<number, string>();
-    if (metricsData) {
-      for (const game of metricsData.games) {
+    if (effectiveMetricsData) {
+      for (const game of effectiveMetricsData.games) {
         appIdByName.set(game.app_name, game.app_id);
         appNameById.set(game.app_id, game.app_name);
       }
     }
 
     let gameItems: GameRankItem[];
-    if (currentFilters.appId !== null && facetsData) {
-      const withReviews = facetsData.games
+    if (currentFilters.appId !== null && effectiveFacetsData) {
+      const withReviews = effectiveFacetsData.games
         .filter((game) => game.review_count > 0)
         .sort((a, b) => b.review_count - a.review_count);
       const topGames = withReviews.slice(0, RANK_GAMES_LIMIT);
@@ -480,7 +501,7 @@ function ChartsContent() {
         ? topGames
         : [
             ...topGames,
-            facetsData.games.find((game) => game.app_id === currentFilters.appId) ?? {
+            effectiveFacetsData.games.find((game) => game.app_id === currentFilters.appId) ?? {
               app_id: currentFilters.appId,
               review_count: 0,
             },
@@ -490,25 +511,88 @@ function ChartsContent() {
         appId: game.app_id,
         appName:
           appNameById.get(game.app_id) ??
-          chartsData.games.find((cg) => cg.app_name && appIdByName.get(cg.app_name) === game.app_id)?.app_name ??
-          (chartsData.games.length === 1 && currentFilters.appId === game.app_id
-            ? chartsData.games[0].app_name
+          effectiveChartsData.games.find((cg) => cg.app_name && appIdByName.get(cg.app_name) === game.app_id)?.app_name ??
+          (effectiveChartsData.games.length === 1 && currentFilters.appId === game.app_id
+            ? effectiveChartsData.games[0].app_name
             : `Jogo #${game.app_id}`),
         reviewCount: game.review_count,
       }));
     } else {
-      gameItems = chartsData.games.map((game) => ({
+      gameItems = effectiveChartsData.games.map((game) => ({
         appId:
           appIdByName.get(game.app_name) ??
-          (currentFilters.appId !== null && chartsData.games.length === 1 ? currentFilters.appId : null),
+          (currentFilters.appId !== null && effectiveChartsData.games.length === 1 ? currentFilters.appId : null),
         appName: game.app_name,
         reviewCount: game.review_count,
       }));
     }
 
-    renderGameRanks(rankGames, gameItems, currentFilters.appId);
-    renderLanguageRanks(rankLanguages, chartsData.languages, currentFilters.language);
-  }, [chartsData, metricsData, facetsData, currentFilters.appId, currentFilters.language]);
+    const max = Math.max(...gameItems.map((game) => game.reviewCount), 1);
+    return gameItems.map((game) => {
+      const selected = game.appId !== null && currentFilters.appId === game.appId;
+      const name = game.appName;
+      return {
+        rowKey: `game:${name}`,
+        name,
+        valueText: formatInteger(game.reviewCount),
+        scale: game.reviewCount / max,
+        diverging: false,
+        selected,
+        title: name,
+        ariaLabel: `${name}: ${formatCount(game.reviewCount, 'avaliação', 'avaliações')}`,
+        onSelect: () => {
+          if (game.appId !== null) {
+            patchFilters({ appId: selected ? null : game.appId });
+          }
+        },
+      };
+    });
+  }, [effectiveChartsData, effectiveMetricsData, effectiveFacetsData, currentFilters.appId]);
+
+  const languageRankRows = useMemo<RankRowModel[]>(() => {
+    if (!effectiveChartsData) return [];
+
+    const sorted = [...effectiveChartsData.languages].sort(compareLanguagesByApproval);
+    const deltas = sorted
+      .filter((item) => item.recommendation_rate !== null)
+      .map((item) => Math.abs(item.recommendation_rate! - BASELINE_RATE));
+    const maxDelta = deltas.length > 0 ? Math.max(...deltas) : 0;
+    // Escala pelo maior |delta|, com piso de 5 p.p. (0.05) para não distorcer variações mínimas.
+    const scaleMax = Math.max(maxDelta, 0.05);
+
+    return sorted.map((item) => {
+      const selected = currentFilters.language === item.language;
+      const rate = item.recommendation_rate;
+      const name = languageLabel(item.language);
+
+      let valueText = PLACEHOLDER;
+      let signedValue = 0;
+      if (rate !== null) {
+        const diffPp = (rate - BASELINE_RATE) * 100;
+        const formattedPp = ppFormat.format(Math.abs(diffPp) < 0.005 ? 0 : diffPp);
+        valueText = `${formatPercent(rate)} · ${formattedPp} p.p.`;
+        signedValue = Math.max(-1, Math.min(1, (rate - BASELINE_RATE) / scaleMax));
+      }
+
+      const reviewText = formatCount(item.review_count, 'avaliação', 'avaliações');
+      return {
+        rowKey: `lang:${item.language}`,
+        name,
+        valueText,
+        scale: signedValue,
+        diverging: true,
+        selected,
+        title: `${name}: ${reviewText}`,
+        ariaLabel:
+          rate === null
+            ? `${name}: sem avaliações, ${reviewText}`
+            : `${name}: ${valueText}, ${reviewText}`,
+        onSelect: () => {
+          patchFilters({ language: selected ? null : item.language });
+        },
+      };
+    });
+  }, [effectiveChartsData, currentFilters.language]);
 
   return (
     <div className="charts-shell">
@@ -526,7 +610,12 @@ function ChartsContent() {
             <p className="meta mt-2">
               Aprovação por faixa de horas jogadas · a área sombreada é a janela de reembolso (até 2&nbsp;h)
             </p>
-            <div id="chart-playtime" className="chart-frame mt-4 h-[280px] w-full" hidden={playtimeEmpty} />
+            <div
+              id="chart-playtime"
+              className="chart-frame mt-4 h-[280px] w-full"
+              aria-label={playtimeLabel}
+              hidden={playtimeEmpty}
+            />
             <EmptyState align="start" className="mt-4" hidden={!playtimeEmpty} />
             {effectiveChartsData !== undefined && !playtimeEmpty ? (
               <PlaytimeLegend
@@ -557,12 +646,11 @@ function ChartsContent() {
           <p className="meta mt-2">
             Top idiomas por volume, ordenados pela aprovação · barras partem da base geral ({formatPercent(BASELINE_RATE)})
           </p>
-          <ol
-            id="rank-languages"
-            ref={languageRanksRef}
-            className="rank-list"
-            hidden={languagesEmpty}
-          />
+          <ol id="rank-languages" className="rank-list" hidden={languagesEmpty}>
+            {languageRankRows.map((row, index) => (
+              <RankRow key={row.rowKey} {...row} index={index} scalesRef={rankScalesRef} />
+            ))}
+          </ol>
           <EmptyState align="start" className="mt-4" hidden={!languagesEmpty} />
           {languageRankNote ? (
             <p className="meta mt-4" hidden={languagesEmpty}>
@@ -600,7 +688,7 @@ function ChartsContent() {
                 type="button"
                 className="seg-btn"
                 aria-pressed={monthMetric === 'volume' ? 'true' : 'false'}
-                onClick={() => handleMonthMetricChange('volume')}
+                onClick={() => setMonthMetricState('volume')}
               >
                 Volume
               </button>
@@ -608,7 +696,7 @@ function ChartsContent() {
                 type="button"
                 className="seg-btn"
                 aria-pressed={monthMetric === 'approval' ? 'true' : 'false'}
-                onClick={() => handleMonthMetricChange('approval')}
+                onClick={() => setMonthMetricState('approval')}
               >
                 Aprovação
               </button>
@@ -618,7 +706,7 @@ function ChartsContent() {
             id="chart-month"
             role="group"
             aria-roledescription="gráfico"
-            aria-label="Avaliações por mês"
+            aria-label={monthLabel ?? 'Avaliações por mês'}
             tabIndex={0}
             aria-describedby="chart-month-hint"
             className="chart-frame mt-4 h-[320px] w-full"
@@ -629,19 +717,20 @@ function ChartsContent() {
             Use as setas para percorrer os meses (PageUp/PageDown para avançar ou voltar 12 meses). Enter ou Espaço filtra o mês destacado. Escape
             remove o filtro de mês. Uma tabela com os mesmos dados segue logo abaixo.
           </p>
-          <p id="chart-month-live" className="sr-only" aria-live="polite" />
+          <p id="chart-month-live" className="sr-only" aria-live="polite">
+            {liveMessage}
+          </p>
           {effectiveChartsData !== undefined && !monthEmpty ? <MonthTable months={effectiveChartsData.months} /> : null}
         </article>
 
         <article className="card" hidden={sliceEmpty}>
           <h2 className="title">Volume por jogo</h2>
           <p className="meta mt-2">Jogos com mais avaliações</p>
-          <ol
-            id="rank-games"
-            ref={gameRanksRef}
-            className="rank-list"
-            hidden={gamesEmpty}
-          />
+          <ol id="rank-games" className="rank-list" hidden={gamesEmpty}>
+            {gameRankRows.map((row, index) => (
+              <RankRow key={row.rowKey} {...row} index={index} scalesRef={rankScalesRef} />
+            ))}
+          </ol>
           <EmptyState align="start" className="mt-4" hidden={!gamesEmpty} />
           {gameRankNote ? (
             <p className="meta mt-4" hidden={gamesEmpty}>
