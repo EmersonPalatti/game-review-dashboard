@@ -11,12 +11,15 @@ wheels/
 venv/
 env/
 
-# Data files
+# Data files (Kaggle CSVs, ~460 MB)
 data/
 *.csv
 
-# SQLite Database
+# SQLite database (gerado por backend.app.seed)
 backend/data/*.db
+*.db-journal
+*.db-wal
+*.db-shm
 
 # Jupyter checkpoints
 .ipynb_checkpoints/
@@ -30,6 +33,12 @@ backend/data/*.db
 .pytest_cache/
 .ruff_cache/
 .mypy_cache/
+.coverage
+htmlcov/
+
+# Logs
+*.log
+npm-debug.log*
 
 # OS and Editor configurations
 .DS_Store
@@ -37,17 +46,20 @@ Thumbs.db
 .vscode/
 .idea/
 
-# Frontend (Astro / Node)
+# Node (raiz, frontend e video)
 node_modules/
-frontend/node_modules/
+
+# Frontend (Astro)
 frontend/.astro/
 frontend/dist/
+.vercel/
 
 # Video (Remotion / Captures)
-video/node_modules/
 video/.remotion/
 video/out/
 video/captures/
 
 # AI tooling artifacts
 .impeccable/
+.claude/settings.local.json
+graphify-out/

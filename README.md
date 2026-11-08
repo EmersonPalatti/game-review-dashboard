@@ -6,7 +6,7 @@
 Painel analítico interativo e estudo de dados sobre **1.000.000 de avaliações da Steam** (março de 2013 a janeiro de 2021), derivado do [Game Reviews Dataset no Kaggle](https://www.kaggle.com/datasets/sridharstreaks/game-reviews-dataset). A base cobre **59 jogos** e **912.553 autores únicos**.
 
 O projeto reúne duas entregas integradas:
-1. **Dashboard operacional de filtragem cruzada** (Astro, React Islands, TanStack Query, TanStack Table + TanStack Virtual, Apache ECharts, Nanostores, Tailwind CSS v4 e FastAPI com SQLite) para exploração interativa em tempo real com recortes multidimensionais, KPIs dinâmicos, gráficos reativos e listagem virtualizada de avaliações com rolagem infinita.
+1. **Dashboard operacional de filtragem cruzada** (Astro, React Islands, TanStack Query, TanStack Table + TanStack Virtual, Apache ECharts, Nanostores, Tailwind CSS v4 e FastAPI com SQLite local / PostgreSQL em produção) para exploração interativa em tempo real com recortes multidimensionais, KPIs dinâmicos, gráficos reativos e listagem virtualizada de avaliações com rolagem infinita.
 2. **Análise exploratória de dados e auditoria relacional** (`analysis.ipynb`), conduzida com o Gemini 4 Argon e subagentes Gemini 3.8 Flash (`AGENTS.md`), auditando as 4 partições relacionais 1:1, saneando anomalias extremas (como underflow de `uint32` e spams de copypasta) e investigando a dinâmica de recomendação e tempo de jogo.
 
 [![Demonstração do Dashboard e Análise](assets/overview.gif)](assets/overview.mp4)
@@ -43,6 +43,7 @@ O painel foi projetado para permitir que analistas, engenheiros e recrutadores t
   - **Taxa de aprovação por faixa de horas com filtro por clique (ECharts)**: visualização da inflexão na janela de reembolso de 2 horas da Valve, com linha de referência de aprovação global e alternância interativa de filtro ao clicar diretamente em qualquer barra.
   - **Rankings bidirecionais**: Top jogos por volume de avaliações e ranking de aprovação por idioma com badges percentuais e barras de progresso proporcionais.
   - **Tabela virtualizada com Infinite Scroll (TanStack Table + TanStack Virtual)**: renderização sob demanda apenas das linhas visíveis no viewport, rolagem contínua em janelas de 100 avaliações com cache assíncrono (TanStack Query), ordenação dinâmica por horas jogadas, votos úteis ou data de publicação, além de expansão de linhas para inspeção detalhada de badges e metadados completos (votos engraçados higienizados, pontuação ponderada da Steam, comentários e decomposição de horas jogadas).
+- **Achados do estudo**: seção no topo do painel com as conclusões do notebook, ao lado do chat quando ele está aberto. A barra lateral traz o link "Como a base foi auditada", que abre o repositório da análise original ([game-review](https://github.com/EmersonPalatti/game-review#readme)).
 - **Presets guiados por hipóteses da pesquisa**: atalhos na barra de contexto para carregar recortes emblemáticos:
   - *Janela < 1 h*: avaliações precoces (aprovação cai para 49,6%).
   - *Acesso antecipado*: impacto de jogos em desenvolvimento (69,8% vs. 83,8% no lançamento).
@@ -75,12 +76,14 @@ O sistema adota uma separação limpa entre processamento de dados, API de agreg
 flowchart LR
     subgraph Dados ["Camada de Dados"]
         CSV["4 CSVs Kaggle (1M Linhas)"] --> SEED["Script de Ingestão e Limpeza\n(backend/app/seed.py)"]
-        SEED --> SQLITE[("SQLite Otimizado\n(backend/data/reviews.db)")]
+        SEED --> SQLITE[("SQLite local\n(backend/data/reviews.db)")]
+        SQLITE -->|"scripts/migrate_sqlite_to_pg.py"| PG[("PostgreSQL / Supabase\n(produção)")]
     end
 
     subgraph Backend ["Backend (FastAPI)"]
-        SQLITE --> REPO["Consultas Agregadas & Filtros\n(backend/app/queries.py)"]
-        REPO --> API["Endpoints REST (/api/summary, /api/charts, /api/reviews)\n(backend/app/main.py)"]
+        SQLITE --> REPO["Consultas Agregadas, Filtros e Cache LRU\n(backend/app/queries.py + baseline.json)"]
+        PG -.->|"DATABASE_URL"| REPO
+        REPO --> API["Endpoints REST (/api/summary, /api/charts, /api/facets, /api/reviews)\n(backend/app/main.py)"]
         REPO <--> AGENT["Agente SteamBot-9000 (LangChain + OpenRouter)\n(backend/app/chat.py)"]
         AGENT --> CHAT_API["Endpoint Conversacional (/api/chat)"]
     end
@@ -117,8 +120,10 @@ O frontend adota uma abordagem híbrida moderna de alto desempenho:
   > [!NOTE]
   > O endpoint `/api/summary` é o caminho oficial consumido pelo frontend para evitar interceptações locais de antivírus (ex.: Kaspersky interceptando requisições a rotas denominadas `/api/metrics`).
 - `GET /api/charts`: Devolve simultaneamente a distribuição mensal (`timeline`), a taxa de aprovação por faixa de horas jogadas (`playtime_buckets`), o top 10 de jogos por volume (`game_rankings`) e os idiomas mais frequentes ordenados por aprovação (`language_rankings`). Ao filtrar um único mês (`date_from` e `date_to` no mesmo mês), a série mensal preserva a curva completa para destacar o mês selecionado no gráfico sem colapsar a 1 ponto, enquanto os demais painéis são filtrados pelo mês.
+- `GET /api/facets`: Contagens por jogo (`games`) e por idioma (`languages`) no recorte atual, usadas pelos seletores da barra lateral e pelos rankings.
 - `GET /api/reviews`: Retorna a lista paginada de avaliações com suporte a todos os filtros dimensionais e temporais, ordenação por data (`created_at`), horas de jogo (`playtime_hours`) ou votos úteis (`votes_helpful`), além de paginação via `limit` (até 100) e `offset`.
 - `POST /api/chat`: Endpoint conversacional inteligente alimentado pelo agente LangChain (`SteamBot-9000`). Recebe a mensagem do usuário, histórico e o recorte atual de filtros. O robô aciona dinamicamente as ferramentas analíticas do backend (`get_metrics`, `get_charts`, `get_reviews_sample`) e devolve a resposta formatada em Markdown com tabelas GFM, metadados de execução, suporte a cancelamento de stream/geração via `AbortSignal` e lista de ferramentas utilizadas (`tools_used`).
+- `GET /health`: Health check simples para monitoramento do serviço.
 - `GET /docs`: Documentação interativa Swagger/OpenAPI gerada automaticamente pelo FastAPI.
 
 ---
@@ -159,78 +164,71 @@ game-review-dashboard/
 │   └── showcase-poster.png               # Pôster estático de apresentação
 ├── backend/                              # API FastAPI e camada de dados
 │   ├── app/
-│   │   ├── database.py                   # Conexão SQLite e sessão SQLAlchemy
-│   │   ├── main.py                       # Rotas da API e middlewares
+│   │   ├── baseline.json                 # Agregados pré-calculados da base completa (resposta sem filtros)
+│   │   ├── chat.py                       # Agente SteamBot-9000 (LangChain + OpenRouter) e ferramentas
+│   │   ├── database.py                   # Engine SQLAlchemy: SQLite local ou PostgreSQL via DATABASE_URL
+│   │   ├── main.py                       # Rotas da API, CORS e cabeçalhos Cache-Control
 │   │   ├── models.py                     # Modelo relacional ORM da tabela reviews
-│   │   ├── queries.py                    # Agregações SQL e filtragem paramétrica
+│   │   ├── queries.py                    # Agregações SQL, filtragem paramétrica e cache LRU
 │   │   ├── schemas.py                    # Schemas de validação Pydantic
 │   │   ├── seed.py                       # Pipeline de ingestão e higienização dos CSVs
 │   │   └── transform.py                  # Regras de limpeza, underflow e buckets
 │   ├── data/
-│   │   └── reviews.db                    # Banco SQLite higienizado (gerado pelo seed)
+│   │   └── reviews.db                    # Banco SQLite higienizado (gerado pelo seed, fora do git)
 │   └── tests/
 │       └── test_api.py                   # Testes automatizados da API (Pytest + TestClient)
-├── data/                                 # Partições originais do Kaggle (.gitignore)
+├── data/                                 # Partições originais do Kaggle (fora do git)
 │   ├── review_info.csv                   # Texto, votos e recomendação (~364 MB)
 │   ├── game_info.csv                     # Dados dos jogos (app_id e app_name) (~28 MB)
 │   ├── author_info.csv                   # Telemetria e perfil do autor (~58 MB)
 │   └── purchase_info.csv                 # Tipo de compra e early access (~10 MB)
 ├── frontend/                             # Aplicação web interativa (Astro + React Islands)
+│   ├── public/                           # Favicon e ícones estáticos
 │   ├── src/
-│   │   ├── components/                   # Componentes estáticos e estruturais da interface
-│   │   │   ├── react/                    # Ilhas interativas React
-│   │   │   │   ├── ChartsIsland.tsx      # Ilha dos gráficos ECharts (client:visible) com zoom e filtros por clique
-│   │   │   │   ├── ContextIsland.tsx     # Presets analíticos e chips dinâmicos de filtro (client:load)
-│   │   │   │   ├── DateRangeFilter.tsx   # Seletor de período com presets anuais e calendário interativo
-│   │   │   │   ├── FiltersIsland.tsx     # Controles laterais, combos com busca e seletores (client:load)
-│   │   │   │   ├── MetricsIsland.tsx     # 4 cards de KPIs agregados (client:load)
-│   │   │   │   ├── QueryRoot.tsx         # Provedor compartilhado do TanStack Query
-│   │   │   │   ├── RailIcon.tsx          # Componente de ícones vetoriais padronizados
-│   │   │   │   └── ReviewsIsland.tsx     # Tabela virtualizada com TanStack Table + Virtual (client:visible)
-│   │   │   ├── ContextBar.astro          # Barra superior de contexto
-│   │   │   ├── MobileBar.astro           # Barra de navegação móvel
-│   │   │   ├── Sidebar.astro             # Painel lateral responsivo
-│   │   │   └── ThemeToggle.astro         # Alternância de tema claro/escuro
-│   │   ├── layouts/
-│   │   │   └── Base.astro                # Layout base HTML com meta tags e fontes IBM Plex
-│   │   ├── lib/
-│   │   │   ├── api.ts                    # Cliente HTTP tipado para a API backend
-│   │   │   ├── constants.ts              # Constantes, presets e parâmetros padrão
-│   │   │   ├── fetchFeedback.ts          # Feedback visual com anti-flicker calibrado (useDelayedFlag)
-│   │   │   ├── format.ts                 # Formatação numérica pt-BR e datas
-│   │   │   ├── queryClient.ts            # Instância centralizada do TanStack QueryClient
-│   │   │   └── useNanostore.ts           # Hook de integração React com Nanostores
-│   │   ├── pages/
-│   │   │   └── index.astro               # Ponto de entrada do dashboard Astro
-│   │   ├── scripts/
-│   │   │   ├── charts.ts                 # Configuração, eventos de clique e renderização dos gráficos ECharts
-│   │   │   ├── combo.ts                  # Comportamento de foco, busca e acessibilidade dos seletores dropdown
-│   │   │   ├── dashboard.ts              # Sincronização de URL, atalhos de teclado e tema
-│   │   │   ├── renderers.ts              # Utilitários de renderização de rankings
-│   │   │   └── theme.ts                  # Persistência do tema claro/escuro
-│   │   ├── stores/
-│   │   │   ├── filters.ts                # Estado global reativo dos filtros e datas (Nanostores)
-│   │   │   ├── metrics.ts                # Armazenamento complementar de métricas
-│   │   │   └── urlSync.ts                # Sincronização bidirecional entre filtros e URL
-│   │   └── styles/
-│   │       └── global.css                # Estilos globais e tokens com Tailwind CSS v4
-│   ├── astro.config.mjs                  # Configuração do Astro com integrações React e Tailwind
+│   │   ├── components/                   # Componentes Astro estáticos (ChartCard, FilterCombo, MetricCard,
+│   │   │   │                             #   TriFilter, ComboToggle, ContextBar, MobileBar, Sidebar, ThemeToggle…)
+│   │   │   └── react/                    # Ilhas interativas React
+│   │   │       ├── BotGlyph.tsx          # Glifo animado do SteamBot-9000
+│   │   │       ├── ChartsIsland.tsx      # Gráficos ECharts (client:visible) com zoom e filtros por clique
+│   │   │       ├── ChatIsland.tsx        # Assistente SteamBot-9000 (client:load)
+│   │   │       ├── ContextIsland.tsx     # Presets analíticos e chips dinâmicos de filtro (client:load)
+│   │   │       ├── DateRangeFilter.tsx   # Seletor de período com presets anuais e calendário interativo
+│   │   │       ├── EmptyState.tsx        # Estado vazio para recortes sem resultado
+│   │   │       ├── FiltersIsland.tsx     # Controles laterais, combos com busca e seletores (client:load)
+│   │   │       ├── MetricsIsland.tsx     # 4 cards de KPIs agregados (client:load)
+│   │   │       ├── QueryRoot.tsx         # Provedor compartilhado do TanStack Query
+│   │   │       ├── RailIcon.tsx          # Ícones Lucide padronizados
+│   │   │       └── ReviewsIsland.tsx     # Tabela virtualizada com TanStack Table + Virtual (client:visible)
+│   │   ├── layouts/Base.astro            # Layout base HTML com meta tags e fontes IBM Plex
+│   │   ├── lib/                          # api.ts (cliente tipado), constants.ts, format.ts, queryClient.ts,
+│   │   │                                 #   fetchFeedback.ts (useDelayedFlag), useNanostore.ts, useHydrated.ts,
+│   │   │                                 #   useGridReflowMotion.ts
+│   │   ├── pages/index.astro             # Ponto de entrada do dashboard
+│   │   ├── scripts/                      # charts.ts, combo.ts, dashboard.ts, renderers.ts, theme.ts
+│   │   ├── stores/                       # filters.ts, metrics.ts, urlSync.ts (Nanostores + URL)
+│   │   └── styles/                       # global.css (tokens Tailwind v4) + CSS por área
+│   │                                     #   (charts, chat, findings, metrics, reviews, sidebar)
+│   ├── astro.config.mjs                  # Astro com React, Tailwind e proxy /api → :8000
 │   └── package.json                      # Dependências do frontend
-├── scripts/                              # Utilitários de inicialização do JupyterLab
-│   ├── start-jupyter.ps1                 # Inicialização no Windows PowerShell
-│   └── start-jupyter.sh                  # Inicialização no Linux / macOS
+├── scripts/
+│   ├── migrate_sqlite_to_pg.py           # Migração do SQLite local para PostgreSQL / Supabase
+│   ├── start-jupyter.ps1                 # Inicialização do JupyterLab no Windows PowerShell
+│   └── start-jupyter.sh                  # Inicialização do JupyterLab no Linux / macOS
 ├── video/                                # Pipeline de captura determinística e renderização Remotion
-│   ├── capture/                          # Captura sem head via Playwright + CDP a 60 FPS
+│   ├── capture/                          # Captura headless via Playwright + CDP a 60 FPS
 │   │   ├── engine.ts                     # Engine de gravação, interpolação de cursor e time-dilation
-│   │   ├── record.ts                     # Roteiro das tomadas desktop e mobile
+│   │   ├── record.ts                     # Roteiro das tomadas desktop e mobile (saída em video/captures/)
 │   │   └── review.ts                     # Utilitário de inspeção e validação de frames
-│   ├── public/                           # Gravações brutas (desktop/mobile) e trilhas sonoras
+│   ├── public/                           # Tomadas desktop/mobile usadas na renderização e trilhas sonoras
 │   ├── src/                              # Composições Remotion (Showcase e Overview a 60 FPS)
-│   └── package.json                      # Scripts de renderização Remotion e dependências
+│   └── package.json                      # Scripts de captura/renderização e dependências
 ├── analysis.ipynb                        # Notebook analítico exploratório original
 ├── AGENTS.md                             # Protocolo operacional da equipe de agentes de IA
+├── DESIGN.md                             # Design system do dashboard (tokens, superfícies tonais, motion)
 ├── PRODUCT.md                            # Especificação de produto e direcionamento de UX
-├── pyproject.toml                        # Dependências Python gerenciadas via uv
+├── iniciar-servidores.bat                # Atalho Windows: sobe backend (:8000) e frontend (:4321)
+├── pyproject.toml / uv.lock              # Dependências Python gerenciadas via uv
+├── requirements.txt                      # Dependências mínimas do backend para o deploy (Render)
 ├── pytest.ini                            # Configuração da suíte de testes
 └── README.md                             # Documentação técnica do projeto
 ```
@@ -349,7 +347,7 @@ xychart-beta
 
 - [Python](https://www.python.org/) >= 3.14
 - [uv](https://docs.astral.sh/uv/) (gerenciador rápido de pacotes Python)
-- [Node.js](https://nodejs.org/) >= 18 e `npm`
+- [Node.js](https://nodejs.org/) >= 22.23 e `npm` (exigência do Astro 7)
 
 ---
 
@@ -415,6 +413,21 @@ OPENROUTER_MODEL=openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
 > [!NOTE]
 > Se `OPENROUTER_API_KEY` não for configurada, o painel e os endpoints analíticos (`/api/summary`, `/api/charts`, `/api/reviews`) continuam funcionando normalmente. Apenas o chat retornará uma instrução amigável indicando a necessidade da chave para acionar o modelo de linguagem.
 
+#### Outras variáveis de ambiente (deploy)
+
+| Variável | Onde | Uso |
+| :--- | :--- | :--- |
+| `DATABASE_URL` | Backend | String de conexão PostgreSQL (Supabase). Sem ela, o backend usa `backend/data/reviews.db`. Aceita `postgres://` e `postgresql://`. |
+| `CORS_ORIGINS` | Backend | Origens permitidas, separadas por vírgula. Sem ela, libera `*`. |
+| `PUBLIC_API_URL` | Frontend (build) | URL base da API publicada (ex.: o serviço no Render). Sem ela, o frontend chama `/api` no mesmo host, que o proxy do Astro encaminha para a porta 8000 em desenvolvimento. |
+
+Para levar o banco local para o PostgreSQL de produção:
+
+```bash
+uv run python scripts/migrate_sqlite_to_pg.py --target-url postgresql://user:pass@host:5432/postgres
+# ou defina TARGET_DATABASE_URL / DATABASE_URL no ambiente
+```
+
 #### Iniciar o Servidor FastAPI
 Inicie o servidor da API com hot-reload:
 
@@ -424,6 +437,8 @@ uv run uvicorn backend.app.main:app --reload --port 8000
 
 - API disponível em: `http://127.0.0.1:8000`
 - Documentação interativa Swagger: `http://127.0.0.1:8000/docs`
+
+No Windows, `iniciar-servidores.bat` abre backend e frontend em duas janelas (usa a `.venv` do projeto e assume o repositório em `C:\Projects\game-review-dashboard`).
 
 Para rodar a suíte de testes automatizados do backend:
 
@@ -520,7 +535,7 @@ npm run render:overview
 - **[PostgreSQL / Supabase](https://supabase.com/)**: banco de dados em produção na nuvem com índices otimizados para 1.000.000 de avaliações.
 - **[SQLite](https://www.sqlite.org/)**: armazenamento local transacional e consultas indexadas para prototipação e testes.
 - **[uv](https://docs.astral.sh/uv/)**: gerenciamento moderno de dependências e ambientes virtuais.
-- **[Pytest](https://pytest.org/)**: testes de integração automatizados da API (61 testes de validação contínua cobrindo agregação, paginação e chat).
+- **[Pytest](https://pytest.org/)**: testes de integração automatizados da API (45 testes cobrindo agregação, filtros, paginação e chat).
 
 ### Infraestrutura & Deploy em Produção
 - **[Vercel](https://vercel.com/)**: hospedagem do frontend Astro estático com distribuição global via CDN Edge de baixa latência.
