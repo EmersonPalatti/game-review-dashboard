@@ -129,17 +129,17 @@
   outline-offset: 1px;
 }
 
-/* Selecionado é neutro, como a linha de ranking; o foco do teclado segue em --accent pelo outline. */
+/* Selecionado = véu verde e texto em acento, sem borda. O foco segue no outline. */
 .playtime-chip[aria-pressed='true'] {
-  background: var(--seg-active);
-  border-color: var(--seg-ring);
-  color: var(--ink);
+  background: var(--selected-card);
+  border-color: transparent;
+  color: var(--accent);
 }
 
 .playtime-chip[aria-pressed='true']:hover,
 .playtime-chip[aria-pressed='true']:focus-visible {
-  background: var(--seg-active);
-  border-color: var(--seg-ring);
+  background: var(--selected-card-hover);
+  border-color: transparent;
 }
 
 .playtime-chip-label {

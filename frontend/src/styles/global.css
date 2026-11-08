@@ -37,9 +37,9 @@
     paper  = chão da página
     sidebar = plano próprio, um passo fora do paper (mais claro no claro, mais fundo no escuro para o well seguir rebaixado), com divisória de 1px (--line) na borda de conteúdo
     surface = cards apoiados no chão (--shadow-card no lugar da borda)
-    field / field-hover / field-border = controles interativos (campos, datas, presets, trilhos segmentados, limpar): tom do card com borda 3:1 nos dois temas (no escuro, o well com borda clara)
-    well / well-hover = só chips passivos, atalhos e chat
-    seg-active / seg-ring = segmento selecionado: tom levemente tingido + contorno; verde só para filtro ativo
+    field / field-hover = controles interativos (campos, datas, presets, trilhos segmentados, limpar): tom de campo, sem borda em repouso; nenhuma borda carrega estado e o foco é o outline de acento
+    well / well-hover = só chips passivos, atalhos e chat; no claro o campo usa o mesmo tom do well
+    selected / selected-card = selecionado: véu verde sem borda (sobre campo / sobre card); hover é neutro, hover do selecionado sobe um passo de verde
     raised = hover dentro de um card
     line = só divisórias que organizam leitura (linhas da tabela, trilhos, grade, borda da sidebar)
   */
@@ -49,13 +49,16 @@
   --raised: #f1f1ee;
   --well: #e8e8e4;
   --well-hover: #e0e0dc;
-  --field: var(--surface);
-  --field-hover: #f6f6f3;
-  /* 50%, não 48%: controles no cabeçalho ficam sobre o paper, e a borda precisa de 3:1 também contra ele. */
-  --field-border: color-mix(in srgb, var(--ink) 50%, var(--sidebar));
-  --field-border-hover: color-mix(in srgb, var(--ink) 64%, var(--sidebar));
-  --seg-active: color-mix(in srgb, var(--ink) 8%, var(--surface));
-  --seg-ring: color-mix(in srgb, var(--ink) 64%, var(--surface));
+  --field: var(--well);
+  --field-hover: var(--well-hover);
+  /* Controles se identificam pelo texto e pelo tom. A borda fica transparente (1px mantido para não mudar a geometria) e nunca carrega estado: selecionado é véu verde (--selected), foco é o outline. */
+  --field-border: transparent;
+  --field-border-hover: transparent;
+  /* Selecionado = véu verde, sem borda e sem sólido. Um tom sobre campo e trilho, outro sobre card; o hover do selecionado sobe um passo. */
+  --selected: color-mix(in srgb, var(--accent) 14%, var(--field));
+  --selected-hover: color-mix(in srgb, var(--accent) 20%, var(--field));
+  --selected-card: color-mix(in srgb, var(--accent) 10%, var(--surface));
+  --selected-card-hover: color-mix(in srgb, var(--accent) 15%, var(--surface));
   --line: #e3e3df;
   --ink: #1c1915;
   --secondary: #5c564e;
@@ -87,13 +90,17 @@ html.dark {
   --raised: #282622;
   --well: #1c1a17;
   --well-hover: #25231f;
-  --field: var(--well);
-  --field-hover: var(--well-hover);
-  /* Borda de campo no escuro: 3:1 contra o popover (plano mais claro onde há campo) e contra sidebar, surface e paper. */
-  --field-border: color-mix(in srgb, var(--ink) 46%, var(--sidebar));
-  --field-border-hover: color-mix(in srgb, var(--ink) 62%, var(--sidebar));
-  --seg-active: var(--raised);
-  --seg-ring: color-mix(in srgb, var(--ink) 38%, var(--well));
+  /* No escuro o well some sobre o surface: o campo tem tom próprio, um passo mais claro. */
+  --field: #2a2723;
+  --field-hover: #33302b;
+  /* Controles se identificam pelo texto e pelo tom. A borda fica transparente (1px mantido para não mudar a geometria) e nunca carrega estado: selecionado é véu verde (--selected), foco é o outline. */
+  --field-border: transparent;
+  --field-border-hover: transparent;
+  /* O acento do escuro é claro: a mesma proporção pesa menos sobre o campo escuro, então o véu sobe alguns pontos. */
+  --selected: color-mix(in srgb, var(--accent) 18%, var(--field));
+  --selected-hover: color-mix(in srgb, var(--accent) 24%, var(--field));
+  --selected-card: color-mix(in srgb, var(--accent) 14%, var(--surface));
+  --selected-card-hover: color-mix(in srgb, var(--accent) 19%, var(--surface));
   --line: #34302b;
   --ink: #efe9de;
   --secondary: #aaa398;
@@ -254,8 +261,14 @@ html.dark {
   color: var(--accent);
 }
 
+/* Filtro ativo no campo: véu verde no lugar da borda. O hover sobe um passo para continuar respondendo ao ponteiro. */
 .sidebar-row.is-field.is-filtered .field-control {
-  border-color: var(--accent);
+  background-color: var(--selected);
+}
+
+.sidebar-row.is-field.is-filtered .field-control:hover,
+.sidebar-row.is-field.is-filtered .combo:hover .field-control {
+  background-color: var(--selected-hover);
 }
 
 .logo-mark {
@@ -377,7 +390,12 @@ html.dark {
     flex-direction: column;
     overflow-x: hidden;
     overflow-y: auto;
-    padding: 20px;
+    /* A barra reserva a faixa desde o início: abrir "Mais filtros" não reflui os controles. */
+    scrollbar-gutter: stable;
+    scrollbar-width: thin;
+    scrollbar-color: var(--line) transparent;
+    /* Padding direito de 10px: a faixa da barra (10px, thin) mais este valor dá a margem visual de 20px. */
+    padding: 20px 10px 20px 20px;
     border-right: 0;
     background: var(--sidebar);
     box-shadow: inset -1px 0 0 var(--line);
@@ -473,17 +491,17 @@ html.dark {
   color: var(--ink);
 }
 
-/* Selecionado é neutro, como o segmento; o verde fica só para filtro ativo. */
+/* Selecionado = véu verde e texto em acento, sem borda. Mesmo par do segmento, da linha de ranking e do achado. */
 .preset-btn[aria-pressed='true'] {
-  background: var(--seg-active);
-  color: var(--ink);
-  border-color: var(--seg-ring);
+  background: var(--selected);
+  color: var(--accent);
+  border-color: transparent;
   font-weight: 500;
 }
 
-.sidebar-row.is-field.is-filtered .preset-btn[aria-pressed='true'] {
+.preset-btn[aria-pressed='true']:hover {
+  background: var(--selected-hover);
   color: var(--accent);
-  border-color: var(--accent);
 }
 
 .context-heading {
@@ -517,8 +535,9 @@ html.dark {
   width: 40px;
   height: 40px;
   padding: 0;
-  border: 1px solid var(--field-border);
+  border: 1px solid transparent;
   border-radius: 8px;
+  /* Repouso no mesmo tom de campo dos chips ao lado: sem fundo, o ícone solto não lia como botão. */
   background: var(--field);
   color: var(--secondary);
   cursor: pointer;
@@ -545,11 +564,140 @@ html.dark {
   width: 18px;
   height: 18px;
   color: inherit;
+  overflow: visible;
+}
+
+/* Peças do sol e da lua giram e piscam em torno do próprio centro, no espaço do viewBox. */
+.theme-glyph * {
+  transform-box: view-box;
+}
+
+.sun-rays,
+.sun-core,
+.moon-body {
+  transform-origin: 12px 12px;
+}
+
+.moon-star-a {
+  transform-origin: 19px 4px;
+}
+
+.moon-star-b {
+  transform-origin: 15.5px 8.5px;
+}
+
+/* Movimento só quando o sistema permite; com reduce, o ícone que chega só entra em fade (fim do arquivo). */
+@media (prefers-reduced-motion: no-preference) {
+  /* O giro dos raios fica declarado e pausado: no hover ele anda, ao sair ele para onde está, sem tranco. */
+  .sun-rays {
+    animation: sun-orbit 10s linear infinite paused;
+  }
+
+  /* Troca de tema: o ícone que chega nasce em vez de só aparecer. Só depois de um clique, nunca no carregamento. */
+  .theme-switch[data-switched] .sun-core {
+    animation: sun-rise 420ms var(--ease) both;
+  }
+
+  .theme-switch[data-switched] .sun-rays {
+    animation:
+      sun-rays-in 520ms var(--ease) both,
+      sun-orbit 10s linear 520ms infinite;
+    animation-play-state: running, paused;
+  }
+
+  .theme-switch[data-switched] .moon-body {
+    animation: moon-rise 480ms var(--ease) both;
+  }
+
+  .theme-switch[data-switched] .moon-star {
+    animation: moon-star-in 360ms var(--ease) 200ms both;
+  }
+
+  .theme-switch[data-switched] .moon-star-b {
+    animation-delay: 300ms;
+  }
+}
+
+/* Hover: os raios circulam devagar e as estrelas piscam. Nada se move em repouso.
+   Depois de um clique o cursor já está em cima: a entrada fica na lista para não ser cortada pelo hover. */
+@media (prefers-reduced-motion: no-preference) and (hover: hover) {
+  .theme-switch:hover .sun-rays,
+  .theme-switch:focus-visible .sun-rays {
+    animation-play-state: running;
+  }
+
+  .theme-switch:hover .moon-star,
+  .theme-switch:focus-visible .moon-star {
+    animation: moon-twinkle 1.6s ease-in-out infinite;
+  }
+
+  .theme-switch:hover .moon-star-b,
+  .theme-switch:focus-visible .moon-star-b {
+    animation-delay: -0.8s;
+  }
+
+  .theme-switch[data-switched]:hover .moon-star,
+  .theme-switch[data-switched]:focus-visible .moon-star {
+    animation:
+      moon-star-in 360ms var(--ease) 200ms both,
+      moon-twinkle 1.6s ease-in-out 560ms infinite;
+  }
+
+  .theme-switch[data-switched]:hover .moon-star-b,
+  .theme-switch[data-switched]:focus-visible .moon-star-b {
+    animation-delay: 300ms, 1460ms;
+  }
+}
+
+@keyframes sun-orbit {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes sun-rise {
+  from {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+}
+
+@keyframes sun-rays-in {
+  from {
+    opacity: 0;
+    transform: rotate(-60deg) scale(0.6);
+  }
+}
+
+@keyframes moon-rise {
+  from {
+    opacity: 0;
+    transform: rotate(-40deg) scale(0.7);
+  }
+}
+
+@keyframes moon-star-in {
+  from {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+}
+
+@keyframes moon-twinkle {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.25;
+    transform: scale(0.55);
+  }
 }
 
 .theme-switch:hover {
   background-color: var(--field-hover);
-  border-color: var(--field-border-hover);
   color: var(--ink);
 }
 
@@ -779,27 +927,16 @@ section[data-fetch-region='reviews'][data-fetching='true'] .th-sort {
   background: color-mix(in srgb, var(--ink) 4%, var(--field));
 }
 
-/* O contorno fica por fora da caixa: é a borda do segmento, em contato com o well. */
+/* Selecionado = véu verde e texto em acento, plano: sem borda, sem anel, sem sombra. */
 .seg-btn[aria-pressed='true'] {
-  background: var(--seg-active);
-  color: var(--ink);
+  background: var(--selected);
+  color: var(--accent);
   font-weight: 500;
   border-color: transparent;
-  box-shadow:
-    0 1px 2px rgba(28, 25, 21, 0.08),
-    0 0 0 1px var(--seg-ring);
 }
 
-html.dark .seg-btn[aria-pressed='true'] {
-  box-shadow:
-    inset 0 1px 0 rgba(239, 233, 222, 0.06),
-    0 0 0 1px var(--seg-ring);
-}
-
-.sidebar-row.is-field.is-filtered .seg-btn[aria-pressed='true'],
-html.dark .sidebar-row.is-field.is-filtered .seg-btn[aria-pressed='true'] {
-  color: var(--accent);
-  box-shadow: inset 0 0 0 1px var(--accent);
+.seg-btn[aria-pressed='true']:hover {
+  background: var(--selected-hover);
 }
 
 .field {
@@ -1103,15 +1240,7 @@ html.dark .when-dark {
   transform: scale(0.98);
 }
 
-.sidebar-row.is-field.is-filtered .date-trigger:not(.has-value) {
-  border-color: var(--field-border);
-}
-
-.sidebar-row.is-field.is-filtered .date-trigger:not(.has-value):hover {
-  border-color: var(--field-border-hover);
-}
-
-/* Aberto vem antes de com valor: o acento do filtro ativo vence a borda de aberto. */
+/* Aberto vem antes de com valor: o véu do filtro ativo vence o tom de aberto. */
 .date-trigger.is-open {
   background-color: var(--field-hover);
   border-color: var(--field-border-hover);
@@ -1123,7 +1252,11 @@ html.dark .when-dark {
   font-family: var(--font-mono);
   font-weight: 500;
   font-variant-numeric: tabular-nums;
-  border-color: var(--accent);
+  background-color: var(--selected);
+}
+
+.date-trigger.has-value:hover {
+  background-color: var(--selected-hover);
 }
 
 .date-trigger-chevron {
@@ -1279,7 +1412,6 @@ html.dark .when-dark {
 
 .date-nav-btn:hover:not(:disabled) {
   background: var(--raised);
-  border-color: var(--line);
 }
 
 .date-nav-btn:active:not(:disabled) {
@@ -1352,7 +1484,6 @@ html.dark .when-dark {
 
 .date-cell:hover:not(:disabled):not(.is-selected) {
   background: color-mix(in srgb, var(--accent) 16%, var(--raised));
-  border-color: color-mix(in srgb, var(--accent) 55%, var(--line));
   color: var(--ink);
   font-weight: 500;
 }
@@ -1383,7 +1514,6 @@ html.dark .when-dark {
 
 .date-cell.is-selected:hover:not(:disabled) {
   background: color-mix(in srgb, var(--accent) 86%, var(--ink));
-  border-color: color-mix(in srgb, var(--accent) 86%, var(--ink));
 }
 
 .date-cell:disabled {
@@ -1438,7 +1568,6 @@ html.dark .when-dark {
 
 .date-footer-btn.is-primary:hover {
   background: color-mix(in srgb, var(--accent) 14%, var(--raised));
-  border-color: var(--accent);
   color: var(--ink);
 }
 
@@ -1479,10 +1608,14 @@ html.dark .when-dark {
   background: var(--raised);
 }
 
-/* Selecionado é neutro (mesmo par do segmento); o verde fica no preenchimento de volume, que é filtro ativo. */
+/* Selecionado = véu verde sobre o card, sem borda; o hover neutro (--raised) fica para a linha não selecionada. */
 .rank-row.is-selected {
-  background: var(--seg-active);
-  border-color: var(--seg-ring);
+  background: var(--selected-card);
+  border-color: transparent;
+}
+
+.rank-row.is-selected:hover {
+  background: var(--selected-card-hover);
 }
 
 .rank-row.is-selected .rank-fill {
@@ -1943,6 +2076,17 @@ html[data-theme-reveal='active']::view-transition-new(root) {
     width: 100%;
     transform: none;
   }
+
+  /* Sem giro, sem pulso: o ícone que chega só aparece em fade. */
+  .theme-switch[data-switched] .theme-glyph {
+    animation: theme-glyph-fade 200ms ease-out both;
+  }
+}
+
+@keyframes theme-glyph-fade {
+  from {
+    opacity: 0;
+  }
 }
 
 /* ==========================================================================
@@ -2328,7 +2472,6 @@ html[data-theme-reveal='active']::view-transition-new(root) {
 .chat-action-btn:hover:not(:disabled) {
   background: var(--surface);
   color: var(--ink);
-  border-color: var(--line);
 }
 
 .chat-action-btn:disabled {
@@ -2351,7 +2494,6 @@ html[data-theme-reveal='active']::view-transition-new(root) {
 .chat-action-confirm:hover:not(:disabled) {
   background: color-mix(in srgb, var(--negative) 20%, var(--surface));
   color: var(--negative);
-  border-color: var(--negative);
 }
 
 .chat-confirm-label {
@@ -2456,7 +2598,6 @@ html[data-theme-reveal='active']::view-transition-new(root) {
 
 .chat-suggestions-toggle:hover {
   background: color-mix(in srgb, var(--accent) 12%, var(--surface));
-  border-color: var(--accent);
 }
 
 .chat-messages {
@@ -2824,7 +2965,6 @@ html.dark .chat-bubble-user {
 
 .chat-copy-btn:hover {
   background: var(--surface);
-  border-color: var(--line);
   color: var(--ink);
 }
 
@@ -2873,7 +3013,6 @@ html.dark .chat-bubble-user {
 }
 
 .chat-retry-btn:hover {
-  border-color: var(--negative);
   color: var(--negative);
 }
 

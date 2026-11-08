@@ -164,6 +164,8 @@ export function setupTheme(themeToggle: HTMLButtonElement, onRepaintCharts: () =
     applyTheme(event.matches ? 'dark' : 'light', themeToggle, onRepaintCharts, false);
   });
   themeToggle.addEventListener('click', () => {
+    // Liga a animação de entrada do ícone só a partir do primeiro clique, nunca no carregamento.
+    themeToggle.dataset.switched = '';
     revealTheme(themeToggle, onRepaintCharts);
   });
 }

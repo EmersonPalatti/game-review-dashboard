@@ -1,6 +1,5 @@
 ---
-import { Sun, Moon } from 'lucide';
-import RailIcon from './RailIcon.astro';
+// Sol e lua desenhados à mão (mesmo traço do Lucide) para que raios e estrelas sejam peças animáveis.
 ---
 
 <button
@@ -10,7 +9,47 @@ import RailIcon from './RailIcon.astro';
   aria-label="Mudar para tema escuro"
   title="Mudar para tema escuro"
 >
-  <span class="when-light"><RailIcon icon={Moon} /></span>
-  <span class="when-dark"><RailIcon icon={Sun} /></span>
+  <span class="when-light">
+    <svg
+      class="theme-glyph theme-moon"
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <path class="moon-body" d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path>
+      <path class="moon-star moon-star-a" d="M19 2.5v3M17.5 4h3"></path>
+      <path class="moon-star moon-star-b" d="M15.5 8.5h.01"></path>
+    </svg>
+  </span>
+  <span class="when-dark">
+    <svg
+      class="theme-glyph theme-sun"
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <circle class="sun-core" cx="12" cy="12" r="4"></circle>
+      <g class="sun-rays">
+        <path d="M12 2v2"></path>
+        <path d="M12 20v2"></path>
+        <path d="m4.93 4.93 1.41 1.41"></path>
+        <path d="m17.66 17.66 1.41 1.41"></path>
+        <path d="M2 12h2"></path>
+        <path d="M20 12h2"></path>
+        <path d="m6.34 17.66-1.41 1.41"></path>
+        <path d="m19.07 4.93-1.41 1.41"></path>
+      </g>
+    </svg>
+  </span>
   <span class="sr-only"><span class="when-light">Tema escuro</span><span class="when-dark">Tema claro</span></span>
 </button>

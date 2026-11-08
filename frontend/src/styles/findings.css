@@ -179,12 +179,16 @@
   border-color: var(--field-border-hover);
 }
 
-/* Selecionado é neutro (mesmo par do segmento): nada de tint ou anel em accent. */
+/* Aplicado = véu verde e texto em acento, sem borda, como todo selecionado. */
 .finding-compact-btn[aria-pressed='true'] {
-  background: var(--seg-active);
-  border-color: var(--seg-ring);
-  color: var(--ink);
+  background: var(--selected);
+  border-color: transparent;
+  color: var(--accent);
   font-weight: 500;
+}
+
+.finding-compact-btn[aria-pressed='true']:hover {
+  background: var(--selected-hover);
 }
 
 .finding-compact-btn:focus-visible,
@@ -272,13 +276,15 @@
   }
 }
 
+/* Aplicado = véu verde sobre o card; a sombra continua sendo a do card, sem anel. */
 .finding-tile[aria-pressed='true'] {
-  background: var(--seg-active);
-  box-shadow: inset 0 0 0 1px var(--seg-ring), var(--shadow-card);
+  background: var(--selected-card);
+  box-shadow: var(--shadow-card);
 }
 
 .finding-tile[aria-pressed='true']:hover {
-  box-shadow: inset 0 0 0 1px var(--seg-ring), var(--shadow-lift);
+  background: var(--selected-card-hover);
+  box-shadow: var(--shadow-lift);
 }
 
 .finding-claim {
