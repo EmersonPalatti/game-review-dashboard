@@ -13,6 +13,7 @@ export const BASELINE_RATE = 0.8297;
 export const BASELINE_GAMES = 59;
 export const BASELINE_AUTHORS = 912_553;
 export const BASELINE_PERIOD_SHORT = 'mar/2013 a jan/2021';
+export const AUDIT_REPO_URL = 'https://github.com/EmersonPalatti/game-review#readme';
 
 export const REFUND_BUCKETS: readonly PlaytimeBucket[] = ['lt1', 'h1_2'];
 

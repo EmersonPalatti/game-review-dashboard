@@ -5,9 +5,11 @@ import {
   useRef,
   type ReactNode,
 } from 'react';
+import { ArrowUpRight } from 'lucide';
 import { fetchMetrics, type Metrics } from '../../lib/api';
 import { useDelayedFlag } from '../../lib/fetchFeedback';
 import {
+  AUDIT_REPO_URL,
   BASELINE_AUTHORS,
   BASELINE_GAMES,
   BASELINE_RATE,
@@ -21,6 +23,7 @@ import { useHydrated } from '../../lib/useHydrated';
 import { activeFilterCount, type Filters, type Tri } from '../../stores/filters';
 import { latestMetrics } from '../../stores/metrics';
 import { QueryRoot } from './QueryRoot';
+import { RailIcon } from './RailIcon';
 
 /** Último resultado definitivo e os filtros que o produziram. */
 type SettledMetrics = {
@@ -127,7 +130,7 @@ function MetricCardBody({
 }: {
   id: string;
   label: string;
-  sublabel: string;
+  sublabel: ReactNode;
   accent?: boolean;
   value: number | undefined;
   format: (n: number) => string;
@@ -230,18 +233,24 @@ function MetricsContent() {
   }
 
 
-  const sublabels: Record<string, string> = useMemo(() => {
+  const sublabels: Record<string, ReactNode> = useMemo(() => {
     if (!metrics) {
       return Object.fromEntries(METRIC_CARDS_CONFIG.map((c) => [c.id, 'Carregando…']));
     }
 
     const empty = metrics.total_reviews === 0;
 
-    let reviewsSub: string;
+    let reviewsSub: ReactNode;
     if (empty) {
       reviewsSub = 'nenhuma avaliação neste recorte';
     } else if (!shownFiltered) {
-      reviewsSub = '100% da base auditada';
+      reviewsSub = (
+        <a className="source-link" href={AUDIT_REPO_URL} target="_blank" rel="noopener">
+          100% da base auditada
+          <RailIcon icon={ArrowUpRight} className="source-link-icon" />
+          <span className="sr-only">(abre em nova aba)</span>
+        </a>
+      );
     } else {
       reviewsSub = `${formatPercent(baselineReviews.current > 0 ? metrics.total_reviews / baselineReviews.current : 0)} de ${formatInteger(baselineReviews.current)}`;
     }

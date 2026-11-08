@@ -236,7 +236,7 @@ Cinco papéis e dois pesos (400 e 500). Tracking é 0 abaixo de 16px; o meta pod
 Modelo: sidebar fixa à esquerda e conteúdo à direita, em flex. Abaixo de 768px, a sidebar vira gaveta.
 
 - **Desktop (≥768px, `md`):** sidebar `.sidebar-panel` sticky, `height: 100vh`, largura 288px, padding de 20px com o lado direito menor para compensar a calha, `scrollbar-gutter: stable` e `scrollbar-width: thin`; divisória com `box-shadow: inset -1px 0 0 var(--line)`. Com a calha reservada, abrir "Mais filtros" não estreita o conteúdo. Conteúdo em `main` com `flex-1`; a grade (`.stage`) tem `max-width: 1320px`, padding 24px (`px-6 py-6`) e 32px entre seções (`gap-8`).
-- **Cabeçalho do conteúdo (`.context-bar`):** no desktop, título, período e link de auditoria à esquerda, alternância de tema no canto superior direito e chips do recorte à direita do título. Abaixo de 768px, o título ocupa a linha inteira; chips (`.active-chips`, `flex: 1 1 0`) e a alternância de tema (centralizada na vertical) dividem a linha seguinte.
+- **Cabeçalho do conteúdo (`.context-bar`):** sem título nem linha de metadados. Tem só chips de filtro, achados e a alternância de tema. No desktop, os chips ficam à esquerda e a alternância no canto superior direito. Abaixo de 768px, chips (`.active-chips`, `flex: 1 1 0`) e a alternância de tema (centralizada na vertical) dividem a linha. O h2 "Recorte ativo" fica só para leitor de tela (`sr-only`). A procedência da base fica na sidebar.
 - **Mobile (<768px):** a sidebar é um painel fixo de tela cheia com padding 24px, aberto por `.is-open` (transição de 0,3s). A barra superior `.sidebar-mobile-bar` é sticky, com 48px de altura e padding lateral de 16px.
 - **Toque e ponteiro grosso:** a regra usa OR, `(max-width: 767px), (pointer: coarse)`. Presets, chips, achados compactos e Desfazer sobem para 36px; segmentos, para 40px; combobox, linhas de ranking, botões pequenos e botões do chat, para 44px. A alternância de tema vai a 44px só com `(pointer: coarse)`.
 - **Ponteiro fino, desktop:** presets e achados compactos em 28px; chips e segmentos em 32px; selects do calendário em 28px; alternância de tema em 40px.
@@ -295,6 +295,14 @@ Definidos em `:root` de `global.css`. Use só estes.
 - **Após o clique** (`data-switched`, nunca no carregamento): o ícone que chega entra. O núcleo do sol cresce em 420ms; os raios giram de -60deg em 520ms; a lua gira de -40deg em 480ms, e as estrelas surgem em 200ms e 300ms. Curva `--ease`.
 - **Movimento reduzido:** sem movimento espacial; o ícone que chega só entra por opacidade em 200ms.
 - As durações desta seção são locais do `.theme-switch`, fora dos tokens acima.
+
+### SteamBot (`.bot-glyph`)
+O robô do SteamBot é desenhado à mão, com a geometria do Lucide `Bot`, para que olhos e antena sejam peças animáveis. Em repouso nada se move.
+- **Olhada:** quando um filtro muda, os olhos vão em direção ao painel (esquerda 1,6px, acima 0,8px), piscam e voltam em 560ms, `ease-in-out`. Cada filtro aplicado reinicia a olhada. O filtro lido da URL na carga não conta: a janela de 1s depois de montar é ignorada. A olhada mostra que o bot viu a mudança, porque as respostas usam o recorte filtrado.
+- **Hover e foco por teclado no FAB** (`.chat-fab`; hover só com `(hover: hover)`): os olhos abertos dão lugar a arcos felizes, em crossfade de opacidade de 120ms com escala em `--fast`. A antena balança uma vez, em 620ms, com amortecimento (-16deg, 10deg, -4deg), sem loop. O lift de 2px do FAB continua.
+- **Pensando** (`.is-thinking` no avatar do cabeçalho do chat): os olhos varrem de um lado a outro (±1,4px, 1,4s), em loop enquanto o bot pensa. Substitui o pulso de cor que o avatar tinha. A varredura vence a olhada.
+- **Movimento reduzido:** só opacidade. O hover troca os olhos por crossfade; não há olhada; pensando vira um esmaecer de opacidade (1,6s). A antena não balança.
+- As durações desta seção são locais do `.bot-glyph`, fora dos tokens acima.
 
 ## Shapes
 
@@ -356,6 +364,16 @@ Caráter: sóbrio, com tinta sólida para a ação primária.
 - **Internal Padding:** 20px.
 - **Cartão Recomendação:** `.figure.is-accent` em `--accent`, com a régua `.stamp-rule` (24 × 2px) 8px abaixo do número. É o único cartão com `accent: true` (`METRIC_CARDS_CONFIG`).
 - **Progresso de carregamento:** barra de 2px em `--accent` no topo do card (`data-fetching='true'`), com 40% da largura e animação de 900ms. Os valores ficam a 78% de opacidade durante a busca.
+- **Subtítulo do card Avaliações sem filtro:** "100% da base auditada" é um link de procedência (ver Link de procedência). Com filtro, o subtítulo mostra a fração da base e não é link.
+
+### Link de procedência (`.source-link`)
+Link para o repositório da auditoria. Aparece no rodapé da sidebar (`.sidebar-source`) e no subtítulo do card Avaliações sem filtro.
+- **Texto:** herda tamanho e cor do contexto. Não tem fonte nem cor próprias.
+- **Repouso:** cor `--muted` herdada, sublinhado na própria cor a 45%. No hover, texto e sublinhado vão para `--ink`.
+- **Ícone:** ArrowUpRight de 12px, depois do texto.
+- **Alvo:** mínimo de 24px de altura, mesmo quando o texto é menor.
+- **Foco:** outline de 2px em `--accent`, com offset de 2px, como os demais controles.
+- **Nova aba:** `target="_blank"` com `rel="noopener"`. Um texto sr-only "(abre em nova aba)" acompanha o link.
 
 ### Tabela (`.sheet`)
 - **Cabeçalho:** 12px, `--muted`, borda inferior `--line`.
@@ -383,12 +401,14 @@ Caráter: sóbrio, com tinta sólida para a ação primária.
 - **Compacto:** depois de 120px de rolagem (`data-compact='true'`), vira círculo de 52px só com o avatar. O texto recolhe (largura 0, opacidade 0) e reabre no hover e no foco por teclado.
 - **Balão de dica:** não aparece enquanto o botão está compacto. Abaixo de 768px, o rótulo e o balão ficam ocultos.
 - **Cabeçalho:** subtítulo com até duas linhas e reticências, largura máxima de 250px.
+- **Glifo do SteamBot (`.bot-glyph`):** olhos e antena são peças animáveis. Os movimentos estão em Motion, em SteamBot (`.bot-glyph`).
 
 ### Navegação e sidebar (`.sidebar-row`, `.disclosure`)
 - **Style:** texto `--ink`, ícone de 20px `--ink`. Linhas de campo alinham o ícone ao topo.
 - **Filtro ativo:** ícone em `--accent` e fundo do campo em `--selected`.
 - **Disclosure:** rótulo de 13px em `--secondary` com contagem em mono; seta gira ao abrir.
 - **Mobile:** barra sticky de 48px com marca e botão de 44px.
+- **Procedência (`.sidebar-source`):** rodapé da sidebar com a origem da base (Dataset do Kaggle, 4 partições conciliadas 1:1) e o link "Como a base foi auditada" (ver Link de procedência).
 
 ### Controles fantasma
 Botões sem borda em repouso: `.date-nav-btn`, `.date-footer-btn`, `.combo-toggle`, `.excerpt-toggle` e ações do chat (`.chat-action-btn`). Repouso transparente; hover em `--raised` ou `--surface`, com contorno de `--line` quando há contorno. Não recebem o tom de campo. A alternância de tema não é fantasma: tem tom de campo (ver Alternância de tema).
@@ -406,6 +426,7 @@ Botões sem borda em repouso: `.date-nav-btn`, `.date-footer-btn`, `.combo-toggl
 - **Do** usar 44px de altura nos controles de toque (campo, botão, tema) e 36px no mínimo em toque para presets, chips e achados.
 - **Do** deixar `.filters-footer` com `bottom` igual ao negativo do padding do painel, para cobrir a faixa de rolagem.
 - **Do** animar o ícone do tema só depois do clique (`data-switched`) e, em hover ou foco, com movimento permitido.
+- **Do** deixar a procedência da base na sidebar (`.sidebar-source`) e no subtítulo do card Avaliações, sempre como `.source-link`.
 
 ### Don't:
 - **Don't** pintar a página de creme. O chão é `--paper` (`#f0f0ed`); o calor fica na tinta e no verde.
@@ -418,3 +439,4 @@ Botões sem borda em repouso: `.date-nav-btn`, `.date-footer-btn`, `.combo-toggl
 - **Don't** escrever a interface em inglês. A UI é pt-BR com datas e números localizados.
 - **Don't** introduzir tracking diferente de 0 abaixo de 16px (exceto `meta`, 0.01em).
 - **Don't** pôr loop ambiente em repouso, no cabeçalho ou em qualquer ícone: o giro e a piscada do tema rodam só em hover e foco.
+- **Don't** repetir no topo do conteúdo o que a sidebar ou os cards já mostram, como o período da base, a contagem de avaliações ou o título da base.

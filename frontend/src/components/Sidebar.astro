@@ -1,5 +1,6 @@
 ---
-import { X } from 'lucide';
+import { ArrowUpRight, X } from 'lucide';
+import { AUDIT_REPO_URL } from '../lib/constants';
 import RailIcon from './RailIcon.astro';
 import { FiltersIsland } from './react/FiltersIsland';
 ---
@@ -21,6 +22,19 @@ import { FiltersIsland } from './react/FiltersIsland';
 
     <div class="sidebar-body mt-8 flex flex-col">
       <FiltersIsland client:load />
+    </div>
+
+    <div class="sidebar-row sidebar-source">
+      <div class="sidebar-reveal">
+        <div class="sidebar-reveal-inner">
+          <p class="meta">Dataset do Kaggle, 4 partições<br />conciliadas 1:1</p>
+          <a class="source-link" href={AUDIT_REPO_URL} target="_blank" rel="noopener">
+            Como a base foi auditada
+            <RailIcon icon={ArrowUpRight} class="source-link-icon" />
+            <span class="sr-only">(abre em nova aba)</span>
+          </a>
+        </div>
+      </div>
     </div>
   </div>
 </aside>

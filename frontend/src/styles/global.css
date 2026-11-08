@@ -295,6 +295,24 @@ html.dark {
   overflow: hidden;
 }
 
+/* Procedência no pé da sidebar. O .sidebar-body cresce até a altura da janela (sidebar.css), e o margin-top: auto só reforça o empurrão.
+   Recuo de 28px = ícone de 20px + gap de 8px, o mesmo x do wordmark e dos campos. O tamanho vem daqui para o link herdar 12/16px.
+   Overflow visível deixa o anel de foco do link sair da caixa. */
+.sidebar-source {
+  color: var(--muted);
+  margin-top: auto;
+  padding-top: 24px;
+  padding-left: 28px;
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.sidebar-source .sidebar-reveal,
+.sidebar-source .sidebar-reveal-inner {
+  margin-left: 0;
+  overflow: visible;
+}
+
 /* Limpar é controle interativo: tom do card e borda, como os campos. */
 .clear-row {
   min-height: 44px;
@@ -504,27 +522,10 @@ html.dark {
   color: var(--accent);
 }
 
-.context-heading {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-/* Botão de tema no canto superior direito do cabeçalho; alinha ao topo do h2 e não entra na linha dos chips. */
+/* Botão de tema à direita da linha de chips, centralizado na altura deles (vale no desktop e no celular). */
 .context-top > .theme-switch {
-  align-self: flex-start;
+  align-self: center;
   margin-left: auto;
-}
-
-/* No celular o título ocupa a linha inteira; chips e tema dividem a linha seguinte. */
-@media (max-width: 767px) {
-  .context-heading {
-    flex-basis: 100%;
-  }
-
-  .context-top > .theme-switch {
-    align-self: center;
-  }
 }
 
 .theme-switch {
@@ -2410,18 +2411,147 @@ html[data-theme-reveal='active']::view-transition-new(root) {
   transition: border-color var(--fast) var(--ease), background var(--fast) var(--ease);
 }
 
-.chat-avatar-badge.is-thinking {
-  animation: chat-avatar-pulse 2s ease-in-out infinite;
+/* Robô do SteamBot (BotGlyph): olhos e antena são peças. Nada se mexe em repouso; o bot só reage:
+   olha o painel quando um filtro muda, sorri no hover/foco do botão e varre com os olhos enquanto consulta. */
+.bot-glyph {
+  overflow: visible;
 }
 
-@keyframes chat-avatar-pulse {
-  0%, 100% {
-    border-color: color-mix(in srgb, var(--accent) 25%, transparent);
-    background: color-mix(in srgb, var(--accent) 15%, var(--surface));
+.bot-glyph * {
+  transform-box: view-box;
+}
+
+.bot-antenna {
+  transform-origin: 12px 8px;
+}
+
+.bot-eyes,
+.bot-eyes-open,
+.bot-eyes-happy {
+  transform-origin: 12px 14px;
+}
+
+.bot-eyes-open,
+.bot-eyes-happy {
+  transition: opacity 120ms ease-out, transform var(--fast) var(--ease);
+}
+
+.bot-eyes-happy {
+  opacity: 0;
+}
+
+/* Sorriso: os olhos abertos fecham e dão lugar aos arcos. Sem movimento, a troca ainda acontece pela opacidade. */
+.chat-fab:focus-visible .bot-eyes-open {
+  opacity: 0;
+}
+
+.chat-fab:focus-visible .bot-eyes-happy {
+  opacity: 1;
+}
+
+/* No toque o hover fica preso depois do tap; o sorriso por ponteiro vale só onde há hover de verdade. */
+@media (hover: hover) {
+  .chat-fab:hover .bot-eyes-open {
+    opacity: 0;
   }
+
+  .chat-fab:hover .bot-eyes-happy {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .bot-eyes-happy {
+    transform: translateY(1px) scaleY(0.4);
+  }
+
+  .chat-fab:focus-visible .bot-eyes-open {
+    transform: scaleY(0.2);
+  }
+
+  .chat-fab:focus-visible .bot-eyes-happy {
+    transform: none;
+  }
+
+  .chat-fab:focus-visible .bot-antenna {
+    animation: bot-antenna-wobble 620ms var(--ease);
+  }
+
+  /* Olhada: a remontagem do grupo (key) reinicia a animação a cada filtro aplicado. */
+  .bot-eyes.is-glancing {
+    animation: bot-glance 560ms ease-in-out both;
+  }
+
+  /* Consultando vence a olhada: o estado em curso importa mais que o aviso. */
+  .is-thinking .bot-eyes,
+  .is-thinking .bot-eyes.is-glancing {
+    animation: bot-scan 1.4s ease-in-out infinite;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) and (hover: hover) {
+  .chat-fab:hover .bot-eyes-open {
+    transform: scaleY(0.2);
+  }
+
+  .chat-fab:hover .bot-eyes-happy {
+    transform: none;
+  }
+
+  .chat-fab:hover .bot-antenna {
+    animation: bot-antenna-wobble 620ms var(--ease);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .is-thinking .bot-eyes {
+    animation: bot-eyes-dim 1.6s ease-in-out infinite;
+  }
+}
+
+/* O painel fica à esquerda e acima do bot: os olhos vão para lá, piscam e voltam. */
+@keyframes bot-glance {
+  0%, 100% {
+    transform: none;
+  }
+  30%, 62%, 80% {
+    transform: translate(-1.6px, -0.8px);
+  }
+  71% {
+    transform: translate(-1.6px, -0.8px) scaleY(0.15);
+  }
+}
+
+@keyframes bot-scan {
+  0%, 100% {
+    transform: none;
+  }
+  25% {
+    transform: translateX(-1.4px);
+  }
+  75% {
+    transform: translateX(1.4px);
+  }
+}
+
+@keyframes bot-antenna-wobble {
+  0%, 100% {
+    transform: none;
+  }
+  22% {
+    transform: rotate(-16deg);
+  }
+  48% {
+    transform: rotate(10deg);
+  }
+  74% {
+    transform: rotate(-4deg);
+  }
+}
+
+@keyframes bot-eyes-dim {
   50% {
-    border-color: var(--accent);
-    background: color-mix(in srgb, var(--accent) 28%, var(--surface));
+    opacity: 0.35;
   }
 }
 
@@ -3531,7 +3661,6 @@ html.dark .chat-send-btn.is-ready {
   .chat-msg-enter,
   .chat-stage-enter,
   .chat-loading-icon,
-  .chat-avatar-badge.is-thinking,
   .chat-copilot-chip,
   .chat-copilot-chip-active,
   .chat-chip-check path,

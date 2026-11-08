@@ -1,6 +1,5 @@
 import {
   AlertCircle,
-  Bot,
   Check,
   Copy,
   Database,
@@ -31,6 +30,7 @@ import {
   type Filters,
   type PlaytimeBucket,
 } from '../../stores/filters';
+import { BotGlyph } from './BotGlyph';
 import { RailIcon } from './RailIcon';
 
 export type TeaserItem = {
@@ -871,6 +871,7 @@ export function ChatIsland() {
   const [isComposerShaking, setIsComposerShaking] = useState(false);
   const [announcement, setAnnouncement] = useState('');
   const [isScrolled, setIsScrolled] = useState(false);
+  const [glanceKey, setGlanceKey] = useState(0);
 
   const dialogRef = useRef<HTMLElement | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
@@ -1262,6 +1263,16 @@ export function ChatIsland() {
     };
   }, [isOpen, isMobileViewport]);
 
+  // Olhada do bot: a cada filtro aplicado os olhos vão até o painel, porque a resposta usa esse recorte.
+  // `listen` só dispara em mudança real; a janela inicial ignora o filtro lido da URL na carga.
+  useEffect(() => {
+    const mountedAt = performance.now();
+    return filtersAtom.listen(() => {
+      if (performance.now() - mountedAt < 1000) return;
+      setGlanceKey((key) => key + 1);
+    });
+  }, []);
+
   // Pulso da barra de contexto ao alterar filtros com drawer aberto
   useEffect(() => {
     if (isFirstMount.current) {
@@ -1522,7 +1533,7 @@ export function ChatIsland() {
             aria-haspopup="dialog"
           >
             <div className="chat-fab-avatar">
-              <RailIcon icon={Bot} className="chat-fab-icon w-6 h-6" />
+              <BotGlyph className="chat-fab-icon w-6 h-6" glanceKey={glanceKey} />
               <span className="chat-status-dot chat-status-dot-pop" aria-hidden="true" />
             </div>
             <span className="chat-fab-text">
@@ -1559,7 +1570,7 @@ export function ChatIsland() {
             <header className="chat-header">
               <div className="flex items-center gap-3 min-w-0">
                 <div className={`chat-avatar-badge relative flex items-center justify-center ${isLoading ? 'is-thinking' : ''}`}>
-                  <RailIcon icon={Bot} className="w-5 h-5 text-[var(--accent)]" />
+                  <BotGlyph className="w-5 h-5 text-[var(--accent)]" glanceKey={glanceKey} />
                   <span className="chat-status-dot absolute -bottom-0.5 -right-0.5" aria-hidden="true" />
                 </div>
                 <div className="min-w-0">
