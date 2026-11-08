@@ -220,3 +220,12 @@ export function writeFiltersToSearch(
   const query = params.toString();
   return query ? `?${query}` : '';
 }
+
+// O estado inicial vem da URL na criação do store, antes de qualquer ilha ler ou assinar `filters`:
+// assim nenhuma ilha `client:load` chega a buscar com o recorte padrão quando a URL traz filtros.
+// No servidor não há URL; as ilhas usam `serverFilters` como snapshot de hidratação.
+if (typeof window !== 'undefined') {
+  const initial = readFiltersFromSearch(window.location.search);
+  filters.set(initial.filters);
+  reviewSort.set(initial.sort);
+}

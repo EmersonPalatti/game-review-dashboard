@@ -107,10 +107,6 @@ function init(): void {
   setupTheme(themeButton);
   bindControls();
 
-  const initial = readFiltersFromSearch(window.location.search);
-  filters.set(initial.filters);
-  reviewSort.set(initial.sort);
-
   filters.listen(() => {
     syncUrl();
   });

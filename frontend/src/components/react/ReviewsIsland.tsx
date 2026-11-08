@@ -431,6 +431,9 @@ function ReviewsTableContent() {
   } = useInfiniteQuery({
     queryKey,
     queryFn: ({ pageParam }) => fetchReviewWindow(currentFilters, pageParam, currentSort),
+    // Só depois de hidratar: na hidratação useFilters() devolve o recorte do servidor (padrão) e a
+    // query buscaria esse recorte antes do render seguinte, que já traz os filtros da URL.
+    enabled: mounted,
     initialPageParam: 0,
     getNextPageParam: (last) => {
       const next = last.offset + last.items.length;

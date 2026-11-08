@@ -370,9 +370,14 @@ function ChartsContent() {
   const gridRef = useRef<HTMLElement>(null);
   useGridReflowMotion(gridRef);
 
+  const mounted = useHydrated();
+
   const { data: metricsData } = useQuery({
     queryKey: metricsKey,
     queryFn: () => fetchMetrics(currentFilters),
+    // Só depois de hidratar: na hidratação useFilters() devolve o recorte do servidor (padrão) e a
+    // query buscaria esse recorte antes do render seguinte, que já traz os filtros da URL.
+    enabled: mounted,
     placeholderData: keepPreviousData,
   });
 
@@ -384,16 +389,16 @@ function ChartsContent() {
   } = useQuery({
     queryKey: chartsKey,
     queryFn: () => fetchCharts(currentFilters),
+    enabled: mounted,
     placeholderData: keepPreviousData,
   });
 
   const { data: facetsData } = useQuery({
     queryKey: ['facets', currentFilters],
     queryFn: () => fetchFacets(currentFilters),
+    enabled: mounted,
     placeholderData: keepPreviousData,
   });
-
-  const mounted = useHydrated();
 
   const showBusyFlag = useDelayedFlag(chartsFetching);
   const showBusy = mounted && showBusyFlag;

@@ -166,9 +166,14 @@ function MetricsContent() {
   const baselineGames = useRef(BASELINE_GAMES);
   const baselineAuthors = useRef(BASELINE_AUTHORS);
 
+  const mounted = useHydrated();
+
   const { data, error, isFetching, isPlaceholderData, refetch } = useQuery({
     queryKey,
     queryFn: () => fetchMetrics(currentFilters),
+    // Só depois de hidratar: na hidratação useFilters() devolve o recorte do servidor (padrão) e a
+    // query buscaria esse recorte antes do render seguinte, que já traz os filtros da URL.
+    enabled: mounted,
     placeholderData: keepPreviousData,
   });
 
@@ -184,11 +189,9 @@ function MetricsContent() {
   const baseQuery = useQuery({
     queryKey: ['metrics', baseFilters] as const,
     queryFn: () => fetchMetrics(baseFilters),
-    enabled: recommendationActive,
+    enabled: mounted && recommendationActive,
     placeholderData: keepPreviousData,
   });
-
-  const mounted = useHydrated();
 
   const showBusyFlag = useDelayedFlag(isFetching || baseQuery.isFetching);
   const recommendationPending =

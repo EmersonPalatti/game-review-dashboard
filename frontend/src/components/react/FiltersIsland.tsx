@@ -311,6 +311,9 @@ function FiltersContent() {
   const { data: facets } = useQuery({
     queryKey: ['facets', currentFilters],
     queryFn: () => fetchFacets(currentFilters),
+    // Só depois de hidratar: na hidratação useFilters() devolve o recorte do servidor (padrão) e a
+    // query buscaria esse recorte antes do render seguinte, que já traz os filtros da URL.
+    enabled: mounted,
     placeholderData: keepPreviousData,
   });
 

@@ -39,7 +39,8 @@ import { LoadErrorIsland } from '../components/react/LoadErrorIsland';
     </main>
   </div>
 
-  <ChatIsland client:load />
+  <!-- Começa fechado e a dica só aparece após ~10 s ocioso: hidrata depois das ilhas da carga inicial. -->
+  <ChatIsland client:idle />
 
   <script>
     import '../scripts/dashboard';
