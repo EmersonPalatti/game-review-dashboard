@@ -18,7 +18,7 @@ import {
 import { formatInteger, formatPercent } from '../../lib/format';
 import { serverFilters, useFilters } from '../../lib/useNanostore';
 import { useHydrated } from '../../lib/useHydrated';
-import { activeFilterCount, type Filters } from '../../stores/filters';
+import { activeFilterCount, type Filters, type Tri } from '../../stores/filters';
 import { latestMetrics } from '../../stores/metrics';
 import { QueryRoot } from './QueryRoot';
 
@@ -46,6 +46,13 @@ const ppFormat = new Intl.NumberFormat('pt-BR', {
   maximumFractionDigits: 2,
   signDisplay: 'exceptZero',
 });
+
+/** Mesmo texto da barra lateral: o rótulo do grupo e o da opção escolhida. */
+const RECOMMENDED_FILTER_LABEL: Record<Tri, string> = {
+  all: 'Recomendação: Todas',
+  yes: 'Recomendação: Sim',
+  no: 'Recomendação: Não',
+};
 
 function AnimatedFigure({
   id,
@@ -162,10 +169,28 @@ function MetricsContent() {
     placeholderData: keepPreviousData,
   });
 
+  // Com filtro de recomendação, a taxa do recorte filtrado é 0% ou 100% por definição.
+  // O cartão mostra a taxa do mesmo recorte sem esse filtro, buscada à parte.
+  // Sem o filtro a busca fica desligada e a chave coincide com a do cartão geral, então o cache é compartilhado.
+  const recommendationActive = currentFilters.recommended !== 'all';
+  const recommendedLabel = RECOMMENDED_FILTER_LABEL[currentFilters.recommended];
+  const baseFilters = useMemo<Filters>(
+    () => ({ ...currentFilters, recommended: 'all' }),
+    [currentFilters],
+  );
+  const baseQuery = useQuery({
+    queryKey: ['metrics', baseFilters] as const,
+    queryFn: () => fetchMetrics(baseFilters),
+    enabled: recommendationActive,
+    placeholderData: keepPreviousData,
+  });
+
   const mounted = useHydrated();
 
-  const showBusyFlag = useDelayedFlag(isFetching);
-  const showUpdating = useDelayedFlag(isPlaceholderData);
+  const showBusyFlag = useDelayedFlag(isFetching || baseQuery.isFetching);
+  const recommendationPending =
+    recommendationActive && (baseQuery.isPlaceholderData || baseQuery.isError);
+  const showUpdating = useDelayedFlag(isPlaceholderData || recommendationPending);
 
   useEffect(() => {
     if (data) latestMetrics.set(data);
@@ -179,6 +204,13 @@ function MetricsContent() {
     settledRef.current = { metrics: data, filters: currentFilters };
   }
   const settled = settledRef.current;
+
+  // Mesmo critério para a taxa base: guarda o último resultado definitivo junto com o recorte que o produziu.
+  const baseSettledRef = useRef<SettledMetrics | null>(null);
+  if (baseQuery.data && !baseQuery.isPlaceholderData) {
+    baseSettledRef.current = { metrics: baseQuery.data, filters: baseFilters };
+  }
+  const baseSettled = baseSettledRef.current;
 
   // Se a busca do recorte novo falhar sem dados, os números exibidos são os do último recorte carregado.
   // Durante o primeiro render (SSR e hidratação do cliente), renderiza os valores de carregamento
@@ -217,6 +249,15 @@ function MetricsContent() {
     let recommendationSub: string;
     if (empty) {
       recommendationSub = 'sem avaliações neste recorte';
+    } else if (recommendationActive) {
+      if (!baseSettled) {
+        recommendationSub = baseQuery.isError ? 'não foi possível carregar a taxa' : 'Carregando…';
+      } else if (activeFilterCount(baseSettled.filters) === 0) {
+        recommendationSub = `antes do filtro “${recommendedLabel}” · média global da base`;
+      } else {
+        const diffPp = (baseSettled.metrics.recommendation_rate - baselineRate.current) * 100;
+        recommendationSub = `antes do filtro “${recommendedLabel}” · ${ppFormat.format(diffPp)} p.p. vs. base (${formatPercent(baselineRate.current)})`;
+      }
     } else if (!shownFiltered) {
       recommendationSub = 'média global da base';
     } else {
@@ -248,7 +289,7 @@ function MetricsContent() {
       games: gamesSub,
       authors: authorsSub,
     };
-  }, [metrics, shownFiltered]);
+  }, [metrics, shownFiltered, recommendationActive, recommendedLabel, baseSettled, baseQuery.isError]);
 
   const formatters: Record<string, (n: number) => string> = useMemo(
     () => ({
@@ -260,24 +301,27 @@ function MetricsContent() {
     [],
   );
 
-  const values: Record<string, number | undefined> = useMemo(
-    () =>
-      metrics
-        ? {
-            reviews: metrics.total_reviews,
-            // Sem avaliações não existe taxa: o cartão mostra o travessão, sem contagem.
-            recommendation: metrics.total_reviews > 0 ? metrics.recommendation_rate : undefined,
-            games: metrics.game_count,
-            authors: metrics.author_count,
-          }
-        : {
-            reviews: undefined,
-            recommendation: undefined,
-            games: undefined,
-            authors: undefined,
-          },
-    [metrics],
-  );
+  const values: Record<string, number | undefined> = useMemo(() => {
+    if (!metrics) {
+      return {
+        reviews: undefined,
+        recommendation: undefined,
+        games: undefined,
+        authors: undefined,
+      };
+    }
+    // Com filtro de recomendação, a taxa vem do recorte sem esse filtro (`baseSettled`).
+    const rateMetrics = recommendationActive ? baseSettled?.metrics : metrics;
+    // Sem avaliações não existe taxa: o cartão mostra o travessão, sem contagem.
+    // Antes da primeira resposta da taxa base, o travessão também aparece, sem 0% nem 100%.
+    const hasRate = metrics.total_reviews > 0 && rateMetrics !== undefined && rateMetrics.total_reviews > 0;
+    return {
+      reviews: metrics.total_reviews,
+      recommendation: hasRate ? rateMetrics.recommendation_rate : undefined,
+      games: metrics.game_count,
+      authors: metrics.author_count,
+    };
+  }, [metrics, recommendationActive, baseSettled]);
 
   // Texto único e estável para leitores de tela. Enquanto a busca está pendente, `metrics`
   // é o recorte anterior, então o texto não muda e nada é anunciado de novo.
@@ -285,12 +329,18 @@ function MetricsContent() {
     if (!metrics) return '';
     const parts = METRIC_CARDS_CONFIG.map((card) => {
       const value = values[card.id];
-      const text =
-        value === undefined ? 'sem avaliações neste recorte' : (formatters[card.id] ?? formatInteger)(value);
+      let text: string;
+      if (value === undefined) {
+        text = metrics.total_reviews === 0 ? 'sem avaliações neste recorte' : 'carregando';
+      } else if (card.id === 'recommendation' && recommendationActive) {
+        text = `${formatPercent(value)}, antes do filtro “${recommendedLabel}”`;
+      } else {
+        text = (formatters[card.id] ?? formatInteger)(value);
+      }
       return `${card.label} ${text}`;
     });
     return `${parts.join('; ')}.`;
-  }, [metrics, values, formatters]);
+  }, [metrics, values, formatters, recommendationActive, recommendedLabel]);
 
   let errorBlock: ReactNode = null;
   if (error && metrics !== undefined) {

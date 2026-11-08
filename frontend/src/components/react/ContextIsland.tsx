@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { ArrowRight } from 'lucide';
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { atom } from 'nanostores';
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
 import { fetchMetrics } from '../../lib/api';
 import { RailIcon } from './RailIcon';
 import {
@@ -17,10 +18,12 @@ import { renderFilterChips, type FilterChip } from '../../scripts/renderers';
 import {
   DEFAULT_SORT,
   PLAYTIME_LABELS,
+  activeFilterCount,
   filters,
   resetFilters,
   reviewSort,
   type Filters,
+  type ReviewSort,
 } from '../../stores/filters';
 import { suppressUrlSyncDuring } from '../../stores/urlSync';
 import { QueryRoot } from './QueryRoot';
@@ -59,10 +62,11 @@ type FindingCopy = {
   source: string;
 };
 
-const DOCKED_CHAT_MEDIA_QUERY = '(min-width: 1280px)';
+// Mesmo valor de DOCKED_MEDIA_QUERY em ChatIsland.tsx: manter sincronizado.
+const DOCKED_CHAT_MEDIA_QUERY = '(min-width: 1440px)';
 
 /**
- * Observa se o SteamBot está acoplado lateralmente (viewport >= 1280px e data-chat-dock="open").
+ * Observa se o SteamBot está acoplado lateralmente (viewport >= 1440px e data-chat-dock="open").
  * O atributo é controlado pelo ChatIsland no elemento raiz document.documentElement.
  * SSR-safe: devolve false no servidor e na primeira renderização para bater com o HTML hidratado.
  */
@@ -183,11 +187,31 @@ function buildFilterChips(current: Filters, gameNameById: Map<number, string>): 
   return chips;
 }
 
-/** Aplica o recorte do achado (ou limpa, se já ativo). Retorna true quando o recorte foi aplicado. */
-function applyPreset(preset: PresetKey): boolean {
-  if (isPresetActive(filters.get(), preset)) {
-    resetFilters();
-    return false;
+/**
+ * Recorte do analista guardado antes do primeiro achado. Existe só enquanto um achado está ativo
+ * e o recorte não foi editado à mão. Trocar de achado (A → B) mantém o snapshot original.
+ */
+type FindingSnapshot = {
+  filters: Filters;
+  sort: ReviewSort;
+  /** Achado cujo recorte está aplicado sobre o snapshot. */
+  preset: PresetKey;
+};
+
+const findingSnapshot = atom<FindingSnapshot | null>(null);
+
+function activeFindingKey(current: Filters): PresetKey | null {
+  return THESIS_PRESETS.find((preset) => isPresetActive(current, preset.key))?.key ?? null;
+}
+
+/** Aplica o recorte do achado. O recorte do analista só é guardado quando nenhum achado está ativo. */
+function applyFinding(preset: PresetKey): void {
+  const current = filters.get();
+  if (activeFindingKey(current) === null) {
+    findingSnapshot.set({ filters: { ...current }, sort: { ...reviewSort.get() }, preset });
+  } else {
+    const pending = findingSnapshot.get();
+    if (pending !== null) findingSnapshot.set({ ...pending, preset });
   }
   suppressUrlSyncDuring(() => {
     reviewSort.set(
@@ -197,7 +221,32 @@ function applyPreset(preset: PresetKey): boolean {
     );
   });
   filters.set({ ...PRESETS[preset] });
-  return true;
+}
+
+/** Devolve o recorte guardado. O snapshot sai antes da troca de filtros para o listener não tratá-la como edição manual. */
+function restoreFindingSnapshot(snapshot: FindingSnapshot): void {
+  findingSnapshot.set(null);
+  suppressUrlSyncDuring(() => {
+    reviewSort.set({ ...snapshot.sort });
+  });
+  filters.set({ ...snapshot.filters });
+}
+
+type FindingToggle = 'applied' | 'restored' | 'cleared';
+
+/** Liga ou desliga o achado. Desligar devolve o recorte do analista; sem snapshot, limpa os filtros. */
+function toggleFinding(preset: PresetKey): FindingToggle {
+  if (!isPresetActive(filters.get(), preset)) {
+    applyFinding(preset);
+    return 'applied';
+  }
+  const snapshot = findingSnapshot.get();
+  if (snapshot !== null) {
+    restoreFindingSnapshot(snapshot);
+    return 'restored';
+  }
+  resetFilters();
+  return 'cleared';
 }
 
 function useRecommendationRate(probe: ProbeKey): number | undefined {
@@ -225,6 +274,7 @@ function FindingsStrip() {
   // desmonta ou fica inerte, então o foco é devolvido ao botão equivalente do novo layout visível.
   const pendingFocusRef = useRef<PresetKey | null>(null);
   const [announcement, setAnnouncement] = useState('');
+  const snapshot = useSyncExternalStore(findingSnapshot.subscribe, findingSnapshot.get, () => null);
 
   // Só os números usam a fonte mono; o conector (→, vs.) fica na fonte do texto para caber no tile.
   const refundFigure: ReactNode =
@@ -273,31 +323,51 @@ function FindingsStrip() {
   };
 
   const handlePreset = (key: PresetKey): void => {
-    const applied = applyPreset(key);
+    const outcome = toggleFinding(key);
     pendingFocusRef.current = key;
-    setAnnouncement(
-      applied
-        ? `Recorte aplicado: ${copy[key].claim}. Os achados continuam mostrando a base completa.`
-        : 'Recorte do achado removido. Filtros limpos.',
-    );
+    if (outcome === 'applied') {
+      setAnnouncement(
+        `Recorte aplicado: ${copy[key].claim.replace(/\.$/, '')}. Os achados continuam mostrando a base completa.`,
+      );
+    } else if (outcome === 'restored') {
+      setAnnouncement('Recorte do achado removido. Seu recorte anterior voltou.');
+    } else {
+      setAnnouncement('Recorte do achado removido. Filtros limpos.');
+    }
   };
 
-  const hasActiveFilters =
-    currentFilters.appId !== null ||
-    currentFilters.language !== null ||
-    currentFilters.dateFrom !== null ||
-    currentFilters.dateTo !== null ||
-    currentFilters.recommended !== 'all' ||
-    currentFilters.steamPurchase !== 'all' ||
-    currentFilters.receivedForFree !== 'all' ||
-    currentFilters.earlyAccess !== 'all' ||
-    currentFilters.playtime !== 'all';
+  const handleUndo = (): void => {
+    const pending = findingSnapshot.get();
+    if (pending === null) return;
+    pendingFocusRef.current = pending.preset;
+    restoreFindingSnapshot(pending);
+    setAnnouncement('Seu recorte anterior foi restaurado.');
+  };
+
+  const hasActiveFilters = activeFilterCount(currentFilters) > 0;
+  const findingActive = activeFindingKey(currentFilters) !== null;
+  const undoAvailable =
+    snapshot !== null &&
+    isPresetActive(currentFilters, snapshot.preset) &&
+    activeFilterCount(snapshot.filters) > 0;
+
+  // Qualquer edição manual que tire o achado do ar descarta o snapshot: ele já não descreve o recorte atual.
+  useEffect(
+    () =>
+      filters.listen((next) => {
+        const pending = findingSnapshot.get();
+        if (pending !== null && !isPresetActive(next, pending.preset)) {
+          findingSnapshot.set(null);
+        }
+      }),
+    [],
+  );
 
   const collapsed = hasActiveFilters || dockedChat;
 
   // Quando o usuário clica num achado, o layout troca entre expandido e compacto. O foco é transferido
   // para o botão equivalente no layout ativo (compactRef se collapsed, senão expandedRef).
-  // pendingFocusRef só é definido em handlePreset, garantindo que abrir/fechar o dock do chat
+  // pendingFocusRef só é definido em handlePreset e handleUndo, garantindo que abrir/fechar o dock do chat
   // nunca roube o foco.
   useEffect(() => {
     const key = pendingFocusRef.current;
@@ -322,7 +392,8 @@ function FindingsStrip() {
       }
     >
       <span id="findings-preset-desc" className="sr-only">
-        Aplica o recorte deste achado e substitui os filtros atuais.
+        Aplica o recorte deste achado e substitui os filtros atuais. Pode ser desfeito: clicar de novo, ou em
+        Desfazer, restaura o seu recorte anterior.
       </span>
       <p className="sr-only" aria-live="polite">
         {announcement}
@@ -359,7 +430,11 @@ function FindingsStrip() {
                         'Limpar recorte'
                       ) : (
                         <>
-                          Ver recorte
+                          <span>
+                            {hasActiveFilters && !findingActive
+                              ? 'Ver recorte · substitui seus filtros'
+                              : 'Ver recorte'}
+                          </span>
                           <RailIcon icon={ArrowRight} className="finding-action-icon" />
                         </>
                       )}
@@ -379,8 +454,20 @@ function FindingsStrip() {
         >
           <div className="findings-slot-inner">
             {/* Com o chat acoplado e sem filtro, não há recorte a contrastar: a nota só vale com filtro ativo. */}
+            {/* Os tiles expandidos ficam inertes com filtro ativo, então o aviso de substituição vive aqui. */}
             {hasActiveFilters ? (
-              <p className="meta findings-scope-note">Achados da base completa · não seguem o filtro</p>
+              <div className="findings-scope-row">
+                <p className="meta findings-scope-note">
+                  {findingActive
+                    ? 'Achados da base completa · não seguem o filtro'
+                    : 'Achados da base completa · não seguem o filtro · clicar em um achado substitui seus filtros'}
+                </p>
+                {undoAvailable ? (
+                  <button type="button" className="findings-undo" onClick={handleUndo}>
+                    Desfazer · voltar ao seu recorte
+                  </button>
+                ) : null}
+              </div>
             ) : null}
             <div className="findings-compact-row">
               {THESIS_PRESETS.map((preset) => {

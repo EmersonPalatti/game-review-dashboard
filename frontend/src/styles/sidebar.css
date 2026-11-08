@@ -21,6 +21,26 @@
   flex: 1 0 auto;
 }
 
+/* Datas "05/03/2013" ocupam 72px em mono 12px; o gatilho tem 92px. Com valor, a borda
+   em acento e o texto mono já dizem "campo", então a seta sai e o texto cabe inteiro. */
+.sidebar-row.is-field .date-trigger {
+  gap: 2px;
+  padding: 0 6px;
+}
+
+.sidebar-row.is-field .date-trigger-chevron {
+  width: 10px;
+  height: 10px;
+}
+
+.sidebar-row.is-field .date-trigger.has-value .date-trigger-chevron {
+  display: none;
+}
+
+.sidebar-row.is-field .date-trigger.has-value {
+  justify-content: center;
+}
+
 .filters-panel {
   display: flex;
   flex: 1 0 auto;
@@ -89,10 +109,10 @@
   color: var(--muted);
 }
 
-/* Disclosure "Mais filtros" */
+/* Disclosure "Mais filtros": o gap de 8px do formulário mais esta margem põe o
+   texto cerca de 22px abaixo das datas predefinidas, como um grupo. */
 .disclosure {
-  margin-top: 14px;
-  padding-top: 8px;
+  margin-top: 8px;
 }
 
 .disclosure-toggle {
@@ -105,15 +125,19 @@
   cursor: pointer;
 }
 
-.disclosure-toggle:hover .disclosure-label {
-  text-decoration: underline;
-  text-underline-offset: 3px;
+/* Rótulo em tom secundário: lê como controle, não como item da lista de filtros. */
+.disclosure-label {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 20px;
+  color: var(--secondary);
+  transition: color var(--fast) var(--ease);
 }
 
-.disclosure-label {
-  font-size: 14px;
-  line-height: 20px;
+.disclosure-toggle:hover .disclosure-label {
   color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .disclosure-count {
@@ -126,7 +150,14 @@
 }
 
 .disclosure-chevron {
-  transition: transform var(--menu) var(--ease);
+  color: var(--secondary);
+  transition:
+    transform var(--menu) var(--ease),
+    color var(--fast) var(--ease);
+}
+
+.disclosure-toggle:hover .disclosure-chevron {
+  color: var(--ink);
 }
 
 .disclosure-chevron.is-open {
@@ -149,21 +180,29 @@
   overflow: hidden;
 }
 
+/* Respiro entre o botão e a primeira linha. Fica dentro do recorte: com a região
+   fechada (0fr) some junto, sem sobra. Não vai no .disclosure-inner, que deixaria
+   um vão de 12px mesmo fechado. */
+.disclosure-inner > :first-child {
+  padding-top: 12px;
+}
+
 /* O anel de foco do seg-btn fica dentro do recorte do disclosure. */
 .disclosure-region .seg-btn:focus-visible {
   outline-offset: -2px;
 }
 
 /* Rodapé fixo: limpar, contagem e atalhos. Sticky no fim da barra rolável. */
+/* O sticky respeita o padding do painel; o rodapé cobre essa faixa. */
 .filters-footer {
   position: sticky;
-  bottom: 0;
+  bottom: -20px;
   z-index: 5;
   display: flex;
   flex-direction: column;
   gap: 8px;
-  margin: auto -20px 0;
-  padding: 12px 20px 16px;
+  margin: auto -20px -20px;
+  padding: 12px 20px 36px;
   background: var(--sidebar);
   box-shadow: 0 -12px 16px -12px rgba(28, 25, 21, 0.18);
 }
@@ -226,8 +265,9 @@ html.dark .filters-footer {
 
 @media (max-width: 767px) {
   .filters-footer {
-    margin: auto -24px 0;
-    padding: 12px 24px 20px;
+    bottom: -24px;
+    margin: auto -24px -24px;
+    padding: 12px 24px 44px;
     background: var(--sidebar);
   }
 
@@ -238,7 +278,8 @@ html.dark .filters-footer {
 
 @media (prefers-reduced-motion: reduce) {
   .disclosure-region,
-  .disclosure-chevron {
+  .disclosure-chevron,
+  .disclosure-label {
     transition: none;
   }
 }

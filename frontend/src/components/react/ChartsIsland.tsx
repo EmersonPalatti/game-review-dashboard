@@ -387,7 +387,11 @@ function ChartsContent() {
 
   const effectiveChartsData = mounted ? chartsData : undefined;
   const effectiveFacetsData = mounted ? facetsData : undefined;
+  const effectiveMetricsData = mounted ? metricsData : undefined;
 
+  // Recorte sem nenhuma avaliação: um único estado vazio substitui os cards, que seguem montados
+  // (ocultos) para que as instâncias do ECharts e as listas de ranking não percam o alvo.
+  const sliceEmpty = effectiveMetricsData !== undefined && effectiveMetricsData.total_reviews === 0;
   // Empty states are derived here once; each card collapses its chart area and shows one line.
   const monthEmpty = effectiveChartsData !== undefined && effectiveChartsData.months.length === 0;
   const playtimeEmpty =
@@ -515,7 +519,59 @@ function ChartsContent() {
         data-fetching={showBusy ? 'true' : 'false'}
         aria-busy={showBusy}
       >
-        <article className="card charts-col-span-2">
+        <article className="card charts-col-span-2 card-playtime" hidden={sliceEmpty}>
+          <h2 className="title">Recomendação por tempo de jogo</h2>
+
+          <div className="playtime-desktop">
+            <p className="meta mt-2">
+              Aprovação por faixa de horas jogadas · a área sombreada é a janela de reembolso (até 2&nbsp;h)
+            </p>
+            <div id="chart-playtime" className="chart-frame mt-4 h-[280px] w-full" hidden={playtimeEmpty} />
+            <EmptyState align="start" className="mt-4" hidden={!playtimeEmpty} />
+            {effectiveChartsData !== undefined && !playtimeEmpty ? (
+              <PlaytimeLegend
+                rows={effectiveChartsData.playtime}
+                active={currentFilters.playtime}
+                onToggle={togglePlaytime}
+              />
+            ) : null}
+          </div>
+
+          <div className="playtime-mobile">
+            <p className="meta mt-2">
+              Barras partem da base geral ({formatPercent(BASELINE_RATE)}) · janela de reembolso até 2&nbsp;h
+            </p>
+            <EmptyState align="start" className="mt-4" hidden={!playtimeEmpty} />
+            {effectiveChartsData !== undefined && !playtimeEmpty ? (
+              <PlaytimeRanks
+                rows={effectiveChartsData.playtime}
+                active={currentFilters.playtime}
+                onToggle={togglePlaytime}
+              />
+            ) : null}
+          </div>
+        </article>
+
+        <article className="card" hidden={sliceEmpty}>
+          <h2 className="title">Aprovação por idioma</h2>
+          <p className="meta mt-2">
+            Top idiomas por volume, ordenados pela aprovação · barras partem da base geral ({formatPercent(BASELINE_RATE)})
+          </p>
+          <ol
+            id="rank-languages"
+            ref={languageRanksRef}
+            className="rank-list"
+            hidden={languagesEmpty}
+          />
+          <EmptyState align="start" className="mt-4" hidden={!languagesEmpty} />
+          {languageRankNote ? (
+            <p className="meta mt-4" hidden={languagesEmpty}>
+              {languageRankNote}
+            </p>
+          ) : null}
+        </article>
+
+        <article className="card charts-col-span-2" hidden={sliceEmpty}>
           <div className="chart-card-header">
             <div>
               <h2 className="title">
@@ -577,7 +633,7 @@ function ChartsContent() {
           {effectiveChartsData !== undefined && !monthEmpty ? <MonthTable months={effectiveChartsData.months} /> : null}
         </article>
 
-        <article className="card">
+        <article className="card" hidden={sliceEmpty}>
           <h2 className="title">Volume por jogo</h2>
           <p className="meta mt-2">Jogos com mais avaliações</p>
           <ol
@@ -594,57 +650,14 @@ function ChartsContent() {
           ) : null}
         </article>
 
-        <article className="card charts-col-span-2 card-playtime">
-          <h2 className="title">Recomendação por tempo de jogo</h2>
-
-          <div className="playtime-desktop">
-            <p className="meta mt-2">
-              Aprovação por faixa de horas jogadas (reembolso até 2{' '}h)
-            </p>
-            <div id="chart-playtime" className="chart-frame mt-4 h-[280px] w-full" hidden={playtimeEmpty} />
-            <EmptyState align="start" className="mt-4" hidden={!playtimeEmpty} />
-            {effectiveChartsData !== undefined && !playtimeEmpty ? (
-              <PlaytimeLegend
-                rows={effectiveChartsData.playtime}
-                active={currentFilters.playtime}
-                onToggle={togglePlaytime}
-              />
-            ) : null}
-          </div>
-
-          <div className="playtime-mobile">
-            <p className="meta mt-2">
-              Barras partem da base geral ({formatPercent(BASELINE_RATE)}) · janela de reembolso até 2&nbsp;h
-            </p>
-            <EmptyState align="start" className="mt-4" hidden={!playtimeEmpty} />
-            {effectiveChartsData !== undefined && !playtimeEmpty ? (
-              <PlaytimeRanks
-                rows={effectiveChartsData.playtime}
-                active={currentFilters.playtime}
-                onToggle={togglePlaytime}
-              />
-            ) : null}
-          </div>
-        </article>
-
-        <article className="card">
-          <h2 className="title">Aprovação por idioma</h2>
-          <p className="meta mt-2">
-            Top idiomas por volume, ordenados pela aprovação · barras partem da base geral ({formatPercent(BASELINE_RATE)})
-          </p>
-          <ol
-            id="rank-languages"
-            ref={languageRanksRef}
-            className="rank-list"
-            hidden={languagesEmpty}
+        <div className="card charts-col-span-3" hidden={!sliceEmpty}>
+          <h2 className="title">Nenhuma avaliação neste recorte</h2>
+          <EmptyState
+            align="start"
+            className="mt-2"
+            message="Nenhum gráfico tem o que mostrar. Remova um filtro para ampliar o recorte ou volte à base completa."
           />
-          <EmptyState align="start" className="mt-4" hidden={!languagesEmpty} />
-          {languageRankNote ? (
-            <p className="meta mt-4" hidden={languagesEmpty}>
-              {languageRankNote}
-            </p>
-          ) : null}
-        </article>
+        </div>
 
         {error && effectiveChartsData !== undefined ? (
           <div

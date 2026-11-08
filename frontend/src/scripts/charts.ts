@@ -1,6 +1,6 @@
 import * as echarts from 'echarts';
 import type { ECharts, EChartsOption } from 'echarts';
-import type { Charts, MonthPoint } from '../lib/api';
+import type { Charts, MonthPoint, PlaytimePoint } from '../lib/api';
 import { BASELINE_RATE, REFUND_BUCKETS } from '../lib/constants';
 import { formatCount, formatInteger, formatPercent } from '../lib/format';
 import type { PlaytimeBucket } from '../stores/filters';
@@ -259,6 +259,15 @@ function palette() {
     negative: token('--negative'),
     shadow: token('--shadow') || 'none',
   };
+}
+
+// Taxa de aprovação: acima da base, acento; abaixo, negativo; na base, tinta. Igual às linhas de ranking.
+const RATE_TONE_EPSILON = 0.00005; // 0,005 p.p., o mesmo limiar de zero usado nos rankings
+
+function rateTone(rate: number, colors: ReturnType<typeof palette>): string {
+  const diff = rate - BASELINE_RATE;
+  if (Math.abs(diff) < RATE_TONE_EPSILON) return colors.ink;
+  return diff > 0 ? colors.accent : colors.negative;
 }
 
 export function formatMonth(value: string): string {
@@ -785,6 +794,15 @@ function paintMonth(data: Charts, colors: ReturnType<typeof palette>, animate: b
     });
   }
 
+  // Marcador de pico (volume) ou de menor aprovação: na aprovação, a cor segue a base.
+  const peakDimmed =
+    activeIndex >= 0 && activeIndex !== (currentMonthMetric === 'approval' ? lowestIndex : peakIndex);
+  const lowestRate = lowestMonth?.recommendation_rate;
+  const peakTone =
+    currentMonthMetric === 'approval' && lowestRate !== null && lowestRate !== undefined
+      ? rateTone(lowestRate, colors)
+      : colors.accent;
+
   suppressZoomEvent = true;
   try {
   monthChart.setOption(
@@ -946,16 +964,8 @@ function paintMonth(data: Charts, colors: ReturnType<typeof palette>, animate: b
           symbolSize: 8,
           cursor: 'pointer',
           itemStyle: {
-            color:
-              activeIndex >= 0 &&
-              activeIndex !== (currentMonthMetric === 'approval' ? lowestIndex : peakIndex)
-                ? colors.muted
-                : colors.accent,
-            opacity:
-              activeIndex >= 0 &&
-              activeIndex !== (currentMonthMetric === 'approval' ? lowestIndex : peakIndex)
-                ? 0.55
-                : 1,
+            color: peakDimmed ? colors.muted : peakTone,
+            opacity: peakDimmed ? 0.55 : 1,
           },
           tooltip: { show: false },
           z: 3,
@@ -994,6 +1004,44 @@ function paintMonth(data: Charts, colors: ReturnType<typeof palette>, animate: b
   }
 }
 
+const jumpFormat = new Intl.NumberFormat('pt-BR', {
+  minimumFractionDigits: 1,
+  maximumFractionDigits: 1,
+  signDisplay: 'exceptZero',
+});
+
+// Curto para caber na janela de duas faixas (1–2 h e menos de 1 h) sem invadir o eixo.
+const REFUND_CAPTION = 'reembolso até 2 h';
+
+type RefundStep = {
+  /** Índice da faixa 1–2 h; o corte fica entre ela e a faixa seguinte (2–5 h). */
+  before: number;
+  after: number;
+  /** Salto de aprovação entre as duas faixas, em p.p.; null quando não há base para medir. */
+  jump: string | null;
+};
+
+/** Corte da janela de reembolso (1–2 h para 2–5 h), medido sobre as faixas do recorte atual. */
+function refundStep(rows: PlaytimePoint[]): RefundStep | null {
+  const before = rows.findIndex((row) => row.key === 'h1_2');
+  const after = rows.findIndex((row) => row.key === 'h2_5');
+  if (before < 0 || after !== before + 1) return null;
+  const from = rows[before];
+  const to = rows[after];
+  if (!from || !to) return null;
+  let jump: string | null = null;
+  // Sem taxa ou sem avaliações em uma das faixas, o salto não tem base e não aparece.
+  if (
+    from.recommendation_rate !== null &&
+    to.recommendation_rate !== null &&
+    from.review_count > 0 &&
+    to.review_count > 0
+  ) {
+    jump = `${jumpFormat.format((to.recommendation_rate - from.recommendation_rate) * 100)} p.p.`;
+  }
+  return { before, after, jump };
+}
+
 function hasPlaytimeReviews(data: Charts): boolean {
   return data.playtime.some((point) => point.review_count > 0);
 }
@@ -1006,13 +1054,16 @@ function playtimeAriaLabel(data: Charts): string {
         : `${point.label} ${formatPercent(point.recommendation_rate)}`,
     )
     .join(', ');
-  return `Recomendação por tempo de jogo: ${rates}. Faixas até 2 h marcadas como janela de reembolso.`;
+  const jump = refundStep(data.playtime)?.jump;
+  const jumpText = jump ? ` Salto de ${jump} de 1 a 2 h para 2 a 5 h.` : '';
+  return `Recomendação por tempo de jogo: ${rates}. Faixas até 2 h marcadas como janela de reembolso.${jumpText}`;
 }
 
 function paintPlaytime(data: Charts, colors: ReturnType<typeof palette>, animate: boolean): void {
   if (!hasPlaytimeReviews(data)) return;
 
   document.getElementById('chart-playtime')?.setAttribute('aria-label', playtimeAriaLabel(data));
+  const refund = refundStep(data.playtime);
 
   chart('chart-playtime').setOption(
     {
@@ -1064,29 +1115,15 @@ function paintPlaytime(data: Charts, colors: ReturnType<typeof palette>, animate
           id: 'playtime-bars',
           type: 'bar',
           data: data.playtime.map((point) => {
-            let color = colors.ink;
-            let opacity: number | undefined;
-
-            if (lastActivePlaytime !== 'all') {
-              if (point.key === lastActivePlaytime) {
-                color = colors.accent;
-              } else {
-                color = colors.muted;
-                opacity = 0.45;
-              }
-            } else {
-              if (REFUND_BUCKETS.includes(point.key as PlaytimeBucket)) {
-                color = colors.negative;
-              } else {
-                color = colors.ink;
-              }
-            }
+            const rate = point.recommendation_rate;
+            // Com faixa escolhida, as demais recuam; a cor segue acima ou abaixo da base, como no ranking.
+            const dimmed = lastActivePlaytime !== 'all' && point.key !== lastActivePlaytime;
 
             return {
-              value: point.recommendation_rate === null ? null : point.recommendation_rate * 100,
+              value: rate === null ? null : rate * 100,
               itemStyle: {
-                color,
-                opacity: opacity ?? 1,
+                color: rate === null ? colors.ink : rateTone(rate, colors),
+                opacity: dimmed ? 0.45 : 1,
                 borderRadius: 0,
               },
             };
@@ -1094,7 +1131,45 @@ function paintPlaytime(data: Charts, colors: ReturnType<typeof palette>, animate
           barMaxWidth: 28,
           cursor: 'pointer',
           emphasis: {
-            itemStyle: { color: colors.accent, shadowBlur: 0 },
+            itemStyle: { shadowBlur: 0, opacity: 1 },
+          },
+          // Área da janela de reembolso (primeira faixa até 1–2 h): sua borda direita é o corte
+          // exato em 2 h, pois a marcação de área usa as bordas das faixas. O rótulo fica nessa quina.
+          markArea: {
+            silent: true,
+            data: refund
+              ? [
+                  [
+                    {
+                      xAxis: 0,
+                      itemStyle: { color: `${colors.muted}14`, borderWidth: 0 },
+                      label: {
+                        show: true,
+                        position: 'insideTopRight',
+                        formatter: refund.jump
+                          ? `{caption|${REFUND_CAPTION}}\n{value|${refund.jump}}`
+                          : `{caption|${REFUND_CAPTION}}`,
+                        rich: {
+                          caption: {
+                            color: colors.muted,
+                            fontFamily: '"IBM Plex Mono", monospace',
+                            fontSize: 11,
+                            lineHeight: 16,
+                          },
+                          value: {
+                            color: colors.accent,
+                            fontFamily: '"IBM Plex Mono", monospace',
+                            fontSize: 12,
+                            fontWeight: 500,
+                            lineHeight: 16,
+                          },
+                        },
+                      },
+                    },
+                    { xAxis: refund.before },
+                  ],
+                ]
+              : [],
           },
           markLine: {
             silent: true,
@@ -1114,7 +1189,7 @@ function paintPlaytime(data: Charts, colors: ReturnType<typeof palette>, animate
               {
                 yAxis: Number((BASELINE_RATE * 100).toFixed(2)),
                 lineStyle: {
-                  color: colors.accent,
+                  color: colors.muted,
                   type: [5, 4],
                   width: 1.5,
                 },
@@ -1123,9 +1198,9 @@ function paintPlaytime(data: Charts, colors: ReturnType<typeof palette>, animate
                   position: 'insideEndTop',
                   distance: [0, 4],
                   formatter: `Base ${formatPercent(BASELINE_RATE)}`,
-                  color: colors.accent,
+                  color: colors.muted,
                   backgroundColor: colors.surface,
-                  borderColor: colors.accent,
+                  borderColor: colors.muted,
                   borderWidth: 1,
                   borderRadius: 4,
                   padding: [3, 6],

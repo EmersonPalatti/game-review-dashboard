@@ -21,11 +21,10 @@ export function applyTheme(
     }
   }
   if (themeToggle) {
-    // O botão é uma ação: o nome descreve o tema que ele vai aplicar.
-    themeToggle.setAttribute(
-      'aria-label',
-      theme === 'dark' ? 'Mudar para tema claro' : 'Mudar para tema escuro',
-    );
+    // O botão é uma ação: o nome descreve o tema que ele vai aplicar. O tooltip repete o nome.
+    const label = theme === 'dark' ? 'Mudar para tema claro' : 'Mudar para tema escuro';
+    themeToggle.setAttribute('aria-label', label);
+    themeToggle.title = label;
   }
   if (onRepaintCharts) {
     onRepaintCharts();

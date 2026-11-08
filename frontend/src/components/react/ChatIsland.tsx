@@ -202,7 +202,11 @@ function isInputOrComboboxFocused(): boolean {
 }
 
 const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)';
-const DOCKED_MEDIA_QUERY = '(min-width: 1280px)';
+// Acoplado só em >= 1440px. Entre 1280 e 1439px o painel segue flutuante, sem reduzir o #dashboard-main.
+// Mantido igual a DOCKED_CHAT_MEDIA_QUERY (ContextIsland.tsx) e aos @media de chat.css.
+const DOCKED_MEDIA_QUERY = '(min-width: 1440px)';
+// Rolagem da janela (px) a partir da qual o botão flutuante vira círculo compacto.
+const FAB_COMPACT_SCROLL_PX = 120;
 
 function subscribeReducedMotion(onChange: () => void): () => void {
   const query = window.matchMedia(REDUCED_MOTION_QUERY);
@@ -744,7 +748,7 @@ function buildChatSubtitle(isFiltered: boolean, total: number | null): string {
   if (isFiltered) {
     return total === null
       ? 'Recorte ativo · SQLite'
-      : `${formatReviewCount(total)} no recorte · SQLite`;
+      : `${formatReviewCount(total)} · recorte atual`;
   }
   return `${formatReviewCount(total ?? BASE_REVIEW_TOTAL)} · SQLite`;
 }
@@ -866,6 +870,7 @@ export function ChatIsland() {
   const [contextPulse, setContextPulse] = useState(false);
   const [isComposerShaking, setIsComposerShaking] = useState(false);
   const [announcement, setAnnouncement] = useState('');
+  const [isScrolled, setIsScrolled] = useState(false);
 
   const dialogRef = useRef<HTMLElement | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
@@ -880,6 +885,7 @@ export function ChatIsland() {
   const autoHideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const teaserRetiredRef = useRef(false);
   const isOpenRef = useRef(isOpen);
+  const isScrolledRef = useRef(false);
   const announceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const restoreFocusRef = useRef(false);
   const isFirstMount = useRef(true);
@@ -898,6 +904,30 @@ export function ChatIsland() {
   const activeFiltersCount = useMemo(() => activeFilterCount(filters), [filters]);
 
   const headerSubtitle = buildChatSubtitle(activeFiltersCount > 0, sliceTotal);
+
+  // Lançador compacto: rolagem da janela (o scroll está em window; #dashboard-main não rola sozinho). Passivo e com um frame por vez.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    let frameId: number | null = null;
+
+    const sync = () => {
+      frameId = null;
+      const scrolled = window.scrollY > FAB_COMPACT_SCROLL_PX;
+      isScrolledRef.current = scrolled;
+      setIsScrolled(scrolled);
+    };
+
+    const handleScroll = () => {
+      if (frameId === null) frameId = window.requestAnimationFrame(sync);
+    };
+
+    sync();
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      if (frameId !== null) window.cancelAnimationFrame(frameId);
+    };
+  }, []);
 
   // Região viva única: anuncia início da consulta, resposta ou erro. Texto repetido é limpo antes para ser lido de novo.
   const announce = useCallback((text: string) => {
@@ -965,7 +995,7 @@ export function ChatIsland() {
     return () => mq.removeEventListener('change', handler);
   }, []);
 
-  // Detecção de viewport para modo acoplado (>= 1280px)
+  // Detecção de viewport para modo acoplado (>= 1440px)
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const mq = window.matchMedia(DOCKED_MEDIA_QUERY);
@@ -1003,6 +1033,11 @@ export function ChatIsland() {
         idleTimerRef.current = null;
         if (teaserRetiredRef.current || readTeaserSeen()) return;
         if (isOpenRef.current) return;
+        if (isScrolledRef.current) {
+          // Botão compacto não comporta balão: espera voltar ao topo sem gastar a dica.
+          scheduleTimer();
+          return;
+        }
         if (typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches) return;
         if (isInputOrComboboxFocused()) {
           // Se houver campo ou combobox com foco, reagenda a verificação de ociosidade
@@ -1455,7 +1490,7 @@ export function ChatIsland() {
       {/* Botão Flutuante Fixo (FAB) + Balão de dica */}
       {!isOpen && (
         <div className="chat-fab-container fixed bottom-6 right-6 z-40 flex items-center gap-3">
-          {teaser && (
+          {teaser && !isScrolled && (
             <div className="chat-teaser group flex items-center gap-2" role="group" aria-label="Dica do SteamBot">
               <button
                 type="button"
@@ -1482,6 +1517,7 @@ export function ChatIsland() {
             type="button"
             onClick={openDrawer}
             className="chat-fab group"
+            data-compact={isScrolled ? 'true' : undefined}
             aria-label="Abrir assistente SteamBot-9000 (Ctrl+K)"
             aria-haspopup="dialog"
           >
@@ -1489,8 +1525,12 @@ export function ChatIsland() {
               <RailIcon icon={Bot} className="chat-fab-icon w-6 h-6" />
               <span className="chat-status-dot chat-status-dot-pop" aria-hidden="true" />
             </div>
-            <span className="chat-fab-label hidden md:inline">SteamBot</span>
-            <kbd className="chat-fab-kbd hidden lg:inline">Ctrl+K</kbd>
+            <span className="chat-fab-text">
+              <span className="chat-fab-text-inner">
+                <span className="chat-fab-label hidden md:inline">SteamBot</span>
+                <kbd className="chat-fab-kbd hidden lg:inline">Ctrl+K</kbd>
+              </span>
+            </span>
           </button>
         </div>
       )}
@@ -1529,7 +1569,7 @@ export function ChatIsland() {
                     </h2>
                     <span className="chat-badge-model hidden sm:inline">SQL + IA</span>
                   </div>
-                  <p className="chat-subtitle truncate" title={headerSubtitle}>
+                  <p className="chat-subtitle" title={headerSubtitle}>
                     {headerSubtitle}
                   </p>
                 </div>

@@ -29,7 +29,6 @@ import {
   type ReviewSort,
   type ReviewSortBy,
 } from '../../stores/filters';
-import { EmptyState } from './EmptyState';
 import { QueryRoot } from './QueryRoot';
 
 // Estado de expansão vai pelo meta da tabela, para as colunas não serem recriadas a cada clique.
@@ -741,7 +740,8 @@ function ReviewsTableContent() {
 
   const rows = table.getRowModel().rows;
   const showSkeleton = !mounted || ((isPending || isFetching) && items.length === 0 && !error);
-  const showEmpty = mounted && !isPending && !isFetching && items.length === 0 && !error;
+  // Recorte sem avaliações: o estado vazio da página já explica, então a tabela sai.
+  const showEmptySlice = mounted && !isPending && !isFetching && total === 0 && !error;
 
   let statusText: string;
   if (showSkeleton) {
@@ -768,64 +768,63 @@ function ReviewsTableContent() {
         <h2 id="reviews-heading" className="title">
           Avaliações
         </h2>
-        <p className="meta">Clique numa linha para ver os detalhes</p>
+        {showEmptySlice ? null : <p className="meta">Clique numa linha para ver os detalhes</p>}
       </div>
 
-      <div className="sheet-card">
-        <div
-          ref={scrollRef}
-          className="sheet sheet-virtual"
-          tabIndex={-1}
-          role="region"
-          aria-label="Tabela de avaliações"
-          aria-describedby="reviews-keyboard-hint"
-          data-reviews-virtual="true"
-        >
-          <table
+      {showEmptySlice ? (
+        <p className="meta" aria-live="polite">
+          Sem avaliações para listar neste recorte.
+        </p>
+      ) : (
+        <div className="sheet-card">
+          <div
+            ref={scrollRef}
+            className="sheet sheet-virtual"
+            tabIndex={-1}
+            role="region"
+            aria-label="Tabela de avaliações"
             aria-describedby="reviews-keyboard-hint"
-            aria-busy={showSkeleton || showBusy}
+            data-reviews-virtual="true"
           >
-            <caption className="sr-only">
-              Avaliações da seleção atual
-              <span id="reviews-keyboard-hint">
-                . Use as setas para percorrer as avaliações; Enter expande o texto.
-              </span>
-            </caption>
-            <thead>
-              {table.getHeaderGroups().map((headerGroup) => (
-                <tr key={headerGroup.id}>
-                  {headerGroup.headers.map((header) => {
-                    const meta = header.column.columnDef.meta as
-                      | { thClass?: string; sortKey?: ReviewSortBy; ariaLabel?: string }
-                      | undefined;
-                    const sortKey = meta?.sortKey;
-                    return (
-                      <th
-                        key={header.id}
-                        scope="col"
-                        className={meta?.thClass}
-                        aria-label={meta?.ariaLabel}
-                        aria-sort={sortKey ? sortHeaderAria(sortKey, currentSort) : undefined}
-                      >
-                        {header.isPlaceholder
-                          ? null
-                          : flexRender(header.column.columnDef.header, header.getContext())}
-                      </th>
-                    );
-                  })}
-                </tr>
-              ))}
-            </thead>
-            <tbody id="reviews-body">
-              {showSkeleton ? (
-                <ReviewSkeletonRows />
-              ) : showEmpty ? (
-                <tr>
-                  <td colSpan={6} className="empty-cell">
-                    <EmptyState />
-                  </td>
-                </tr>
-              ) : (
+            <table
+              aria-describedby="reviews-keyboard-hint"
+              aria-busy={showSkeleton || showBusy}
+            >
+              <caption className="sr-only">
+                Avaliações da seleção atual
+                <span id="reviews-keyboard-hint">
+                  . Use as setas para percorrer as avaliações; Enter expande o texto.
+                </span>
+              </caption>
+              <thead>
+                {table.getHeaderGroups().map((headerGroup) => (
+                  <tr key={headerGroup.id}>
+                    {headerGroup.headers.map((header) => {
+                      const meta = header.column.columnDef.meta as
+                        | { thClass?: string; sortKey?: ReviewSortBy; ariaLabel?: string }
+                        | undefined;
+                      const sortKey = meta?.sortKey;
+                      return (
+                        <th
+                          key={header.id}
+                          scope="col"
+                          className={meta?.thClass}
+                          aria-label={meta?.ariaLabel}
+                          aria-sort={sortKey ? sortHeaderAria(sortKey, currentSort) : undefined}
+                        >
+                          {header.isPlaceholder
+                            ? null
+                            : flexRender(header.column.columnDef.header, header.getContext())}
+                        </th>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </thead>
+              <tbody id="reviews-body">
+                {showSkeleton ? (
+                  <ReviewSkeletonRows />
+                ) : (
                   <>
                     {paddingTop > 0 ? (
                       <tr aria-hidden="true" className="sheet-spacer">
@@ -889,11 +888,12 @@ function ReviewsTableContent() {
                       </tr>
                     ) : null}
                   </>
-              )}
-            </tbody>
-          </table>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
+      )}
 
       {error && items.length > 0 ? (
         <div className="flex flex-wrap items-center gap-3" role="alert">

@@ -20,8 +20,8 @@ import { ChatIsland } from '../components/react/ChatIsland';
         <ContextBar />
 
         <div id="load-error" role="alert" aria-hidden="true" hidden class="card">
-          <p class="title">Não foi possível conectar à API de avaliações.</p>
-          <p id="load-error-detail" class="meta mt-1">Verifique se o servidor FastAPI está ativo em http://127.0.0.1:8000 e tente novamente.</p>
+          <p class="title">Não conseguimos carregar as avaliações.</p>
+          <p id="load-error-detail" class="meta mt-1">O serviço de dados não respondeu. Tente de novo em alguns segundos; se continuar, o servidor local pode estar desligado.</p>
           <button id="retry" type="button" class="btn btn-primary mt-4">Tentar de novo</button>
         </div>
 

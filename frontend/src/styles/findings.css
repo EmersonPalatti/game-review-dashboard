@@ -14,8 +14,10 @@
 }
 
 @media (max-width: 767px) {
+  /* Divide a linha com o botão de tema (40px + 12px de vão). */
   .active-chips {
-    flex: 0 0 100%;
+    flex: 1 1 0;
+    min-width: 0;
     justify-content: flex-start;
   }
 }
@@ -81,11 +83,57 @@
   transition: opacity var(--menu) var(--ease);
 }
 
+.findings-scope-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px 12px;
+  margin-bottom: 8px;
+}
+
 .findings-scope-note {
-  margin: 0 0 8px;
+  margin: 0;
   font-size: 12px;
   line-height: 16px;
   color: var(--secondary);
+}
+
+/* Desfazer: controle de campo com a mesma borda; volta ao recorte do analista antes do achado. */
+.findings-undo {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 4px 10px;
+  border: 1px solid var(--field-border);
+  border-radius: 8px;
+  background: var(--field);
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color var(--fast) var(--ease),
+    border-color var(--fast) var(--ease);
+}
+
+.findings-undo:hover {
+  background: var(--field-hover);
+  border-color: var(--field-border-hover);
+}
+
+.findings-undo:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+@media (max-width: 767px), (pointer: coarse) {
+  .findings-undo {
+    min-height: 36px;
+  }
 }
 
 .findings-grid {
@@ -94,7 +142,7 @@
   gap: 8px;
 }
 
-/* Compact row when any filter is active or chat dock is open on >= 1280px. */
+/* Compact row when any filter is active or chat dock is open on >= 1440px. */
 .findings-compact-row {
   display: flex;
   flex-direction: row;
@@ -103,6 +151,7 @@
   gap: 8px;
 }
 
+/* Controle da família de campo: tom de campo + borda própria (DESIGN.md, Control Tone Rule). */
 .finding-compact-btn {
   display: inline-flex;
   align-items: baseline;
@@ -110,9 +159,9 @@
   min-height: 28px;
   max-width: 100%;
   padding: 4px 12px;
-  border: 0;
-  border-radius: 9999px;
-  background: var(--well);
+  border: 1px solid var(--field-border);
+  border-radius: 8px;
+  background: var(--field);
   color: var(--ink);
   font-family: inherit;
   text-align: left;
@@ -121,17 +170,21 @@
   flex-wrap: wrap;
   transition:
     background-color var(--fast) var(--ease),
-    color var(--fast) var(--ease),
-    box-shadow var(--fast) var(--ease);
+    border-color var(--fast) var(--ease),
+    color var(--fast) var(--ease);
 }
 
 .finding-compact-btn:hover {
-  background: var(--well-hover);
+  background: var(--field-hover);
+  border-color: var(--field-border-hover);
 }
 
+/* Selecionado é neutro (mesmo par do segmento): nada de tint ou anel em accent. */
 .finding-compact-btn[aria-pressed='true'] {
-  background: color-mix(in srgb, var(--accent) 12%, var(--well));
-  box-shadow: inset 0 0 0 1px var(--accent);
+  background: var(--seg-active);
+  border-color: var(--seg-ring);
+  color: var(--ink);
+  font-weight: 500;
 }
 
 .finding-compact-btn:focus-visible,
@@ -159,7 +212,14 @@
 }
 
 .finding-compact-btn[aria-pressed='true'] .finding-compact-figure {
-  color: var(--accent);
+  color: var(--ink);
+}
+
+/* Toque: os botões compactos sobem para 36px, como os presets (DESIGN.md). Fica depois da base para vencer o min-height. */
+@media (max-width: 767px), (pointer: coarse) {
+  .finding-compact-btn {
+    min-height: 36px;
+  }
 }
 
 @keyframes findings-enter {
@@ -213,12 +273,12 @@
 }
 
 .finding-tile[aria-pressed='true'] {
-  background: color-mix(in srgb, var(--accent) 8%, var(--surface));
-  box-shadow: inset 0 0 0 1px var(--accent), var(--shadow-card);
+  background: var(--seg-active);
+  box-shadow: inset 0 0 0 1px var(--seg-ring), var(--shadow-card);
 }
 
 .finding-tile[aria-pressed='true']:hover {
-  box-shadow: inset 0 0 0 1px var(--accent), var(--shadow-lift);
+  box-shadow: inset 0 0 0 1px var(--seg-ring), var(--shadow-lift);
 }
 
 .finding-claim {
@@ -279,7 +339,7 @@
 }
 
 .finding-tile[aria-pressed='true'] .finding-action {
-  color: var(--accent);
+  color: var(--ink);
 }
 
 .finding-action-icon {
@@ -367,6 +427,7 @@
 @media (prefers-reduced-motion: reduce) {
   .finding-tile,
   .finding-compact-btn,
+  .findings-undo,
   .finding-action,
   .context-audit-link,
   .findings-slot,

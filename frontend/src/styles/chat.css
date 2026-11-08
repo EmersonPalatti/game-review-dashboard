@@ -2,9 +2,16 @@
 
 :root {
   --chat-dock-w: clamp(360px, 26vw, 420px);
+  /* Botão flutuante: 52px de altura (6 + 40 + 6), recuo de 24px do canto (.chat-fab-container em global.css; igual no mobile). */
+  --chat-fab-size: 52px;
+  --chat-fab-offset: 24px;
+  /* Folga entre o último cartão e o topo do botão: 52 + 24 + 16. */
+  --chat-fab-gap: 16px;
+  --chat-fab-clearance: calc(var(--chat-fab-size) + var(--chat-fab-offset) + var(--chat-fab-gap));
 }
 
-@media (min-width: 1280px) {
+/* Acoplado só em >= 1440px (DOCKED_MEDIA_QUERY em ChatIsland.tsx). Entre 1280 e 1439px o painel é flutuante. */
+@media (min-width: 1440px) {
   #dashboard-main {
     transition: margin-right var(--menu) var(--ease);
   }
@@ -15,7 +22,7 @@
   }
 }
 
-/* Painel acoplado lateral em telas amplas (>= 1280px) */
+/* Painel acoplado lateral em telas amplas (>= 1440px) */
 @keyframes chat-dock-slide-in {
   from {
     transform: translateX(100%);
@@ -34,8 +41,9 @@
   }
 }
 
-@media (min-width: 1280px) {
+@media (min-width: 1440px) {
   .chat-drawer.chat-drawer-docked {
+    container-type: inline-size;
     position: fixed;
     top: 0;
     bottom: 0;
@@ -75,18 +83,12 @@
   .chat-drawer.chat-drawer-docked .chat-badge-model {
     white-space: nowrap;
   }
-}
 
-/* Painel estreito (360–374px): o selo divide espaço com o título e quebrava; o título vence. */
-@media (min-width: 1280px) and (max-width: 1439px) {
-  .chat-drawer.chat-drawer-docked .chat-badge-model {
-    display: none;
-  }
-}
-
-@media (min-width: 1280px) {
-  .chat-backdrop {
-    display: none !important;
+  /* Painel estreito (<= 380px, cerca de 374px em 1440px): o selo divide espaço com o título e quebrava; o título vence. */
+  @container (max-width: 380px) {
+    .chat-drawer.chat-drawer-docked .chat-badge-model {
+      display: none;
+    }
   }
 }
 
@@ -149,6 +151,10 @@
     transition: none;
   }
 
+  .chat-fab-text {
+    transition: none;
+  }
+
   .chat-drawer.chat-drawer-docked,
   .chat-drawer.chat-drawer-docked.is-closing {
     animation: none !important;
@@ -156,9 +162,11 @@
   }
 }
 
-/* Espaço reservado para o botão flutuante não cobrir o final do conteúdo */
-#dashboard-main {
-  padding-bottom: calc(54px + 24px);
+/* Folga no fim da página para o botão flutuante não cobrir o último cartão.
+   Fica no .stage (que tem py-6 do Tailwind; esta regra ganha por especificidade).
+   Não somar com padding em #dashboard-main: o total abaixo do cartão é só esta folga. */
+#dashboard-main .stage {
+  padding-bottom: var(--chat-fab-clearance);
 }
 
 /* Em telas mobile (< 768px), o balão nunca é exibido */
@@ -166,6 +174,57 @@
   .chat-teaser {
     display: none !important;
   }
+
+  /* Abaixo de 768px o rótulo não aparece: o botão já é o círculo de 52px. */
+  .chat-fab .chat-fab-text {
+    display: none;
+  }
+}
+
+/* Lançador compacto: depois de rolar 120px (data-compact em ChatIsland.tsx), o pill vira círculo de 52px com só o avatar.
+   O texto recolhe pela largura máxima e perde opacidade. Hover e :focus-visible reabrem o pill. */
+.chat-fab {
+  gap: 0;
+  padding: 6px;
+}
+
+.chat-fab-text {
+  display: block;
+  overflow: hidden;
+  /* Acima da largura do rótulo + atalho (~144px em 1440px), com folga para a animação começar cedo. */
+  max-width: 176px;
+  opacity: 1;
+  transition:
+    max-width var(--fast) var(--ease),
+    opacity var(--fast) var(--ease);
+}
+
+.chat-fab-text-inner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  /* 8px + 6px do botão = 14px de respiro à direita, como antes. */
+  padding: 0 8px;
+  white-space: nowrap;
+}
+
+.chat-fab[data-compact='true']:not(:hover):not(:focus-visible) .chat-fab-text {
+  max-width: 0;
+  opacity: 0;
+}
+
+/* Subtítulo do cabeçalho: até duas linhas com reticências, em vez de corte em linha única. */
+.chat-subtitle {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  white-space: normal;
+  text-overflow: ellipsis;
+  overflow-wrap: break-word;
+  /* Quando quebra, equilibra as duas linhas e evita uma palavra sozinha embaixo. */
+  text-wrap: balance;
 }
 
 /* Previne faux bold (apenas IBM Plex Sans 400 e 500 estão carregados) */

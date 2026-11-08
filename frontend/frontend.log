@@ -1,0 +1,46 @@
+
+> steam-reviews-dashboard@0.1.0 dev
+> astro dev --host 127.0.0.1 --port 4321
+
+{"message":"connected.","label":"vite","level":"info"}
+{"message":"Generated 1ms","label":"types","level":"info"}
+{"message":"connected.","label":"vite","level":"info"}
+{"message":"Re-optimizing dependencies because vite config has changed","label":"vite","level":"info"}
+{"message":" astro  v7.4.4 ready in 436 ms\n┃ Local    http://127.0.0.1:4321/","label":"SKIP_FORMAT","level":"info"}
+{"message":"watching for file changes...","label":null,"level":"info"}
+{"message":"[200] / 80ms","label":null,"level":"info"}
+{"message":"[200] / 23ms","label":null,"level":"info"}
+{"message":"[200] / 33ms","label":null,"level":"info"}
+{"message":"[console.warn] [ECharts] Can't get DOM width or height. Please check dom.clientWidth and dom.clientHeight. They should not be 0.For example, you may need to call this in the callback of window.onload.","label":"vite","level":"warn"}
+{"message":"[Unhandled error] TypeError: Cannot read properties of undefined (reading 'coord')\n > getVisualGradient node_modules/echarts/lib/chart/line/LineView.js:285:38\n > LineView.render node_modules/echarts/lib/chart/line/LineView.js:538:22\n > Task.progress node_modules/echarts/lib/view/Chart.js:202:19\n > Task._doProgress node_modules/echarts/lib/core/task.js:167:9\n > Task.perform node_modules/echarts/lib/core/task.js:132:15\n > node_modules/echarts/lib/core/echarts.js:1775:23\n > GlobalModel.<anonymous> node_modules/echarts/lib/model/Global.js:573:9\n > each$12 node_modules/zrender/lib/core/util.js:217:12\n > GlobalModel.eachSeries node_modules/echarts/lib/model/Global.js:571:4\n","label":"vite","level":"error"}
+{"message":"[console.warn] An error occurred in the <ChartsContent> component.\n\nConsider adding an error boundary to your tree to customize error handling behavior.\nVisit https://react.dev/link/error-boundaries to learn more about error boundaries.\n","label":"vite","level":"warn"}
+{"message":"/src/styles/sidebar.css, /src/styles/global.css","label":"watch","level":"info"}
+{"message":"/src/styles/findings.css, /src/styles/global.css","label":"watch","level":"info"}
+{"message":"/src/styles/findings.css, /src/styles/global.css","label":"watch","level":"info"}
+{"message":"/src/styles/findings.css, /src/styles/global.css","label":"watch","level":"info"}
+{"message":"[200] / 50ms","label":null,"level":"info"}
+{"message":"[console.warn] [ECharts] Can't get DOM width or height. Please check dom.clientWidth and dom.clientHeight. They should not be 0.For example, you may need to call this in the callback of window.onload.","label":"vite","level":"warn"}
+{"message":"[Unhandled error] TypeError: Cannot read properties of undefined (reading 'coord')\n > getVisualGradient node_modules/echarts/lib/chart/line/LineView.js:285:38\n > LineView.render node_modules/echarts/lib/chart/line/LineView.js:538:22\n > Task.progress node_modules/echarts/lib/view/Chart.js:202:19\n > Task._doProgress node_modules/echarts/lib/core/task.js:167:9\n > Task.perform node_modules/echarts/lib/core/task.js:132:15\n > node_modules/echarts/lib/core/echarts.js:1775:23\n > GlobalModel.<anonymous> node_modules/echarts/lib/model/Global.js:573:9\n > each$12 node_modules/zrender/lib/core/util.js:217:12\n > GlobalModel.eachSeries node_modules/echarts/lib/model/Global.js:571:4\n","label":"vite","level":"error"}
+{"message":"[console.warn] An error occurred in the <ChartsContent> component.\n\nConsider adding an error boundary to your tree to customize error handling behavior.\nVisit https://react.dev/link/error-boundaries to learn more about error boundaries.\n","label":"vite","level":"warn"}
+{"message":"/src/styles/chat.css, /src/styles/global.css","label":"watch","level":"info"}
+{"message":"[200] / 46ms","label":null,"level":"info"}
+{"message":"[Unhandled error] TypeError: Cannot read properties of undefined (reading 'coord')\n > getVisualGradient node_modules/echarts/lib/chart/line/LineView.js:285:38\n > LineView.render node_modules/echarts/lib/chart/line/LineView.js:538:22\n > Task.progress node_modules/echarts/lib/view/Chart.js:202:19\n > Task._doProgress node_modules/echarts/lib/core/task.js:167:9\n > Task.perform node_modules/echarts/lib/core/task.js:132:15\n > node_modules/echarts/lib/core/echarts.js:1775:23\n > GlobalModel.<anonymous> node_modules/echarts/lib/model/Global.js:573:9\n > each$12 node_modules/zrender/lib/core/util.js:217:12\n > GlobalModel.eachSeries node_modules/echarts/lib/model/Global.js:571:4\n","label":"vite","level":"error"}
+{"message":"[console.warn] An error occurred in the <ChartsContent> component.\n\nConsider adding an error boundary to your tree to customize error handling behavior.\nVisit https://react.dev/link/error-boundaries to learn more about error boundaries.\n","label":"vite","level":"warn"}
+{"message":"[200] / 26ms","label":null,"level":"info"}
+{"message":"[Unhandled error] TypeError: Cannot read properties of undefined (reading 'coord')\n > getVisualGradient node_modules/echarts/lib/chart/line/LineView.js:285:38\n > LineView.render node_modules/echarts/lib/chart/line/LineView.js:538:22\n > Task.progress node_modules/echarts/lib/view/Chart.js:202:19\n > Task._doProgress node_modules/echarts/lib/core/task.js:167:9\n > Task.perform node_modules/echarts/lib/core/task.js:132:15\n > node_modules/echarts/lib/core/echarts.js:1775:23\n > GlobalModel.<anonymous> node_modules/echarts/lib/model/Global.js:573:9\n > each$12 node_modules/zrender/lib/core/util.js:217:12\n > GlobalModel.eachSeries node_modules/echarts/lib/model/Global.js:571:4\n","label":"vite","level":"error"}
+{"message":"[console.warn] An error occurred in the <ChartsContent> component.\n\nConsider adding an error boundary to your tree to customize error handling behavior.\nVisit https://react.dev/link/error-boundaries to learn more about error boundaries.\n","label":"vite","level":"warn"}
+{"message":"/src/styles/global.css, /src/components/react/ContextIsland.tsx","label":"watch","level":"info"}
+{"message":"[200] / 29ms","label":null,"level":"info"}
+{"message":"[Unhandled error] TypeError: Cannot read properties of undefined (reading 'coord')\n > getVisualGradient node_modules/echarts/lib/chart/line/LineView.js:285:38\n > LineView.render node_modules/echarts/lib/chart/line/LineView.js:538:22\n > Task.progress node_modules/echarts/lib/view/Chart.js:202:19\n > Task._doProgress node_modules/echarts/lib/core/task.js:167:9\n > Task.perform node_modules/echarts/lib/core/task.js:132:15\n > node_modules/echarts/lib/core/echarts.js:1775:23\n > GlobalModel.<anonymous> node_modules/echarts/lib/model/Global.js:573:9\n > each$12 node_modules/zrender/lib/core/util.js:217:12\n > GlobalModel.eachSeries node_modules/echarts/lib/model/Global.js:571:4\n","label":"vite","level":"error"}
+{"message":"[console.warn] An error occurred in the <ChartsContent> component.\n\nConsider adding an error boundary to your tree to customize error handling behavior.\nVisit https://react.dev/link/error-boundaries to learn more about error boundaries.\n","label":"vite","level":"warn"}
+{"message":"[200] / 25ms","label":null,"level":"info"}
+{"message":"src/scripts/charts.ts","label":"watch","level":"info"}
+{"message":"[200] / 23ms","label":null,"level":"info"}
+{"message":"[200] / 22ms","label":null,"level":"info"}
+{"message":"[200] / 23ms","label":null,"level":"info"}
+{"message":"/src/styles/sidebar.css, /src/styles/global.css","label":"watch","level":"info"}
+{"message":"/src/styles/sidebar.css, /src/styles/global.css","label":"watch","level":"info"}
+{"message":"/src/styles/global.css","label":"watch","level":"info"}
+{"message":"/src/styles/findings.css, /src/styles/global.css","label":"watch","level":"info"}
+{"message":"[200] / 47ms","label":null,"level":"info"}
+{"message":"[200] / 22ms","label":null,"level":"info"}

@@ -1,7 +1,6 @@
 ---
 import { X } from 'lucide';
 import RailIcon from './RailIcon.astro';
-import ThemeToggle from './ThemeToggle.astro';
 import { FiltersIsland } from './react/FiltersIsland';
 ---
 
@@ -21,8 +20,6 @@ import { FiltersIsland } from './react/FiltersIsland';
     </div>
 
     <div class="sidebar-body mt-8 flex flex-col">
-      <ThemeToggle />
-
       <FiltersIsland client:load />
     </div>
   </div>

@@ -46,6 +46,19 @@ const DATE_PRESETS = [
 const MIN_DATE = '2013-03-05';
 const MAX_DATE = '2021-01-23';
 
+// Filtros são por dia. O gatilho usa dd/MM/aaaa (formatDate), com ano completo para não
+// haver dúvida sobre o século. O nome acessível usa a data por extenso.
+const longDateFormat = new Intl.DateTimeFormat('pt-BR', {
+  day: 'numeric',
+  month: 'long',
+  year: 'numeric',
+  timeZone: 'UTC',
+});
+
+function formatLongDate(dateStr: string): string {
+  return longDateFormat.format(new Date(`${dateStr}T00:00:00Z`));
+}
+
 function clampDateStr(dateStr: string): string {
   if (dateStr < MIN_DATE) return MIN_DATE;
   if (dateStr > MAX_DATE) return MAX_DATE;
@@ -350,6 +363,10 @@ export function DateRangeFilter() {
   const firstDayIndex = new Date(viewYear, viewMonth, 1).getDay();
   const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
 
+  // Data completa para nome acessível e tooltip; o gatilho mostra a forma curta.
+  const fromLabel = currentFilters.dateFrom ? formatLongDate(currentFilters.dateFrom) : null;
+  const toLabel = currentFilters.dateTo ? formatLongDate(currentFilters.dateTo) : null;
+
   return (
     <div
       className={`sidebar-row is-field${hasActiveDate ? ' is-filtered' : ''}`}
@@ -368,7 +385,8 @@ export function DateRangeFilter() {
                 ref={fromTriggerRef}
                 type="button"
                 id="filter-date-from"
-                aria-label="Data inicial"
+                aria-label={fromLabel ? `Data inicial: ${fromLabel}` : 'Data inicial'}
+                title={fromLabel ?? undefined}
                 aria-expanded={activeField === 'from'}
                 aria-haspopup="dialog"
                 className={`field-control date-trigger${
@@ -397,7 +415,8 @@ export function DateRangeFilter() {
                 ref={toTriggerRef}
                 type="button"
                 id="filter-date-to"
-                aria-label="Data final"
+                aria-label={toLabel ? `Data final: ${toLabel}` : 'Data final'}
+                title={toLabel ?? undefined}
                 aria-expanded={activeField === 'to'}
                 aria-haspopup="dialog"
                 className={`field-control date-trigger${

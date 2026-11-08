@@ -129,15 +129,17 @@
   outline-offset: 1px;
 }
 
+/* Selecionado é neutro, como a linha de ranking; o foco do teclado segue em --accent pelo outline. */
 .playtime-chip[aria-pressed='true'] {
-  background: var(--raised);
-  border-color: var(--accent);
+  background: var(--seg-active);
+  border-color: var(--seg-ring);
   color: var(--ink);
 }
 
 .playtime-chip[aria-pressed='true']:hover,
 .playtime-chip[aria-pressed='true']:focus-visible {
-  border-color: var(--accent);
+  background: var(--seg-active);
+  border-color: var(--seg-ring);
 }
 
 .playtime-chip-label {
@@ -285,6 +287,15 @@
   border-radius: 999px;
   background: var(--negative);
   flex: none;
+}
+
+/* Idiomas quebram em duas linhas em vez de truncar; o valor segue a linha de base do primeiro trecho */
+#rank-languages .rank-line > .truncate {
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-wrap: balance;
 }
 
 @media (prefers-reduced-motion: reduce) {

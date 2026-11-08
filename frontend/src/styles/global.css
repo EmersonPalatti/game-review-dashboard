@@ -34,19 +34,29 @@
   --enter: 400ms;
   /*
     Superfícies sem contorno: a profundidade vem do tom e de uma sombra curta.
-    paper  = chão da página e da sidebar (mesmo plano)
+    paper  = chão da página
+    sidebar = plano próprio, um passo fora do paper (mais claro no claro, mais fundo no escuro para o well seguir rebaixado), com divisória de 1px (--line) na borda de conteúdo
     surface = cards apoiados no chão (--shadow-card no lugar da borda)
-    well / well-hover = controles rebaixados no chão (campos, segmentos, presets)
+    field / field-hover / field-border = controles interativos (campos, datas, presets, trilhos segmentados, limpar): tom do card com borda 3:1 nos dois temas (no escuro, o well com borda clara)
+    well / well-hover = só chips passivos, atalhos e chat
+    seg-active / seg-ring = segmento selecionado: tom levemente tingido + contorno; verde só para filtro ativo
     raised = hover dentro de um card
-    line = só divisórias que organizam leitura (linhas da tabela, trilhos, grade)
+    line = só divisórias que organizam leitura (linhas da tabela, trilhos, grade, borda da sidebar)
   */
-  --paper: #efeee9;
+  --paper: #f0f0ed;
   --surface: #ffffff;
-  --sidebar: var(--paper);
-  --raised: #f0efec;
-  --well: #e7e5e0;
-  --well-hover: #e0ded8;
-  --line: #e4e2dc;
+  --sidebar: #f7f7f5;
+  --raised: #f1f1ee;
+  --well: #e8e8e4;
+  --well-hover: #e0e0dc;
+  --field: var(--surface);
+  --field-hover: #f6f6f3;
+  /* 50%, não 48%: controles no cabeçalho ficam sobre o paper, e a borda precisa de 3:1 também contra ele. */
+  --field-border: color-mix(in srgb, var(--ink) 50%, var(--sidebar));
+  --field-border-hover: color-mix(in srgb, var(--ink) 64%, var(--sidebar));
+  --seg-active: color-mix(in srgb, var(--ink) 8%, var(--surface));
+  --seg-ring: color-mix(in srgb, var(--ink) 64%, var(--surface));
+  --line: #e3e3df;
   --ink: #1c1915;
   --secondary: #5c564e;
   --muted: #665f57;
@@ -73,10 +83,17 @@
 html.dark {
   --paper: #0f0e0d;
   --surface: #1e1c19;
-  --sidebar: var(--paper);
+  --sidebar: #060605;
   --raised: #282622;
   --well: #1c1a17;
   --well-hover: #25231f;
+  --field: var(--well);
+  --field-hover: var(--well-hover);
+  /* Borda de campo no escuro: 3:1 contra o popover (plano mais claro onde há campo) e contra sidebar, surface e paper. */
+  --field-border: color-mix(in srgb, var(--ink) 46%, var(--sidebar));
+  --field-border-hover: color-mix(in srgb, var(--ink) 62%, var(--sidebar));
+  --seg-active: var(--raised);
+  --seg-ring: color-mix(in srgb, var(--ink) 38%, var(--well));
   --line: #34302b;
   --ink: #efe9de;
   --secondary: #aaa398;
@@ -265,12 +282,12 @@ html.dark {
   overflow: hidden;
 }
 
-.theme-toggle,
+/* Limpar é controle interativo: tom do card e borda, como os campos. */
 .clear-row {
   min-height: 44px;
-  border: 1px solid transparent;
+  border: 1px solid var(--field-border);
   border-radius: 8px;
-  background: var(--well);
+  background: var(--field);
   padding-right: 10px;
   padding-left: 10px;
   font: inherit;
@@ -282,12 +299,11 @@ html.dark {
     transform var(--fast) var(--ease);
 }
 
-.theme-toggle:hover,
 .clear-row:hover:not(:disabled) {
-  background-color: var(--well-hover);
+  background-color: var(--field-hover);
+  border-color: var(--field-border-hover);
 }
 
-.theme-toggle:active,
 .clear-row:active:not(:disabled) {
   transform: scale(0.98);
 }
@@ -364,6 +380,7 @@ html.dark {
     padding: 20px;
     border-right: 0;
     background: var(--sidebar);
+    box-shadow: inset -1px 0 0 var(--line);
   }
 }
 
@@ -436,9 +453,9 @@ html.dark {
   align-items: center;
   min-height: 28px;
   padding: 2px 10px;
-  border: 1px solid transparent;
+  border: 1px solid var(--field-border);
   border-radius: 9999px;
-  background: var(--well);
+  background: var(--field);
   color: var(--secondary);
   font-family: inherit;
   font-size: 12px;
@@ -451,21 +468,109 @@ html.dark {
 }
 
 .preset-btn:hover {
-  background: var(--well-hover);
+  background: var(--field-hover);
+  border-color: var(--field-border-hover);
   color: var(--ink);
 }
 
+/* Selecionado é neutro, como o segmento; o verde fica só para filtro ativo. */
 .preset-btn[aria-pressed='true'] {
-  background: var(--surface);
+  background: var(--seg-active);
+  color: var(--ink);
+  border-color: var(--seg-ring);
+  font-weight: 500;
+}
+
+.sidebar-row.is-field.is-filtered .preset-btn[aria-pressed='true'] {
   color: var(--accent);
   border-color: var(--accent);
-  font-weight: 500;
 }
 
 .context-heading {
   display: flex;
   flex-direction: column;
   gap: 2px;
+}
+
+/* Botão de tema no canto superior direito do cabeçalho; alinha ao topo do h2 e não entra na linha dos chips. */
+.context-top > .theme-switch {
+  align-self: flex-start;
+  margin-left: auto;
+}
+
+/* No celular o título ocupa a linha inteira; chips e tema dividem a linha seguinte. */
+@media (max-width: 767px) {
+  .context-heading {
+    flex-basis: 100%;
+  }
+
+  .context-top > .theme-switch {
+    align-self: center;
+  }
+}
+
+.theme-switch {
+  position: relative;
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 1px solid var(--field-border);
+  border-radius: 8px;
+  background: var(--field);
+  color: var(--secondary);
+  cursor: pointer;
+  transition:
+    background-color var(--fast) var(--ease),
+    border-color var(--fast) var(--ease),
+    color var(--fast) var(--ease),
+    transform var(--fast) var(--ease);
+}
+
+/* Área de toque de 44px sem alargar o botão visível. */
+.theme-switch::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 44px;
+  height: 44px;
+  transform: translate(-50%, -50%);
+}
+
+.theme-switch svg {
+  display: block;
+  width: 18px;
+  height: 18px;
+  color: inherit;
+}
+
+.theme-switch:hover {
+  background-color: var(--field-hover);
+  border-color: var(--field-border-hover);
+  color: var(--ink);
+}
+
+.theme-switch:active {
+  transform: scale(0.98);
+}
+
+.theme-switch:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+@media (pointer: coarse) {
+  .theme-switch {
+    width: 44px;
+    height: 44px;
+  }
+
+  .theme-switch::before {
+    display: none;
+  }
 }
 
 .active-chips {
@@ -490,6 +595,7 @@ html.dark {
   cursor: pointer;
   transition:
     background-color var(--fast) var(--ease),
+    border-color var(--fast) var(--ease),
     color var(--fast) var(--ease);
 }
 
@@ -516,16 +622,18 @@ html.dark {
   font-family: var(--font-mono);
 }
 
+/* Limpar é controle interativo: tom de campo e borda, não o well dos chips passivos. */
 .filter-chip.is-reset {
-  border: 0;
-  background: var(--well);
+  border: 1px solid var(--field-border);
+  background: var(--field);
   color: var(--secondary);
   text-decoration: underline;
   text-underline-offset: 3px;
 }
 
 .filter-chip.is-reset:hover {
-  background: var(--well-hover);
+  border-color: var(--field-border-hover);
+  background: var(--field-hover);
   color: var(--ink);
 }
 
@@ -644,7 +752,8 @@ section[data-fetch-region='reviews'][data-fetching='true'] .th-sort {
   padding: 2px;
   border: 0;
   border-radius: 8px;
-  background: var(--well);
+  background: var(--field);
+  box-shadow: inset 0 0 0 1px var(--field-border);
 }
 
 .seg-btn {
@@ -667,19 +776,24 @@ section[data-fetch-region='reviews'][data-fetching='true'] .th-sort {
 
 .seg-btn:hover:not([aria-pressed='true']) {
   color: var(--ink);
-  background: var(--well-hover);
+  background: color-mix(in srgb, var(--ink) 4%, var(--field));
 }
 
+/* O contorno fica por fora da caixa: é a borda do segmento, em contato com o well. */
 .seg-btn[aria-pressed='true'] {
-  background: var(--surface);
+  background: var(--seg-active);
   color: var(--ink);
   font-weight: 500;
   border-color: transparent;
-  box-shadow: 0 1px 2px rgba(28, 25, 21, 0.08);
+  box-shadow:
+    0 1px 2px rgba(28, 25, 21, 0.08),
+    0 0 0 1px var(--seg-ring);
 }
 
 html.dark .seg-btn[aria-pressed='true'] {
-  box-shadow: inset 0 1px 0 rgba(239, 233, 222, 0.06);
+  box-shadow:
+    inset 0 1px 0 rgba(239, 233, 222, 0.06),
+    0 0 0 1px var(--seg-ring);
 }
 
 .sidebar-row.is-field.is-filtered .seg-btn[aria-pressed='true'],
@@ -729,9 +843,9 @@ html.dark .sidebar-row.is-field.is-filtered .seg-btn[aria-pressed='true'] {
   width: 100%;
   min-height: 44px;
   padding: 0 12px;
-  border: 1px solid transparent;
+  border: 1px solid var(--field-border);
   border-radius: 8px;
-  background: var(--well);
+  background: var(--field);
   color: var(--ink);
   font: inherit;
   letter-spacing: 0;
@@ -746,7 +860,8 @@ html.dark .sidebar-row.is-field.is-filtered .seg-btn[aria-pressed='true'] {
 
 .field-control:hover,
 .combo:hover .field-control {
-  background-color: var(--well-hover);
+  background-color: var(--field-hover);
+  border-color: var(--field-border-hover);
 }
 
 .combo .field-control {
@@ -964,9 +1079,9 @@ html.dark .when-dark {
   min-height: 44px;
   height: 44px;
   padding: 0 9px;
-  border: 1px solid transparent;
+  border: 1px solid var(--field-border);
   border-radius: 8px;
-  background-color: var(--well);
+  background-color: var(--field);
   color: var(--ink);
   font-size: 12px;
   line-height: 16px;
@@ -980,7 +1095,8 @@ html.dark .when-dark {
 }
 
 .date-trigger:hover {
-  background-color: var(--well-hover);
+  background-color: var(--field-hover);
+  border-color: var(--field-border-hover);
 }
 
 .date-trigger:active {
@@ -988,7 +1104,18 @@ html.dark .when-dark {
 }
 
 .sidebar-row.is-field.is-filtered .date-trigger:not(.has-value) {
-  border-color: transparent;
+  border-color: var(--field-border);
+}
+
+.sidebar-row.is-field.is-filtered .date-trigger:not(.has-value):hover {
+  border-color: var(--field-border-hover);
+}
+
+/* Aberto vem antes de com valor: o acento do filtro ativo vence a borda de aberto. */
+.date-trigger.is-open {
+  background-color: var(--field-hover);
+  border-color: var(--field-border-hover);
+  color: var(--ink);
 }
 
 .date-trigger.has-value {
@@ -997,11 +1124,6 @@ html.dark .when-dark {
   font-weight: 500;
   font-variant-numeric: tabular-nums;
   border-color: var(--accent);
-}
-
-.date-trigger.is-open {
-  background-color: var(--well-hover);
-  color: var(--ink);
 }
 
 .date-trigger-chevron {
@@ -1081,7 +1203,7 @@ html.dark .when-dark {
   left: 24%;
   width: 9px;
   height: 9px;
-  background: var(--paper);
+  background: var(--sidebar);
   border-top: 1px solid var(--border-popover);
   border-left: 1px solid var(--border-popover);
   transform: translateX(-50%) rotate(45deg);
@@ -1102,7 +1224,7 @@ html.dark .when-dark {
   padding: 6px 10px;
   border-bottom: 1px solid var(--line);
   border-radius: 9px 9px 0 0;
-  background: var(--paper);
+  background: var(--sidebar);
   font-size: 11px;
   line-height: 14px;
   color: var(--secondary);
@@ -1172,9 +1294,9 @@ html.dark .when-dark {
 .date-select {
   height: 28px;
   padding: 0 6px;
-  border: 1px solid var(--line);
+  border: 1px solid var(--field-border);
   border-radius: 6px;
-  background: var(--surface);
+  background: var(--field);
   color: var(--ink);
   font-family: inherit;
   font-size: 12px;
@@ -1186,8 +1308,8 @@ html.dark .when-dark {
 }
 
 .date-select:hover {
-  background: var(--raised);
-  border-color: var(--secondary);
+  background: var(--field-hover);
+  border-color: var(--field-border-hover);
 }
 
 .date-select:focus-visible {
@@ -1357,9 +1479,10 @@ html.dark .when-dark {
   background: var(--raised);
 }
 
+/* Selecionado é neutro (mesmo par do segmento); o verde fica no preenchimento de volume, que é filtro ativo. */
 .rank-row.is-selected {
-  background: var(--raised);
-  border-color: var(--accent);
+  background: var(--seg-active);
+  border-color: var(--seg-ring);
 }
 
 .rank-row.is-selected .rank-fill {
@@ -1779,7 +1902,7 @@ html[data-theme-reveal='active']::view-transition-new(root) {
   .btn,
   .seg-btn,
   .preset-btn,
-  .theme-toggle,
+  .theme-switch,
   .clear-row,
   .field-control,
   .filter-chip,

@@ -2,6 +2,7 @@
 import { ArrowUpRight } from 'lucide';
 import { BASELINE_PERIOD_SHORT } from '../lib/constants';
 import RailIcon from './RailIcon.astro';
+import ThemeToggle from './ThemeToggle.astro';
 import { ContextIsland } from './react/ContextIsland';
 ---
 
@@ -22,5 +23,6 @@ import { ContextIsland } from './react/ContextIsland';
       </a>
     </div>
     <ContextIsland client:load />
+    <ThemeToggle />
   </div>
 </header>
