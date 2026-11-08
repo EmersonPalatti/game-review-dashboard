@@ -1,7 +1,7 @@
 # Steam Reviews Dashboard & Análise Exploratória (1M de Reviews)
 
 > 🚀 **Deploy em Produção (Live Demo):** **[game-review-dashboard-sage.vercel.app](https://game-review-dashboard-sage.vercel.app/)**  
-> ⚡ *Frontend estático global na **Vercel** (Astro + React Islands), API de agregação no **Render** (FastAPI com LRU Cache e Baseline em memória) e banco **PostgreSQL** gerenciado no **Supabase** (1.000.000 de avaliações).*
+> ⚡ *Frontend estático global na **Vercel** (Astro + React Islands), API de agregação no **Render** (FastAPI com DuckDB em memória, LRU Cache e Baseline) e banco **PostgreSQL** gerenciado no **Supabase** (1.000.000 de avaliações).*
 
 Painel analítico interativo e estudo de dados sobre **1.000.000 de avaliações da Steam** (março de 2013 a janeiro de 2021), derivado do [Game Reviews Dataset no Kaggle](https://www.kaggle.com/datasets/sridharstreaks/game-reviews-dataset). A base cobre **59 jogos** e **912.553 autores únicos**.
 
@@ -212,6 +212,7 @@ game-review-dashboard/
 │   └── package.json                      # Dependências do frontend
 ├── scripts/
 │   ├── migrate_sqlite_to_pg.py           # Migração do SQLite local para PostgreSQL / Supabase
+│   ├── export_analytics_parquet.py       # Snapshot Parquet que a API carrega no DuckDB
 │   ├── start-jupyter.ps1                 # Inicialização do JupyterLab no Windows PowerShell
 │   └── start-jupyter.sh                  # Inicialização do JupyterLab no Linux / macOS
 ├── video/                                # Pipeline de captura determinística e renderização Remotion
@@ -427,6 +428,15 @@ Para levar o banco local para o PostgreSQL de produção:
 uv run python scripts/migrate_sqlite_to_pg.py --target-url postgresql://user:pass@host:5432/postgres
 # ou defina TARGET_DATABASE_URL / DATABASE_URL no ambiente
 ```
+
+As agregações rodam num DuckDB em memória carregado de `backend/app/reviews.parquet` (cerca de 12 MB, versionado). O Postgres serve só o texto das avaliações, buscado por chave primária. Sempre que o acervo mudar, gere o snapshot de novo:
+
+```bash
+uv run python scripts/export_analytics_parquet.py                       # a partir do SQLite local
+uv run python scripts/export_analytics_parquet.py --source-url postgresql://user:pass@host:5432/postgres
+```
+
+Variáveis opcionais: `ANALYTICS_PARQUET` (caminho do snapshot), `ANALYTICS_THREADS` (padrão `1`) e `ANALYTICS_MEMORY_LIMIT` (padrão `200MB`).
 
 #### Iniciar o Servidor FastAPI
 Inicie o servidor da API com hot-reload:

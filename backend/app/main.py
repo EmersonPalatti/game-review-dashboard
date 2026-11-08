@@ -28,6 +28,13 @@ logger = logging.getLogger(__name__)
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     init_db()
+    # Carrega a cópia analítica e o recorte padrão antes da primeira visita.
+    # O Render free reinicia o processo quando acorda, e o cache em memória some.
+    try:
+        with SessionLocal() as session:
+            warmup_caches(session)
+    except Exception:
+        logger.exception("Falha ao aquecer os caches; as rotas carregam sob demanda.")
     yield
 
 
