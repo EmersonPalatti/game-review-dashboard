@@ -5,26 +5,33 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
+    "ag-ui-protocol>=1.0.0",
     "fastapi>=0.162.0",
+    "fastembed>=0.9.1",
+    "fastmcp>=3.4.0,<4.0.0",
     "ipykernel>=7.4.0",
     "jupyter>=1.1.1",
     "jupyter-collaboration>=5.0.4",
     "jupyter-mcp-tools>=0.1.8",
     "jupyterlab>=4.6.5",
-    "langchain>=0.3.0",
-    "langchain-core>=0.3.0",
-    "langchain-openai>=0.3.0",
+    "langchain>=1.0.0",
+    "langchain-core>=1.0.0",
+    "langchain-mcp-adapters>=0.3.2",
+    "langchain-openai>=1.0.0",
+    "langfuse>=5.2.0",
     "matplotlib>=3.11.2",
     "pandas>=3.1.0",
     "psycopg2-binary>=2.9.13",
     "pycrdt>=0.14.10",
     "seaborn>=0.13.2",
     "sqlalchemy>=2.1.6",
+    "sqlite-vec>=0.1.9",
     "uvicorn>=0.54.0",
 ]
 
 [dependency-groups]
 dev = [
+    "deepeval>=4.3.4",
     "httpx>=0.28.1",
     "pytest>=9.2.0",
 ]
