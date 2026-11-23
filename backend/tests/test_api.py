@@ -906,7 +906,7 @@ def test_post_chat_with_mocked_llm_tool_calling(client, monkeypatch):
 
     data = response.json()
     assert data["reply"] == "Encontrei 2 avaliações positivas no banco de dados!"
-    assert data["model"] == "nvidia/nemotron-3-ultra-550b-a55b:free"
+    assert data["model"] == "nvidia/nemotron-3.5-super-vl:free"
     assert "get_metrics" in data["tools_used"]
 
 
@@ -1213,3 +1213,284 @@ def test_charts_language_appends_when_beyond_top_8():
         lang_09_bar = next(item for item in res.languages if item.language == "lang_09")
         assert lang_09_bar.review_count == 1
         assert lang_09_bar.recommendation_rate == 1.0
+
+
+def test_analytics_ext_resolve_engagement_and_compare():
+    from backend.app.analytics_ext import (
+        compare_slices,
+        get_engagement_stats,
+        resolve_game_catalog,
+    )
+    from backend.app.schemas import ReviewFilters
+
+    test_engine = create_engine("sqlite://", poolclass=StaticPool)
+    Base.metadata.create_all(test_engine)
+    TestSession = sessionmaker(bind=test_engine)
+
+    with TestSession() as session:
+        session.add_all(_sample_reviews())
+        session.commit()
+
+        full_cat = resolve_game_catalog(session)
+        assert full_cat["total_games_in_catalog"] == 2
+        assert len(full_cat["matched_games"]) == 2
+
+        match_alpha = resolve_game_catalog(session, query="alpha")
+        assert match_alpha["matched_games"][0]["app_id"] == ALPHA
+
+        match_id = resolve_game_catalog(session, query=str(BETA))
+        assert match_id["matched_games"][0]["app_id"] == BETA
+
+        eng = get_engagement_stats(session, ReviewFilters())
+        assert eng["overall"]["review_count"] == 4
+        assert eng["positive"]["review_count"] == 2
+        assert eng["negative"]["review_count"] == 2
+        assert eng["positive"]["avg_votes_helpful"] == 4.5
+        assert eng["negative"]["avg_votes_helpful"] == 0.5
+
+        cmp_res = compare_slices(
+            session,
+            "Alpha",
+            ReviewFilters(app_id=ALPHA),
+            "Beta",
+            ReviewFilters(app_id=BETA),
+        )
+        assert cmp_res["slice_a"]["total_reviews"] == 2
+        assert cmp_res["slice_b"]["total_reviews"] == 2
+        assert cmp_res["deltas"]["approval_delta_pp"] == 0.0
+        assert cmp_res["chart"]["kind"] == "comparison_bar"
+
+
+def test_hybrid_search_fallback_and_real_sidecar_index(tmp_path, monkeypatch):
+    import sqlite3
+    from backend.app.schemas import ReviewFilters
+    from backend.app.search_index import build_search_index, hybrid_search_reviews
+
+    source_db = tmp_path / "reviews.db"
+    index_db = tmp_path / "search_index.db"
+
+    test_engine = create_engine(f"sqlite:///{source_db.as_posix()}")
+    Base.metadata.create_all(test_engine)
+    TestSession = sessionmaker(bind=test_engine)
+
+    with TestSession() as session:
+        session.add_all(_sample_reviews())
+        session.commit()
+
+        # 1. SQL fallback (no index_path passed during pytest)
+        fallback = hybrid_search_reviews(session, query="beta short", filters=ReviewFilters())
+        assert fallback["mode"] == "sql_fallback"
+        assert fallback["items"][0]["review_id"] == ID_H1
+
+    # 2. Build real FTS5 + sqlite-vec sidecar index with fake 384-d embedder
+    class FakeEmbedder:
+        def embed(self, texts, batch_size=256):
+            for text in texts:
+                vec = [0.0] * 384
+                if "beta" in text.lower():
+                    vec[0] = 1.0
+                else:
+                    vec[1] = 1.0
+                yield vec
+
+    monkeypatch.setenv("DISABLE_SEMANTIC_SEARCH", "0")
+    monkeypatch.setattr("backend.app.search_index._get_embedder", lambda: FakeEmbedder())
+
+    summary = build_search_index(
+        source_db=source_db,
+        target_index=index_db,
+        vec_limit=10,
+        build_vectors=True,
+    )
+    assert summary["fts_count"] == 4
+    assert summary["vec_count"] == 4
+    assert index_db.is_file()
+
+    # Check punctuation resilience in FTS5 MATCH
+    with TestSession() as session:
+        res = hybrid_search_reviews(
+            session,
+            query='beta "short" + C++',
+            filters=ReviewFilters(app_id=BETA),
+            limit=5,
+            index_path=index_db,
+        )
+        assert res["mode"] == "hybrid"
+        assert res["fts_hits"] >= 1
+        assert res["vec_hits"] >= 1
+        assert any(item["review_id"] == ID_H1 and item["match_source"] == "hybrid" for item in res["items"])
+
+
+def test_fastmcp_in_memory_and_middleware(client):
+    import asyncio
+    import json
+    from langchain.agents.middleware import (
+        ModelFallbackMiddleware,
+        ModelRetryMiddleware,
+        SummarizationMiddleware,
+        ToolCallLimitMiddleware,
+        ToolErrorMiddleware,
+    )
+    from langchain_openai import ChatOpenAI
+    from backend.app.chat import _unwrap_tool_output_text, build_agent_middleware
+    from backend.app.mcp_server import steam_mcp_tools
+    from backend.app.schemas import ReviewFilters
+
+    async def _run():
+        with SessionLocal() as session:
+            async with steam_mcp_tools(session, ReviewFilters(app_id=ALPHA)) as tools:
+                names = {t.name for t in tools}
+                assert {
+                    "resolve_game",
+                    "get_metrics",
+                    "get_charts",
+                    "get_reviews_sample",
+                    "get_engagement_stats",
+                    "compare_slices",
+                    "search_reviews_hybrid",
+                } <= names
+
+                metrics_tool = next(t for t in tools if t.name == "get_metrics")
+                raw = await metrics_tool.ainvoke({})
+                parsed = json.loads(_unwrap_tool_output_text(raw))
+                assert parsed["total_reviews"] == 2
+                assert parsed["applied_filters"]["app_id"] == ALPHA
+
+    asyncio.run(_run())
+
+    primary = ChatOpenAI(api_key="dummy", model="nvidia/nemotron-3.5-super-vl:free")
+    fb = ChatOpenAI(api_key="dummy", model="openrouter/free")
+    mw = build_agent_middleware(primary, [fb])
+    mw_types = [type(m) for m in mw]
+    assert mw_types == [
+        ModelFallbackMiddleware,
+        ModelRetryMiddleware,
+        ToolCallLimitMiddleware,
+        ToolErrorMiddleware,
+        SummarizationMiddleware,
+    ]
+
+
+def test_post_chat_stream_agui_events_and_errors(client, monkeypatch):
+    import json
+    from langchain_core.language_models.chat_models import BaseChatModel
+    from langchain_core.messages import AIMessage, AIMessageChunk
+    from langchain_core.outputs import ChatGeneration, ChatGenerationChunk, ChatResult
+
+    # Validation errors before streaming starts
+    empty_res = client.post("/api/chat/stream", json={"message": "   "})
+    assert empty_res.status_code == 422
+
+    monkeypatch.delenv("OPENROUTER_API_KEY", raising=False)
+    missing_key_res = client.post(
+        "/api/chat/stream",
+        json={
+            "threadId": "thr_1",
+            "runId": "run_1",
+            "messages": [{"id": "u1", "role": "user", "content": "Compare Alpha vs Beta"}],
+            "forwardedProps": {"filters": {}},
+        },
+    )
+    assert missing_key_res.status_code == 503
+    assert "chave de IA não configurada" in missing_key_res.json()["detail"]
+
+    class FakeStreamingChatModel(BaseChatModel):
+        step: int = 0
+
+        @property
+        def _llm_type(self) -> str:
+            return "fake-streaming"
+
+        def bind_tools(self, tools, **kwargs):
+            return self
+
+        def _generate(self, messages, stop=None, run_manager=None, **kwargs):
+            return ChatResult(generations=[ChatGeneration(message=AIMessage(content="ok"))])
+
+        async def _astream(self, messages, stop=None, run_manager=None, **kwargs):
+            self.step += 1
+            if self.step == 1:
+                yield ChatGenerationChunk(
+                    message=AIMessageChunk(
+                        content="",
+                        tool_call_chunks=[
+                            {
+                                "name": "compare_slices",
+                                "args": json.dumps(
+                                    {
+                                        "label_a": "Alpha",
+                                        "label_b": "Beta",
+                                        "app_id_a": ALPHA,
+                                        "app_id_b": BETA,
+                                    }
+                                ),
+                                "id": "tc_cmp",
+                                "index": 0,
+                            },
+                            {
+                                "name": "propose_dashboard_actions",
+                                "args": json.dumps(
+                                    {
+                                        "label": "Filtrar Alpha",
+                                        "app_id": ALPHA,
+                                        "follow_up_1": "Ver reviews negativas de Alpha",
+                                    }
+                                ),
+                                "id": "tc_ui",
+                                "index": 1,
+                            },
+                        ],
+                    )
+                )
+            else:
+                for token in ["Alpha e Beta têm ", "**50,0%** de aprovação."]:
+                    yield ChatGenerationChunk(message=AIMessageChunk(content=token))
+
+    monkeypatch.setenv("OPENROUTER_API_KEY", "dummy_key")
+    monkeypatch.setattr("backend.app.chat._make_openrouter_llm", lambda *a, **kw: FakeStreamingChatModel())
+
+    stream_res = client.post(
+        "/api/chat/stream",
+        headers={"Accept": "text/event-stream"},
+        json={
+            "threadId": "thr_test",
+            "runId": "run_test",
+            "state": {},
+            "tools": [],
+            "context": [],
+            "messages": [{"id": "m1", "role": "user", "content": "Compare Alpha e Beta"}],
+            "forwardedProps": {"filters": {}},
+        },
+    )
+    assert stream_res.status_code == 200
+    assert "text/event-stream" in stream_res.headers["content-type"]
+
+    events = []
+    for line in stream_res.text.splitlines():
+        if line.startswith("data: "):
+            events.append(json.loads(line[6:]))
+
+    event_types = [ev["type"] for ev in events]
+    assert "RUN_STARTED" in event_types
+    assert "TOOL_CALL_START" in event_types
+    assert "TOOL_CALL_RESULT" in event_types
+    assert "TEXT_MESSAGE_START" in event_types
+    assert "TEXT_MESSAGE_CONTENT" in event_types
+    assert "TEXT_MESSAGE_END" in event_types
+    assert "RUN_FINISHED" in event_types
+
+    custom_names = [ev["name"] for ev in events if ev["type"] == "CUSTOM"]
+    assert "genui_widget" in custom_names
+    assert "dashboard_actions" in custom_names
+    assert "run_metadata" in custom_names
+
+
+def test_post_chat_feedback_endpoint(client):
+    res = client.post(
+        "/api/chat/feedback",
+        json={"trace_id": "trace_abc123", "score": 1, "comment": "Excelente análise"},
+    )
+    assert res.status_code == 200
+    assert res.headers["Cache-Control"] == "no-store"
+    body = res.json()
+    assert body == {"recorded": True, "traced": False, "trace_id": "trace_abc123"}

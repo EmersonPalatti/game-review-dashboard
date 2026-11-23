@@ -2,7 +2,6 @@ import {
   AlertCircle,
   Check,
   Copy,
-  Database,
   Filter,
   Maximize2,
   MessageSquare,
@@ -16,10 +15,16 @@ import {
 } from 'lucide';
 import { useCallback, useEffect, useId, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import {
-  sendChatMessage,
   type ChatHistoryItem,
   type Metrics,
 } from '../../lib/api';
+import {
+  sendChatFeedback,
+  streamChatAgui,
+  type GenUIWidget,
+  type StructuredFilterAction,
+  type ToolStepState,
+} from '../../lib/chatStream';
 import { formatDate, formatInteger, languageLabel } from '../../lib/format';
 import { useFilters, useLatestMetrics } from '../../lib/useNanostore';
 import {
@@ -32,6 +37,15 @@ import {
 } from '../../stores/filters';
 import { chatDocked } from '../../stores/ui';
 import { BotGlyph } from './BotGlyph';
+import {
+  FeedbackControls,
+  FollowUpChips,
+  GenUIWidgetList,
+  StructuredFilterChips,
+  TOOL_LABELS,
+  ToolExecutionTimeline,
+  applyChatFiltersToStore,
+} from './ChatGenUI';
 import { RailIcon } from './RailIcon';
 
 export type TeaserItem = {
@@ -122,6 +136,15 @@ type MessageItem = {
   context_label?: string;
   isError?: boolean;
   errorKind?: ChatErrorKind;
+  isStreaming?: boolean;
+  toolSteps?: ToolStepState[];
+  widgets?: GenUIWidget[];
+  structuredActions?: StructuredFilterAction[];
+  followUps?: string[];
+  traceId?: string;
+  model?: string;
+  latencyMs?: number;
+  feedback?: 0 | 1 | null;
 };
 
 const WELCOME_MESSAGE: MessageItem = {
@@ -132,29 +155,6 @@ const WELCOME_MESSAGE: MessageItem = {
 };
 
 const BASE_REVIEW_TOTAL = 1_000_000;
-
-// Faixas de tempo em minutos, espelhando PLAYTIME_BUCKETS em backend/app/transform.py.
-// Usadas só para o texto da consulta exibida no painel.
-const PLAYTIME_MINUTE_BOUNDS: Record<
-  Exclude<PlaytimeBucket, 'all'>,
-  readonly [number | null, number | null]
-> = {
-  lt1: [null, 60],
-  h1_2: [60, 120],
-  h2_5: [120, 300],
-  h5_10: [300, 600],
-  h10_25: [600, 1500],
-  h25_50: [1500, 3000],
-  h50_100: [3000, 6000],
-  h100_500: [6000, 30000],
-  gte500: [30000, null],
-};
-
-const TOOL_LABELS: Record<string, string> = {
-  get_metrics: 'KPIs & Rankings (/api/summary)',
-  get_charts: 'Séries & Playtime (/api/charts)',
-  get_reviews_sample: 'Amostra de Reviews (/api/reviews)',
-};
 
 const TEASER_STORAGE_KEY = 'reviews-da-steam:steambot-teaser';
 const TEASER_IDLE_DELAY_MS = 10000;
@@ -737,10 +737,6 @@ function formatReviewCount(total: number): string {
   return `${formatInteger(total)}${millionsSuffix} avaliações`;
 }
 
-function formatRowCount(total: number): string {
-  return total === 1 ? '1 linha' : `${formatInteger(total)} linhas`;
-}
-
 function formatFilterCount(count: number): string {
   return `${count} ${count === 1 ? 'filtro' : 'filtros'}`;
 }
@@ -797,50 +793,6 @@ function buildContextSummary(filters: Filters, metrics: Metrics | null): string 
 
   const totalLabel = total !== null ? ` (${formatReviewCount(total)})` : '';
   return `${parts.join(' • ')}${totalLabel}`;
-}
-
-// Texto da consulta exibida: o número de linhas vem do recorte ativo (latestMetrics), não de uma constante.
-function buildSqlTickerLines(filters: Filters, sliceTotal: number | null): string[] {
-  const conditions: string[] = [];
-  if (filters.appId !== null) {
-    conditions.push(`app_id = ${filters.appId}`);
-  }
-  if (filters.language) {
-    conditions.push(`language = '${filters.language}'`);
-  }
-  if (filters.recommended !== 'all') {
-    conditions.push(`recommended = ${filters.recommended === 'yes' ? 1 : 0}`);
-  }
-  if (filters.playtime !== 'all') {
-    const [low, high] = PLAYTIME_MINUTE_BOUNDS[filters.playtime];
-    conditions.push('playtime_at_review IS NOT NULL');
-    if (low !== null) conditions.push(`playtime_at_review >= ${low}`);
-    if (high !== null) conditions.push(`playtime_at_review < ${high}`);
-  }
-  if (filters.earlyAccess !== 'all') {
-    conditions.push(`early_access = ${filters.earlyAccess === 'yes' ? 1 : 0}`);
-  }
-  if (filters.steamPurchase !== 'all') {
-    conditions.push(`steam_purchase = ${filters.steamPurchase === 'yes' ? 1 : 0}`);
-  }
-  if (filters.receivedForFree !== 'all') {
-    conditions.push(`received_for_free = ${filters.receivedForFree === 'yes' ? 1 : 0}`);
-  }
-  if (filters.dateFrom) {
-    conditions.push(`timestamp_created >= strftime('%s', '${filters.dateFrom}')`);
-  }
-  if (filters.dateTo) {
-    conditions.push(`timestamp_created <= strftime('%s', '${filters.dateTo} 23:59:59')`);
-  }
-  const whereClause = conditions.length > 0 ? conditions.join(' AND ') : '1=1';
-  const rowsComment = sliceTotal !== null ? ` -- ${formatRowCount(sliceTotal)}` : '';
-
-  return [
-    'SELECT COUNT(*), AVG(recommended) FROM reviews',
-    `WHERE ${whereClause}${rowsComment}`,
-    'GROUP BY language -- ranking por idioma',
-    'ORDER BY votes_helpful DESC -- votos úteis',
-  ];
 }
 
 export function ChatIsland() {
@@ -1322,7 +1274,19 @@ export function ChatIsland() {
       abortControllerRef.current.abort();
       abortControllerRef.current = null;
     }
+    setMessages((prev) =>
+      prev.map((m) => (m.isStreaming ? { ...m, isStreaming: false } : m)),
+    );
     setIsLoading(false);
+  }, []);
+
+  const handleFeedbackVote = useCallback((msgId: string, traceId: string, score: 0 | 1) => {
+    setMessages((prev) =>
+      prev.map((m) => (m.id === msgId ? { ...m, feedback: score } : m)),
+    );
+    void sendChatFeedback(traceId, score).catch(() => {
+      // Falha silenciosa para não interromper a leitura do usuário
+    });
   }, []);
 
   const handleSendMessage = useCallback(
@@ -1330,10 +1294,22 @@ export function ChatIsland() {
       const text = (textToSend ?? inputValue).trim();
       if (!text || isLoading) return;
 
-      const userMessageId = `user-${Date.now()}`;
+      const now = Date.now();
+      const userMessageId = `user-${now}`;
+      const botMsgId = `assistant-${now + 1}`;
       const newMessages: MessageItem[] = [
         ...messages,
         { id: userMessageId, role: 'user', content: text },
+        {
+          id: botMsgId,
+          role: 'assistant',
+          content: '',
+          isStreaming: true,
+          toolSteps: [],
+          widgets: [],
+          tools_used: [],
+          context_label: contextSummary,
+        },
       ];
 
       setMessages(newMessages);
@@ -1341,7 +1317,7 @@ export function ChatIsland() {
       setIsLoading(true);
       setLastFailedPrompt(null);
       setShowSuggestions(false);
-      announce('Consultando o recorte ativo.');
+      announce('Consultando o recorte ativo via MCP.');
 
       if (textareaRef.current) {
         textareaRef.current.style.height = 'auto';
@@ -1349,48 +1325,130 @@ export function ChatIsland() {
 
       // Prepara histórico conversacional das mensagens anteriores para a API
       const historyPayload: ChatHistoryItem[] = messages
-        .filter((m) => !m.isError && m.id !== 'welcome')
+        .filter((m) => !m.isError && m.id !== 'welcome' && m.content.trim().length > 0)
         .map((m) => ({ role: m.role, content: m.content }));
 
       const controller = new AbortController();
       abortControllerRef.current = controller;
 
+      const patchBotMsg = (updater: (msg: MessageItem) => MessageItem) => {
+        setMessages((prev) => prev.map((m) => (m.id === botMsgId ? updater(m) : m)));
+      };
+
       try {
-        const response = await sendChatMessage(
+        await streamChatAgui(
           text,
           filters,
           historyPayload,
+          {
+            onToolStart: (id, name) => {
+              patchBotMsg((m) => ({
+                ...m,
+                tools_used: m.tools_used?.includes(name)
+                  ? m.tools_used
+                  : [...(m.tools_used ?? []), name],
+                toolSteps: [...(m.toolSteps ?? []), { id, name, status: 'running' }],
+              }));
+            },
+            onToolArgs: (id, args) => {
+              patchBotMsg((m) => ({
+                ...m,
+                toolSteps: (m.toolSteps ?? []).map((s) => (s.id === id ? { ...s, args } : s)),
+              }));
+            },
+            onToolResult: (id, summary, isError) => {
+              patchBotMsg((m) => ({
+                ...m,
+                toolSteps: (m.toolSteps ?? []).map((s) =>
+                  s.id === id ? { ...s, status: isError ? 'error' : 'done', summary } : s,
+                ),
+              }));
+            },
+            onToolTiming: (id, durationMs) => {
+              patchBotMsg((m) => ({
+                ...m,
+                toolSteps: (m.toolSteps ?? []).map((s) =>
+                  s.id === id ? { ...s, durationMs } : s,
+                ),
+              }));
+            },
+            onTextDelta: (delta) => {
+              patchBotMsg((m) => ({ ...m, content: `${m.content}${delta}` }));
+            },
+            onWidget: (widget) => {
+              patchBotMsg((m) => ({ ...m, widgets: [...(m.widgets ?? []), widget] }));
+            },
+            onDashboardActions: (actions, followUps) => {
+              patchBotMsg((m) => ({
+                ...m,
+                structuredActions: actions,
+                followUps,
+              }));
+            },
+            onStateFilters: (snapshot) => {
+              applyChatFiltersToStore(snapshot.filters, Boolean(snapshot.reset));
+            },
+            onMetadata: (meta) => {
+              patchBotMsg((m) => ({
+                ...m,
+                traceId: meta.trace_id,
+                model: meta.model,
+                latencyMs: meta.latency_ms,
+                tools_used: meta.tools_used?.length ? meta.tools_used : m.tools_used,
+              }));
+            },
+            onError: (err) => {
+              const { kind, message } = classifyChatError(err);
+              setLastFailedPrompt(text);
+              setMessages((prev) => {
+                const cleaned = prev.filter(
+                  (m) => !(m.id === botMsgId && !m.content.trim() && !(m.toolSteps?.length)),
+                );
+                return [
+                  ...cleaned.map((m) => (m.id === botMsgId ? { ...m, isStreaming: false } : m)),
+                  {
+                    id: `error-${Date.now()}`,
+                    role: 'assistant',
+                    content: message,
+                    isError: true,
+                    errorKind: kind,
+                  },
+                ];
+              });
+              announce(message);
+              setIsLoading(false);
+            },
+            onFinish: () => {
+              patchBotMsg((m) => ({ ...m, isStreaming: false }));
+              setFreshBotMsgId(botMsgId);
+              setIsLoading(false);
+              announce('SteamBot respondeu.');
+            },
+          },
           controller.signal,
         );
-        const botMsgId = `assistant-${Date.now()}`;
-        setFreshBotMsgId(botMsgId);
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: botMsgId,
-            role: 'assistant',
-            content: response.reply,
-            tools_used: response.tools_used,
-            context_label: contextSummary,
-          },
-        ]);
-        announce('SteamBot respondeu.');
       } catch (err: unknown) {
         if (err instanceof Error && err.name === 'AbortError') {
+          patchBotMsg((m) => ({ ...m, isStreaming: false }));
           return;
         }
         const { kind, message } = classifyChatError(err);
         setLastFailedPrompt(text);
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: `error-${Date.now()}`,
-            role: 'assistant',
-            content: message,
-            isError: true,
-            errorKind: kind,
-          },
-        ]);
+        setMessages((prev) => {
+          const cleaned = prev.filter(
+            (m) => !(m.id === botMsgId && !m.content.trim() && !(m.toolSteps?.length)),
+          );
+          return [
+            ...cleaned.map((m) => (m.id === botMsgId ? { ...m, isStreaming: false } : m)),
+            {
+              id: `error-${Date.now()}`,
+              role: 'assistant',
+              content: message,
+              isError: true,
+              errorKind: kind,
+            },
+          ];
+        });
         announce(message);
       } finally {
         abortControllerRef.current = null;
@@ -1485,20 +1543,6 @@ export function ChatIsland() {
     }
   };
 
-  const sqlTickerLines = useMemo(
-    () => buildSqlTickerLines(filters, sliceTotal),
-    [filters, sliceTotal],
-  );
-  const tickerIdx = Math.floor(loadingElapsedMs / 1300) % sqlTickerLines.length;
-
-  const thinkingStage = loadingElapsedMs < 2200 ? 0 : loadingElapsedMs < 5500 ? 1 : 2;
-  const sliceLabel = sliceTotal !== null ? `sobre ${formatRowCount(sliceTotal)}` : 'sobre o recorte ativo';
-  const stageText =
-    thinkingStage === 0
-      ? '1/3 Lendo filtros ativos e preparando consulta SQL...'
-      : thinkingStage === 1
-      ? `2/3 Executando agregações no SQLite ${sliceLabel}...`
-      : '3/3 Sintetizando análise estatística no modelo...';
   const isSuggestionsOpen = (messages.length === 1 && !isLoading) || showSuggestions;
 
   return (
@@ -1588,7 +1632,7 @@ export function ChatIsland() {
                     <h2 id={titleId} className="chat-title truncate">
                       SteamBot-9000
                     </h2>
-                    <span className="chat-badge-model hidden sm:inline">SQL + IA</span>
+                    <span className="chat-badge-model hidden sm:inline">MCP · AG-UI</span>
                   </div>
                   <p className="chat-subtitle" title={headerSubtitle}>
                     {headerSubtitle}
@@ -1727,10 +1771,15 @@ export function ChatIsland() {
                 }
 
                 const isLastAssistant = idx === messages.length - 1 && item.role === 'assistant';
+                const hasStructuredActions = (item.structuredActions?.length ?? 0) > 0;
                 const copilotActions =
-                  item.id !== 'welcome' && !item.isError
+                  item.id !== 'welcome' && !item.isError && !item.isStreaming && !hasStructuredActions
                     ? extractFilterActions(item.content, metrics?.games ?? [])
                     : [];
+                const showInitialSpinner =
+                  Boolean(item.isStreaming) &&
+                  !item.content.trim() &&
+                  (item.toolSteps?.length ?? 0) === 0;
 
                 return (
                   <div
@@ -1739,9 +1788,57 @@ export function ChatIsland() {
                     className={`chat-msg-row chat-msg-row-bot ${item.id !== 'welcome' ? 'chat-msg-enter' : ''}`}
                   >
                     <div className="chat-bubble chat-bubble-bot">
-                      {renderMessageContent(item.content, item.id === freshBotMsgId && !reducedMotion)}
+                      {item.toolSteps && item.toolSteps.length > 0 && (
+                        <ToolExecutionTimeline
+                          steps={item.toolSteps}
+                          isStreaming={Boolean(item.isStreaming)}
+                          elapsedMs={loadingElapsedMs}
+                        />
+                      )}
 
-                      {/* Chips de Co-piloto Bidirecional: Aplicar no Painel */}
+                      {showInitialSpinner && (
+                        <div className="chat-loading-top">
+                          <div className="chat-matrix" aria-hidden="true">
+                            {Array.from({ length: 16 }).map((_, cellIdx) => {
+                              const isGap = cellIdx === 0 || cellIdx === 3 || cellIdx === 12 || cellIdx === 15;
+                              return (
+                                <i
+                                  key={cellIdx}
+                                  className={isGap ? 'is-gap' : undefined}
+                                  style={
+                                    !isGap
+                                      ? ({ '--d': (cellIdx % 4) * 140 + Math.floor(cellIdx / 4) * 45 } as React.CSSProperties)
+                                      : undefined
+                                  }
+                                />
+                              );
+                            })}
+                          </div>
+                          <div className="chat-thinking-stage-wrap">
+                            <span className="chat-thinking-shimmer">
+                              Conectando ao agente MCP...
+                            </span>
+                          </div>
+                          <span className="chat-loading-timer" aria-hidden="true">
+                            {(loadingElapsedMs / 1000).toFixed(1)}s
+                          </span>
+                        </div>
+                      )}
+
+                      {item.content && renderMessageContent(item.content, item.id === freshBotMsgId && !reducedMotion)}
+
+                      {item.widgets && item.widgets.length > 0 && (
+                        <GenUIWidgetList widgets={item.widgets} />
+                      )}
+
+                      {!item.isStreaming && hasStructuredActions && item.structuredActions && (
+                        <StructuredFilterChips
+                          actions={item.structuredActions}
+                          currentFilters={filters}
+                        />
+                      )}
+
+                      {/* Fallback regex para modelos gratuitos que não chamarem propose_dashboard_actions */}
                       {copilotActions.length > 0 && (
                         <div className="chat-copilot-actions" role="group" aria-label="Ações de filtro sugeridas">
                           <span className="text-[12px] leading-[16px] text-[var(--secondary)] flex items-center gap-1 mr-1">
@@ -1777,8 +1874,16 @@ export function ChatIsland() {
                         </div>
                       )}
 
-                      {/* Metadados: recorte, ferramentas consultadas e botão de copiar Markdown */}
-                      {item.id !== 'welcome' && (
+                      {isLastAssistant && !isLoading && !item.isStreaming && item.followUps && item.followUps.length > 0 && (
+                        <FollowUpChips
+                          followUps={item.followUps}
+                          disabled={isLoading}
+                          onSelect={(q) => void handleSendMessage(q)}
+                        />
+                      )}
+
+                      {/* Metadados: recorte, ferramentas consultadas, feedback e copiar Markdown */}
+                      {item.id !== 'welcome' && !item.isStreaming && (
                         <div className="chat-msg-meta" aria-label="Metadados da resposta">
                           {item.context_label && (
                             <span className="chat-meta-context" title={`Recorte consultado: ${item.context_label}`}>
@@ -1794,86 +1899,46 @@ export function ChatIsland() {
                               ))}
                             </div>
                           )}
-                          <button
-                            type="button"
-                            onClick={() => {
-                              void navigator.clipboard.writeText(item.content);
-                              setCopiedMsgId(item.id);
-                              setTimeout(() => {
-                                setCopiedMsgId((prev) => (prev === item.id ? null : prev));
-                              }, 2000);
+                          <FeedbackControls
+                            traceId={item.traceId}
+                            feedback={item.feedback}
+                            onVote={(score) => {
+                              if (item.traceId) {
+                                handleFeedbackVote(item.id, item.traceId, score);
+                              }
                             }}
-                            className={`chat-copy-btn ${copiedMsgId === item.id ? 'is-copied' : ''}`}
-                            title="Copiar resposta como Markdown"
-                            aria-label="Copiar resposta como Markdown"
-                          >
-                            <span className="chat-icon-swap" data-state={copiedMsgId === item.id ? 'b' : 'a'}>
-                              <span className="chat-icon-slot" data-icon="a">
-                                <RailIcon icon={Copy} className="w-3.5 h-3.5" />
+                          />
+                          {item.content && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                void navigator.clipboard.writeText(item.content);
+                                setCopiedMsgId(item.id);
+                                setTimeout(() => {
+                                  setCopiedMsgId((prev) => (prev === item.id ? null : prev));
+                                }, 2000);
+                              }}
+                              className={`chat-copy-btn ${copiedMsgId === item.id ? 'is-copied' : ''}`}
+                              title="Copiar resposta como Markdown"
+                              aria-label="Copiar resposta como Markdown"
+                            >
+                              <span className="chat-icon-swap" data-state={copiedMsgId === item.id ? 'b' : 'a'}>
+                                <span className="chat-icon-slot" data-icon="a">
+                                  <RailIcon icon={Copy} className="w-3.5 h-3.5" />
+                                </span>
+                                <span className="chat-icon-slot" data-icon="b">
+                                  <RailIcon icon={Check} className="w-3.5 h-3.5" />
+                                </span>
                               </span>
-                              <span className="chat-icon-slot" data-icon="b">
-                                <RailIcon icon={Check} className="w-3.5 h-3.5" />
-                              </span>
-                            </span>
-                            <span>{copiedMsgId === item.id ? 'Copiado' : 'Copiar'}</span>
-                          </button>
+                              <span>{copiedMsgId === item.id ? 'Copiado' : 'Copiar'}</span>
+                            </button>
+                          )}
                         </div>
                       )}
                     </div>
                   </div>
                 );
               })}
-
-              {/* Indicador de carregamento (o anúncio para leitores de tela vem da região viva) */}
-              {isLoading && (
-                <div className="chat-msg-row chat-msg-row-bot chat-msg-enter">
-                  <div className="chat-loading">
-                    <div className="chat-loading-top">
-                      <div className="chat-matrix" aria-hidden="true">
-                        {Array.from({ length: 16 }).map((_, idx) => {
-                          const isGap = idx === 0 || idx === 3 || idx === 12 || idx === 15;
-                          return (
-                            <i
-                              key={idx}
-                              className={isGap ? 'is-gap' : undefined}
-                              style={
-                                !isGap
-                                  ? ({ '--d': (idx % 4) * 140 + Math.floor(idx / 4) * 45 } as React.CSSProperties)
-                                  : undefined
-                              }
-                            />
-                          );
-                        })}
-                      </div>
-                      <div className="chat-thinking-stage-wrap">
-                        <span
-                          key={thinkingStage}
-                          className="chat-thinking-shimmer chat-stage-enter"
-                        >
-                          {stageText}
-                        </span>
-                      </div>
-                      <span className="chat-loading-timer" aria-hidden="true">
-                        {(loadingElapsedMs / 1000).toFixed(1)}s
-                      </span>
-                    </div>
-                    <div className="chat-step-track" aria-hidden="true">
-                      {[0, 1, 2].map((step) => (
-                        <span
-                          key={step}
-                          className={`chat-step-seg ${step <= thinkingStage ? 'is-active' : ''} ${step === thinkingStage ? 'is-current' : ''}`}
-                        />
-                      ))}
-                    </div>
-                    <div className="chat-sql-ticker" aria-hidden="true">
-                      <RailIcon icon={Database} className="w-3 h-3 text-[var(--accent)] flex-none" />
-                      <code key={tickerIdx} className="chat-sql-ticker-code chat-stage-enter">
-                        {sqlTickerLines[tickerIdx]}
-                      </code>
-                    </div>
-                  </div>
-                </div>
-              )}
 
               <div ref={messagesEndRef} aria-hidden="true" />
             </div>

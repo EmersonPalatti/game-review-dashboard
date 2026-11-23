@@ -48,10 +48,12 @@ O painel foi projetado para permitir que analistas, engenheiros e recrutadores t
   - *Janela < 1 h*: avaliações precoces (aprovação cai para 49,6%).
   - *Acesso antecipado*: impacto de jogos em desenvolvimento (69,8% vs. 83,8% no lançamento).
   - *Economia da insatisfação*: avaliações negativas (recebem 2,8x mais votos úteis).
-- **Assistente Conversacional de IA (SteamBot-9000)**: Agente analítico sênior com inteligência contextual e humor técnico empírico integrado diretamente ao dashboard (`ChatIsland`, `client:load`) e acoplado ao endpoint `POST /api/chat`:
-  - **Persona e Inteligência de Domínio**: Configurado como um Analista de Dados Sênior da Steam com humor seco e empírico, explorando as 1M de avaliações, a regra dos 119 minutos da Valve, bugs de Early Access e o backlog da Summer Sale — sem clichês infantis de robô ("Beep boop" ou saudações genéricas).
-  - **Tool-calling em tempo real e Telemetria em 3 Estágios**: O agente consome o recorte exato de filtros ativos no dashboard e invoca dinamicamente ferramentas de dados (`get_metrics`, `get_charts`, `get_reviews_sample`). Durante a consulta, exibe telemetria transparente com **4×4 Matrix Dot Scanner** (`scan` mineral), **barra de progresso segmentada em 3 passos** (`1/3 Lendo filtros`, `2/3 Agregações no SQLite`, `3/3 Síntese estatística`) e **SQL Live Ticker** em tempo real com numerais tabulares em `IBM Plex Mono`.
-  - **Co-piloto Analítico Bidirecional**: Detecta jogos, status de Early Access, sentimento e faixas de horas nas respostas do bot e oferece chips acionáveis que aplicam ou removem filtros no dashboard em tempo real via Nanostores, sincronizados com a URL.
+- **Assistente Conversacional de IA (SteamBot-9000 v2)**: Agente analítico sênior integrado diretamente ao dashboard (`ChatIsland`, `client:load`) com **LangChain v1** (`create_agent` + stack de middlewares `ModelFallbackMiddleware`, `ModelRetryMiddleware`, `ToolCallLimitMiddleware`, `ToolErrorMiddleware`, `SummarizationMiddleware`), **OpenRouter (cadeia gratuita com fallback)**, **FastMCP + `langchain-mcp-adapters`**, **Busca Híbrida (`FTS5` + `sqlite-vec` + `FastEmbed`)**, **AG-UI 1.0 Streaming + Generative UI** (`POST /api/chat/stream`), **Langfuse v5** (`POST /api/chat/feedback`) e **DeepEval**:
+  - **Persona e Inteligência de Domínio**: Configurado como um Analista de Dados Sênior da Steam com humor seco e empírico, explorando as 1M de avaliações, a regra dos 119 minutos da Valve, bugs de Early Access e o backlog da Summer Sale — sem clichês infantis de robô.
+  - **7 Ferramentas Analíticas via FastMCP (`backend/app/mcp_server.py`)**: `resolve_game` (catálogo completo dos 59 jogos e todos os idiomas), `get_metrics`, `get_charts`, `get_reviews_sample`, `get_engagement_stats` (votos úteis/engraçados e horas por sentimento), `compare_slices` (comparativo A vs. B com deltas em p.p.) e `search_reviews_hybrid` (fusão RRF de `FTS5` no corpus completo com `sqlite-vec` + `FastEmbed`), além da tool de ações de UI (`propose_dashboard_actions`).
+  - **Protocolo AG-UI 1.0, Streaming Real & Generative UI**: O backend emite eventos padronizados do protocolo **AG-UI** via SSE (`POST /api/chat/stream`), consumidos no frontend por `HttpAgent` (`@ag-ui/client`). Exibe linha do tempo real de execuções MCP (com tempos em ms), streaming token-a-token e cartões visuais inline (comparativo A vs. B, barras de engajamento, mini-gráficos ECharts reativos ao tema e evidências de busca híbrida).
+  - **Co-piloto Bidirecional Tipado + Desfazer**: Sugere filtros estruturados para qualquer um dos 59 jogos, idiomas, datas e faixas de tempo, com botão de desfazer e até 3 perguntas sugeridas de continuação.
+  - **Observabilidade & Evals (Langfuse v5 + DeepEval)**: Rastreamento opcional de latência/tokens/feedback 👍/👎 via Langfuse v5 (`LANGFUSE_PUBLIC_KEY` / `LANGFUSE_SECRET_KEY`) e suíte de fidelidade empírica com **DeepEval** (`pytest -m eval`).
   - **Tabelas GFM e Modo Amplo de Inspeção (680px)**: Suporte completo a tabelas GitHub Flavored Markdown com colunas numéricas alinhadas à direita em `IBM Plex Mono` com `tabular-nums` e botão de expansão do drawer (`440px` ↔ `680px`) para leitura comparativa confortável.
   - **Unified Command Composer (Padrão Linear / Claude)**: Caixa de digitação unificada com foco compartilhado `:focus-within`, `<textarea>` autoexpansível (com limite seguro), dicas de atalho (`Enter` envia, `Shift+Enter` quebra linha, `↑` recupera o último prompt) e botão Enviar/Parar com estado ativo mineral e controle de interrupção (`AbortController`).
   - **Coreografia de Vida Cinética (`transitions-dev`)**:
@@ -122,7 +124,9 @@ O frontend adota uma abordagem híbrida moderna de alto desempenho:
 - `GET /api/charts`: Devolve simultaneamente a distribuição mensal (`timeline`), a taxa de aprovação por faixa de horas jogadas (`playtime_buckets`), o top 10 de jogos por volume (`game_rankings`) e os idiomas mais frequentes ordenados por aprovação (`language_rankings`). Ao filtrar um único mês (`date_from` e `date_to` no mesmo mês), a série mensal preserva a curva completa para destacar o mês selecionado no gráfico sem colapsar a 1 ponto, enquanto os demais painéis são filtrados pelo mês.
 - `GET /api/facets`: Contagens por jogo (`games`) e por idioma (`languages`) no recorte atual, usadas pelos seletores da barra lateral e pelos rankings.
 - `GET /api/reviews`: Retorna a lista paginada de avaliações com suporte a todos os filtros dimensionais e temporais, ordenação por data (`created_at`), horas de jogo (`playtime_hours`) ou votos úteis (`votes_helpful`), além de paginação via `limit` (até 100) e `offset`.
-- `POST /api/chat`: Endpoint conversacional inteligente alimentado pelo agente LangChain (`SteamBot-9000`). Recebe a mensagem do usuário, histórico e o recorte atual de filtros. O robô aciona dinamicamente as ferramentas analíticas do backend (`get_metrics`, `get_charts`, `get_reviews_sample`) e devolve a resposta formatada em Markdown com tabelas GFM, metadados de execução, suporte a cancelamento de stream/geração via `AbortSignal` e lista de ferramentas utilizadas (`tools_used`).
+- `POST /api/chat`: Endpoint conversacional compatível alimentado pelo agente LangChain v1 (`SteamBot-9000`) + FastMCP (`resolve_game`, `get_metrics`, `get_charts`, `get_reviews_sample`, `get_engagement_stats`, `compare_slices`, `search_reviews_hybrid`, `propose_dashboard_actions`).
+- `POST /api/chat/stream`: Endpoint de streaming via protocolo **AG-UI 1.0** (`text/event-stream`) emitindo eventos de execução de ferramentas MCP, widgets Generative UI (`genui_widget`), ações estruturadas de filtro (`dashboard_actions`), texto em tempo real e metadados de trace (`trace_id`).
+- `POST /api/chat/feedback`: Registra avaliação de qualidade (👍/👎) vinculada ao `trace_id` no **Langfuse v5** quando habilitado.
 - `GET /health`: Health check simples para monitoramento do serviço.
 - `GET /docs`: Documentação interativa Swagger/OpenAPI gerada automaticamente pelo FastAPI.
 
@@ -164,19 +168,28 @@ game-review-dashboard/
 │   └── showcase-poster.png               # Pôster estático de apresentação
 ├── backend/                              # API FastAPI e camada de dados
 │   ├── app/
+│   │   ├── analytics.py                  # Cópia colunar em memória (DuckDB) carregada de reviews.parquet
+│   │   ├── analytics_ext.py              # Catálogo completo (59 jogos), engajamento e comparativo A vs B
 │   │   ├── baseline.json                 # Agregados pré-calculados da base completa (resposta sem filtros)
-│   │   ├── chat.py                       # Agente SteamBot-9000 (LangChain + OpenRouter) e ferramentas
+│   │   ├── chat.py                       # Agente LangChain v1 + Middlewares + Streaming AG-UI + Fallback Free
+│   │   ├── config.py                     # Leitura de variáveis de ambiente e .env
 │   │   ├── database.py                   # Engine SQLAlchemy: SQLite local ou PostgreSQL via DATABASE_URL
-│   │   ├── main.py                       # Rotas da API, CORS e cabeçalhos Cache-Control
+│   │   ├── main.py                       # Rotas da API, streaming AG-UI (/api/chat/stream), feedback e CORS
+│   │   ├── mcp_server.py                 # Servidor FastMCP (7 ferramentas analíticas: stdio / streamable-http / in-memory)
 │   │   ├── models.py                     # Modelo relacional ORM da tabela reviews
-│   │   ├── queries.py                    # Agregações SQL, filtragem paramétrica e cache LRU
-│   │   ├── schemas.py                    # Schemas de validação Pydantic
+│   │   ├── observability.py              # Integração opcional Langfuse v5 (traces e scores 👍/👎)
+│   │   ├── queries.py                    # Agregações DuckDB/SQL, filtragem paramétrica e cache LRU
+│   │   ├── reviews.parquet               # Snapshot colunar versionado para o DuckDB em memória (~12 MB)
+│   │   ├── schemas.py                    # Schemas de validação Pydantic (incl. widgets e ações tipadas)
+│   │   ├── search_index.py               # Busca híbrida RRF (FTS5 BM25 + sqlite-vec + FastEmbed) com fallback SQL
 │   │   ├── seed.py                       # Pipeline de ingestão e higienização dos CSVs
 │   │   └── transform.py                  # Regras de limpeza, underflow e buckets
 │   ├── data/
-│   │   └── reviews.db                    # Banco SQLite higienizado (gerado pelo seed, fora do git)
+│   │   ├── reviews.db                    # Banco SQLite higienizado (gerado pelo seed, fora do git)
+│   │   └── search_index.db               # Índice sidecar FTS5 + sqlite-vec (gerado por build_search_index.py)
 │   └── tests/
-│       └── test_api.py                   # Testes automatizados da API (Pytest + TestClient)
+│       ├── evals/test_chat_evals.py      # Suíte DeepEval de fidelidade empírica (pytest -m eval)
+│       └── test_api.py                   # Testes automatizados da API, MCP, busca híbrida e AG-UI
 ├── data/                                 # Partições originais do Kaggle (fora do git)
 │   ├── review_info.csv                   # Texto, votos e recomendação (~364 MB)
 │   ├── game_info.csv                     # Dados dos jogos (app_id e app_name) (~28 MB)
@@ -211,6 +224,7 @@ game-review-dashboard/
 │   ├── astro.config.mjs                  # Astro com React, Tailwind e proxy /api → :8000
 │   └── package.json                      # Dependências do frontend
 ├── scripts/
+│   ├── build_search_index.py             # Gera backend/data/search_index.db (FTS5 + sqlite-vec + FastEmbed)
 │   ├── migrate_sqlite_to_pg.py           # Migração do SQLite local para PostgreSQL / Supabase
 │   ├── export_analytics_parquet.py       # Snapshot Parquet que a API carrega no DuckDB
 │   ├── start-jupyter.ps1                 # Inicialização do JupyterLab no Windows PowerShell
@@ -405,10 +419,31 @@ export OPENROUTER_API_KEY="sk-or-v1-..."
 # export OPENROUTER_MODEL="openrouter/nvidia/nemotron-3-ultra-550b-a55b:free"
 ```
 
-**Ou via arquivo `.env` na raiz do repositório:**
+**Ou via arquivo `.env` na raiz do repositório (veja `.env.example`):**
 ```dotenv
 OPENROUTER_API_KEY=sk-or-v1-...
-OPENROUTER_MODEL=openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
+OPENROUTER_MODEL=nvidia/nemotron-3.5-super-vl:free
+OPENROUTER_FALLBACK_MODELS=inclusionai/ling-3.2-flash:free,nvidia/nemotron-3.5-lightning:free,openrouter/free
+# Opcional — Langfuse v5 Observability:
+# LANGFUSE_PUBLIC_KEY=pk-lf-...
+# LANGFUSE_SECRET_KEY=sk-lf-...
+# LANGFUSE_HOST=https://cloud.langfuse.com
+```
+
+#### Índice de Busca Híbrida (`FTS5` + `sqlite-vec`), Servidor MCP Standalone e Evals (`DeepEval`)
+
+```bash
+# 1. Construir índice sidecar híbrido (998k reviews no FTS5 + 12k estratificadas em sqlite-vec):
+uv run python scripts/build_search_index.py --vec-limit 12000
+
+# 2. (Opcional) Subir o servidor MCP isolado para Claude Desktop, Cursor ou T3 Code:
+uv run python -m backend.app.mcp_server --transport stdio
+# ou HTTP streamable:
+uv run python -m backend.app.mcp_server --transport streamable-http --port 8001
+
+# 3. Rodar testes offline (padrão) e avaliações DeepEval ao vivo (-m eval):
+uv run pytest -v
+uv run pytest -m eval -v
 ```
 
 > [!NOTE]
@@ -540,8 +575,13 @@ npm run render:overview
 ### Backend & Inteligência Artificial
 - **[Python 3.14](https://www.python.org/)**
 - **[FastAPI](https://fastapi.tiangolo.com/)**: criação de APIs assíncronas de alta performance com validação automática via **Pydantic**.
-- **[LangChain & OpenRouter](https://openrouter.ai/)**: orquestração do agente autônomo **SteamBot-9000** com *tool-calling* em tempo real (`get_metrics`, `get_charts`, `get_reviews_sample`) e suporte a modelos de linguagem de ponta (`nvidia/nemotron-3-ultra-550b-a55b:free`).
-- **[SQLAlchemy 2](https://www.sqlalchemy.org/)**: modelagem ORM e construção de consultas SQL agregadas com suporte híbrido SQLite/PostgreSQL.
+- **[LangChain v1 + OpenRouter (Free Fallback Chain)](https://openrouter.ai/)**: orquestração do agente autônomo **SteamBot-9000** com `create_agent`, middlewares de fallback/retry/orçamento/sumarização e cadeia gratuita (`nvidia/nemotron-3.5-super-vl:free` → `inclusionai/ling-3.2-flash:free` → `nvidia/nemotron-3.5-lightning:free` → `openrouter/free`).
+- **[FastMCP v3 & `langchain-mcp-adapters`](https://gofastmcp.com/)**: exposição padronizada das 7 ferramentas analíticas via Model Context Protocol (`stdio`, `streamable-http` e cliente in-memory).
+- **[Busca Híbrida (`FTS5` + `sqlite-vec` + `FastEmbed`)](https://github.com/asg017/sqlite-vec)**: busca textual BM25 em ~998 mil reviews combinada via RRF com embeddings multilíngues (`paraphrase-multilingual-MiniLM-L12-v2`).
+- **[Protocolo AG-UI 1.0 (`ag-ui-protocol` + `@ag-ui/client`)](https://docs.ag-ui.com/)**: streaming bidirecional de eventos de execução, Generative UI inline e sincronização de filtros.
+- **[Langfuse v5](https://langfuse.com/) & [DeepEval](https://deepeval.com/)**: observabilidade de traces/feedback 👍/👎 e suíte automatizada de fidelidade numérica (`pytest -m eval`).
+- **[DuckDB (in-memory)](https://duckdb.org/)**: agregações analíticas rápidas sobre `reviews.parquet` (`analytics.py`).
+- **[SQLAlchemy 2](https://www.sqlalchemy.org/)**: modelagem ORM e leitura dos textos (`excerpt`) e estatísticas complementares em SQLite/PostgreSQL.
 - **[PostgreSQL / Supabase](https://supabase.com/)**: banco de dados em produção na nuvem com índices otimizados para 1.000.000 de avaliações.
 - **[SQLite](https://www.sqlite.org/)**: armazenamento local transacional e consultas indexadas para prototipação e testes.
 - **[uv](https://docs.astral.sh/uv/)**: gerenciamento moderno de dependências e ambientes virtuais.

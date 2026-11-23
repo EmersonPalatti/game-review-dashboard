@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel
 
@@ -122,8 +122,46 @@ class ChatRequest(BaseModel):
     history: list[ChatHistoryItem] = []
 
 
+class DashboardFilterAction(BaseModel):
+    id: str
+    label: str
+    filters: ReviewFilters = ReviewFilters()
+    reset: bool = False
+    reason: str | None = None
+
+
+ChatWidgetType = Literal[
+    "comparison",
+    "engagement",
+    "playtime_chart",
+    "language_chart",
+    "review_evidence",
+]
+
+
+class ChatWidget(BaseModel):
+    type: ChatWidgetType
+    title: str
+    data: dict[str, Any]
+
+
 class ChatResponse(BaseModel):
     reply: str
     model: str
     tools_used: list[str] = []
+    trace_id: str | None = None
+    suggested_actions: list[DashboardFilterAction] = []
+    follow_ups: list[str] = []
+    widgets: list[ChatWidget] = []
 
+
+class ChatFeedbackRequest(BaseModel):
+    trace_id: str
+    score: Literal[0, 1]
+    comment: str | None = None
+
+
+class ChatFeedbackResponse(BaseModel):
+    recorded: bool
+    traced: bool
+    trace_id: str
