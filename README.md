@@ -1,7 +1,7 @@
 # Steam Reviews Dashboard & Análise Exploratória (1M de Reviews)
 
 > 🚀 **Deploy em Produção (Live Demo):** **[game-review-dashboard-sage.vercel.app](https://game-review-dashboard-sage.vercel.app/)**  
-> ⚡ *Frontend estático global na **Vercel** (Astro + React Islands), API de agregação no **Render** (FastAPI com LRU Cache e Baseline em memória) e banco **PostgreSQL** gerenciado no **Supabase** (1.000.000 de avaliações).*
+> ⚡ *Frontend estático global na **Vercel** (Astro + React Islands), API de agregação no **Render** (FastAPI com DuckDB em memória, LRU Cache e Baseline) e banco **PostgreSQL** gerenciado no **Supabase** (1.000.000 de avaliações).*
 
 Painel analítico interativo e estudo de dados sobre **1.000.000 de avaliações da Steam** (março de 2013 a janeiro de 2021), derivado do [Game Reviews Dataset no Kaggle](https://www.kaggle.com/datasets/sridharstreaks/game-reviews-dataset). A base cobre **59 jogos** e **912.553 autores únicos**.
 
@@ -168,6 +168,7 @@ game-review-dashboard/
 │   └── showcase-poster.png               # Pôster estático de apresentação
 ├── backend/                              # API FastAPI e camada de dados
 │   ├── app/
+│   │   ├── analytics.py                  # Cópia colunar em memória (DuckDB) carregada de reviews.parquet
 │   │   ├── analytics_ext.py              # Catálogo completo (59 jogos), engajamento e comparativo A vs B
 │   │   ├── baseline.json                 # Agregados pré-calculados da base completa (resposta sem filtros)
 │   │   ├── chat.py                       # Agente LangChain v1 + Middlewares + Streaming AG-UI + Fallback Free
@@ -177,7 +178,8 @@ game-review-dashboard/
 │   │   ├── mcp_server.py                 # Servidor FastMCP (7 ferramentas analíticas: stdio / streamable-http / in-memory)
 │   │   ├── models.py                     # Modelo relacional ORM da tabela reviews
 │   │   ├── observability.py              # Integração opcional Langfuse v5 (traces e scores 👍/👎)
-│   │   ├── queries.py                    # Agregações SQL, filtragem paramétrica e cache LRU
+│   │   ├── queries.py                    # Agregações DuckDB/SQL, filtragem paramétrica e cache LRU
+│   │   ├── reviews.parquet               # Snapshot colunar versionado para o DuckDB em memória (~12 MB)
 │   │   ├── schemas.py                    # Schemas de validação Pydantic (incl. widgets e ações tipadas)
 │   │   ├── search_index.py               # Busca híbrida RRF (FTS5 BM25 + sqlite-vec + FastEmbed) com fallback SQL
 │   │   ├── seed.py                       # Pipeline de ingestão e higienização dos CSVs
@@ -224,6 +226,7 @@ game-review-dashboard/
 ├── scripts/
 │   ├── build_search_index.py             # Gera backend/data/search_index.db (FTS5 + sqlite-vec + FastEmbed)
 │   ├── migrate_sqlite_to_pg.py           # Migração do SQLite local para PostgreSQL / Supabase
+│   ├── export_analytics_parquet.py       # Snapshot Parquet que a API carrega no DuckDB
 │   ├── start-jupyter.ps1                 # Inicialização do JupyterLab no Windows PowerShell
 │   └── start-jupyter.sh                  # Inicialização do JupyterLab no Linux / macOS
 ├── video/                                # Pipeline de captura determinística e renderização Remotion
@@ -461,6 +464,15 @@ uv run python scripts/migrate_sqlite_to_pg.py --target-url postgresql://user:pas
 # ou defina TARGET_DATABASE_URL / DATABASE_URL no ambiente
 ```
 
+As agregações rodam num DuckDB em memória carregado de `backend/app/reviews.parquet` (cerca de 12 MB, versionado). O Postgres serve só o texto das avaliações, buscado por chave primária. Sempre que o acervo mudar, gere o snapshot de novo:
+
+```bash
+uv run python scripts/export_analytics_parquet.py                       # a partir do SQLite local
+uv run python scripts/export_analytics_parquet.py --source-url postgresql://user:pass@host:5432/postgres
+```
+
+Variáveis opcionais: `ANALYTICS_PARQUET` (caminho do snapshot), `ANALYTICS_THREADS` (padrão `1`) e `ANALYTICS_MEMORY_LIMIT` (padrão `200MB`).
+
 #### Iniciar o Servidor FastAPI
 Inicie o servidor da API com hot-reload:
 
@@ -568,7 +580,8 @@ npm run render:overview
 - **[Busca Híbrida (`FTS5` + `sqlite-vec` + `FastEmbed`)](https://github.com/asg017/sqlite-vec)**: busca textual BM25 em ~998 mil reviews combinada via RRF com embeddings multilíngues (`paraphrase-multilingual-MiniLM-L12-v2`).
 - **[Protocolo AG-UI 1.0 (`ag-ui-protocol` + `@ag-ui/client`)](https://docs.ag-ui.com/)**: streaming bidirecional de eventos de execução, Generative UI inline e sincronização de filtros.
 - **[Langfuse v5](https://langfuse.com/) & [DeepEval](https://deepeval.com/)**: observabilidade de traces/feedback 👍/👎 e suíte automatizada de fidelidade numérica (`pytest -m eval`).
-- **[SQLAlchemy 2](https://www.sqlalchemy.org/)**: modelagem ORM e construção de consultas SQL agregadas com suporte híbrido SQLite/PostgreSQL.
+- **[DuckDB (in-memory)](https://duckdb.org/)**: agregações analíticas rápidas sobre `reviews.parquet` (`analytics.py`).
+- **[SQLAlchemy 2](https://www.sqlalchemy.org/)**: modelagem ORM e leitura dos textos (`excerpt`) e estatísticas complementares em SQLite/PostgreSQL.
 - **[PostgreSQL / Supabase](https://supabase.com/)**: banco de dados em produção na nuvem com índices otimizados para 1.000.000 de avaliações.
 - **[SQLite](https://www.sqlite.org/)**: armazenamento local transacional e consultas indexadas para prototipação e testes.
 - **[uv](https://docs.astral.sh/uv/)**: gerenciamento moderno de dependências e ambientes virtuais.

@@ -6,10 +6,17 @@ from pathlib import Path
 from threading import Lock
 from typing import Generic, TypeVar
 
-from fastapi import HTTPException
-from sqlalchemy import and_, case, func, select
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from backend.app.analytics import (
+    AnalyticsStore,
+    date_bounds,
+    get_store,
+    playtime_sql,
+    reset_store,
+    where_clause,
+)
 from backend.app.models import Review
 from backend.app.schemas import (
     ChartsResponse,
@@ -33,6 +40,7 @@ from backend.app.transform import PLAYTIME_BUCKETS, PLAYTIME_LABELS
 
 
 def apply_filters(stmt, filters: ReviewFilters):
+    """Filtros em SQLAlchemy. As agregações usam `analytics.where_clause`, com a mesma semântica."""
     if filters.app_id is not None:
         stmt = stmt.where(Review.app_id == filters.app_id)
     if filters.language is not None:
@@ -52,31 +60,10 @@ def apply_filters(stmt, filters: ReviewFilters):
             stmt = stmt.where(Review.playtime_at_review >= low)
         if high is not None:
             stmt = stmt.where(Review.playtime_at_review < high)
-    if filters.date_from is not None:
-        try:
-            ts_from = int(
-                datetime.strptime(filters.date_from, "%Y-%m-%d")
-                .replace(tzinfo=timezone.utc)
-                .timestamp()
-            )
-        except ValueError as err:
-            raise HTTPException(
-                status_code=422,
-                detail="Data inválida. Use o formato AAAA-MM-DD.",
-            ) from err
+    ts_from, ts_to = date_bounds(filters)
+    if ts_from is not None:
         stmt = stmt.where(Review.timestamp_created >= ts_from)
-    if filters.date_to is not None:
-        try:
-            ts_to = int(
-                datetime.strptime(filters.date_to, "%Y-%m-%d")
-                .replace(hour=23, minute=59, second=59, tzinfo=timezone.utc)
-                .timestamp()
-            )
-        except ValueError as err:
-            raise HTTPException(
-                status_code=422,
-                detail="Data inválida. Use o formato AAAA-MM-DD.",
-            ) from err
+    if ts_to is not None:
         stmt = stmt.where(Review.timestamp_created <= ts_to)
     return stmt
 
@@ -162,12 +149,21 @@ def is_empty_filters(filters: ReviewFilters) -> bool:
     ])
 
 
-def clear_cache() -> None:
+_reviews_cache: LRUCache[ReviewListResponse] = LRUCache[ReviewListResponse](maxsize=256)
+
+
+def _clear_responses() -> None:
     global _facets
     _facets = None
     _metrics_cache.clear()
     _charts_cache.clear()
     _facets_cache.clear()
+    _reviews_cache.clear()
+
+
+def clear_cache() -> None:
+    _clear_responses()
+    reset_store()
 
 
 def warmup_caches(session: Session) -> None:
@@ -177,39 +173,34 @@ def warmup_caches(session: Session) -> None:
     facets(session, default_filters)
 
 
+def _store(session: Session) -> AnalyticsStore:
+    store, reloaded = get_store(session)
+    if reloaded:
+        # Respostas guardadas vieram de outra cópia (outro banco): descarta.
+        _clear_responses()
+    return store
+
+
 _facets: tuple[list[GameFacet], list[LanguageFacet]] | None = None
 
 
-def _global_facets(session: Session) -> tuple[list[GameFacet], list[LanguageFacet]]:
-    # Catálogo estável depois do seed. A primeira leitura paga o GROUP BY.
+def _global_facets(store: AnalyticsStore) -> tuple[list[GameFacet], list[LanguageFacet]]:
+    # Catálogo estável depois do seed: calcula uma vez por cópia carregada.
     global _facets
     if _facets is not None:
         return _facets
-    game_count = func.count().label("review_count")
-    game_rows = session.execute(
-        select(Review.app_id, Review.app_name, game_count)
-        .group_by(Review.app_id, Review.app_name)
-        .order_by(game_count.desc(), Review.app_id.asc())
-    ).all()
-    language_count = func.count().label("review_count")
-    language_rows = session.execute(
-        select(Review.language, language_count)
-        .group_by(Review.language)
-        .order_by(language_count.desc(), Review.language.asc())
-    ).all()
+    game_rows = store.query(
+        "SELECT r.app_id, g.app_name, count(*) AS n FROM reviews r "
+        "JOIN games g USING (app_id) GROUP BY r.app_id, g.app_name "
+        "ORDER BY n DESC, r.app_id ASC"
+    )
+    language_rows = store.query(
+        "SELECT language, count(*) AS n FROM reviews GROUP BY language "
+        "ORDER BY n DESC, language ASC"
+    )
     _facets = (
-        [
-            GameFacet(
-                app_id=row.app_id,
-                app_name=row.app_name,
-                review_count=int(row.review_count),
-            )
-            for row in game_rows
-        ],
-        [
-            LanguageFacet(language=row.language, review_count=int(row.review_count))
-            for row in language_rows
-        ],
+        [GameFacet(app_id=app_id, app_name=name, review_count=int(n)) for app_id, name, n in game_rows],
+        [LanguageFacet(language=language, review_count=int(n)) for language, n in language_rows],
     )
     return _facets
 
@@ -225,26 +216,15 @@ def _created_at(timestamp: int) -> str:
     return moment.strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
-def _to_item(row: Review) -> ReviewItem:
-    return ReviewItem(
-        review_id=row.review_id,
-        app_id=row.app_id,
-        app_name=row.app_name,
-        language=row.language,
-        recommended=bool(row.recommended),
-        votes_helpful=row.votes_helpful,
-        votes_funny=row.votes_funny,
-        comment_count=row.comment_count,
-        playtime_at_review_hours=_hours(row.playtime_at_review),
-        steam_purchase=bool(row.steam_purchase),
-        received_for_free=bool(row.received_for_free),
-        early_access=bool(row.early_access),
-        created_at=_created_at(row.timestamp_created),
-        excerpt=row.excerpt or "",
-    )
+def _rate(positive: int, total: int) -> float | None:
+    if total == 0:
+        return None
+    return positive / total
 
 
 def metrics(session: Session, filters: ReviewFilters) -> MetricsResponse:
+    where, params = where_clause(filters)  # valida datas antes de qualquer cache
+    store = _store(session)
     cache_key = _filter_cache_key(filters)
     cached = _metrics_cache.get(cache_key)
     if cached is not None:
@@ -257,42 +237,35 @@ def metrics(session: Session, filters: ReviewFilters) -> MetricsResponse:
             _metrics_cache.set(cache_key, result)
             return result
 
-    # Autor fica numa query separada: no mesmo SELECT o SQLite varre a tabela
-    # inteira e o COUNT DISTINCT de 1 milhão de contas leva cerca de 4 s.
-    recommended_count = func.coalesce(
-        func.sum(case((Review.recommended.is_(True), 1), else_=0)),
-        0,
-    )
-    totals = session.execute(
-        apply_filters(
-            select(
-                func.count().label("total_reviews"),
-                recommended_count.label("recommended_reviews"),
-                func.count(func.distinct(Review.app_id)).label("game_count"),
-            ),
-            filters,
-        )
-    ).one()
-    author_count = session.scalar(
-        apply_filters(
-            select(func.count(func.distinct(Review.author_steamid))),
-            filters,
-        )
-    )
-    total = int(totals.total_reviews or 0)
-    recommended = int(totals.recommended_reviews or 0)
-    rate = recommended / total if total else 0.0
-    games, languages = _global_facets(session)
+    total, recommended, game_count, author_count = store.query(
+        "SELECT count(*), count_if(recommended), "
+        "count(DISTINCT app_id), count(DISTINCT author_steamid) "
+        f"FROM reviews{where}",
+        params,
+    )[0]
+    total = int(total or 0)
+    recommended = int(recommended or 0)
+    games, languages = _global_facets(store)
     result = MetricsResponse(
         total_reviews=total,
-        recommendation_rate=rate,
-        game_count=int(totals.game_count or 0),
+        recommendation_rate=recommended / total if total else 0.0,
+        game_count=int(game_count or 0),
         author_count=int(author_count or 0),
         games=games,
         languages=languages,
     )
     _metrics_cache.set(cache_key, result)
     return result
+
+
+_SORT_SQL: dict[tuple[str, str], str] = {
+    ("votes_helpful", "desc"): "votes_helpful DESC, timestamp_created DESC, review_id DESC",
+    ("votes_helpful", "asc"): "votes_helpful ASC, timestamp_created DESC, review_id DESC",
+    ("playtime_hours", "desc"): "playtime_at_review DESC NULLS LAST, timestamp_created DESC, review_id DESC",
+    ("playtime_hours", "asc"): "playtime_at_review ASC NULLS LAST, timestamp_created DESC, review_id DESC",
+    ("created_at", "desc"): "timestamp_created DESC, review_id DESC",
+    ("created_at", "asc"): "timestamp_created ASC, review_id ASC",
+}
 
 
 def list_reviews(
@@ -303,52 +276,74 @@ def list_reviews(
     sort_by: ReviewSortBy = "created_at",
     sort_dir: SortDir = "desc",
 ) -> ReviewListResponse:
-    if sort_by == "votes_helpful":
-        primary = Review.votes_helpful.asc() if sort_dir == "asc" else Review.votes_helpful.desc()
-        order_clauses = [primary, Review.timestamp_created.desc(), Review.review_id.desc()]
-    elif sort_by == "playtime_hours":
-        nulls_last = case((Review.playtime_at_review.is_(None), 1), else_=0).asc()
-        primary = Review.playtime_at_review.asc() if sort_dir == "asc" else Review.playtime_at_review.desc()
-        order_clauses = [nulls_last, primary, Review.timestamp_created.desc(), Review.review_id.desc()]
-    else:
-        if sort_dir == "asc":
-            order_clauses = [Review.timestamp_created.asc(), Review.review_id.asc()]
-        else:
-            order_clauses = [Review.timestamp_created.desc(), Review.review_id.desc()]
+    where, params = where_clause(filters)
+    store = _store(session)
+    cache_key = (*_filter_cache_key(filters), limit, offset, sort_by, sort_dir)
+    cached = _reviews_cache.get(cache_key)
+    if cached is not None:
+        return cached
 
-    filtered = apply_filters(select(Review), filters)
-    total = session.scalar(
-        apply_filters(select(func.count()).select_from(Review), filters)
+    order = _SORT_SQL.get((sort_by, sort_dir), _SORT_SQL[("created_at", "desc")])
+    total = store.query(f"SELECT count(*) FROM reviews{where}", params)[0][0]
+    rows = store.query(
+        "SELECT r.review_id, r.app_id, g.app_name, r.language, r.recommended, "
+        "r.votes_helpful, r.votes_funny, r.comment_count, r.playtime_at_review, "
+        "r.steam_purchase, r.received_for_free, r.early_access, r.timestamp_created "
+        f"FROM (SELECT * FROM reviews{where} ORDER BY {order} LIMIT ? OFFSET ?) r "
+        f"JOIN games g USING (app_id) ORDER BY {order}",
+        [*params, limit, offset],
     )
-    rows = session.scalars(
-        filtered.order_by(*order_clauses)
-        .limit(limit)
-        .offset(offset)
-    ).all()
-    return ReviewListResponse(
-        total=int(total or 0),
-        limit=limit,
-        offset=offset,
-        items=[_to_item(row) for row in rows],
-    )
-
-
-def _rate(positive: int, total: int) -> float | None:
-    if total == 0:
-        return None
-    return positive / total
-
-
-def _playtime_condition(low: int | None, high: int | None):
-    parts = [Review.playtime_at_review.is_not(None)]
-    if low is not None:
-        parts.append(Review.playtime_at_review >= low)
-    if high is not None:
-        parts.append(Review.playtime_at_review < high)
-    return and_(*parts)
+    # O texto fica só no banco relacional: uma consulta por chave primária.
+    review_ids = [row[0] for row in rows]
+    excerpts: dict[int, str] = {}
+    if review_ids:
+        excerpts = {
+            review_id: excerpt
+            for review_id, excerpt in session.execute(
+                select(Review.review_id, Review.excerpt).where(Review.review_id.in_(review_ids))
+            )
+        }
+    items = [
+        ReviewItem(
+            review_id=review_id,
+            app_id=app_id,
+            app_name=app_name,
+            language=language,
+            recommended=bool(recommended),
+            votes_helpful=votes_helpful,
+            votes_funny=votes_funny,
+            comment_count=comment_count,
+            playtime_at_review_hours=_hours(playtime),
+            steam_purchase=bool(steam_purchase),
+            received_for_free=bool(received_for_free),
+            early_access=bool(early_access),
+            created_at=_created_at(created),
+            excerpt=excerpts.get(review_id) or "",
+        )
+        for (
+            review_id,
+            app_id,
+            app_name,
+            language,
+            recommended,
+            votes_helpful,
+            votes_funny,
+            comment_count,
+            playtime,
+            steam_purchase,
+            received_for_free,
+            early_access,
+            created,
+        ) in rows
+    ]
+    result = ReviewListResponse(total=int(total or 0), limit=limit, offset=offset, items=items)
+    _reviews_cache.set(cache_key, result)
+    return result
 
 
 def charts(session: Session, filters: ReviewFilters) -> ChartsResponse:
+    where_clause(filters)  # valida datas antes de qualquer cache
+    store = _store(session)
     cache_key = _filter_cache_key(filters)
     cached = _charts_cache.get(cache_key)
     if cached is not None:
@@ -364,24 +359,18 @@ def charts(session: Session, filters: ReviewFilters) -> ChartsResponse:
                 _charts_cache.set(cache_key, result)
                 return result
 
+    # Faixas de horas ignoram o próprio filtro: o gráfico mostra todas as faixas.
     columns = []
-    for key, bounds in PLAYTIME_BUCKETS.items():
-        condition = _playtime_condition(*bounds)
-        columns.append(
-            func.coalesce(func.sum(case((condition, 1), else_=0)), 0).label(f"{key}_n")
-        )
-        columns.append(
-            func.coalesce(
-                func.sum(case((and_(condition, Review.recommended.is_(True)), 1), else_=0)),
-                0,
-            ).label(f"{key}_pos")
-        )
-    playtime_filters = filters.model_copy(update={"playtime_bucket": None})
-    bucket_row = session.execute(apply_filters(select(*columns), playtime_filters)).one()
+    for bounds in PLAYTIME_BUCKETS.values():
+        condition = playtime_sql(*bounds)
+        columns.append(f"count_if({condition})")
+        columns.append(f"count_if({condition} AND recommended)")
+    where, params = where_clause(filters.model_copy(update={"playtime_bucket": None}))
+    bucket_row = store.query(f"SELECT {', '.join(columns)} FROM reviews{where}", params)[0]
     playtime = []
-    for key in PLAYTIME_BUCKETS:
-        count = int(getattr(bucket_row, f"{key}_n") or 0)
-        positive = int(getattr(bucket_row, f"{key}_pos") or 0)
+    for index, key in enumerate(PLAYTIME_BUCKETS):
+        count = int(bucket_row[2 * index] or 0)
+        positive = int(bucket_row[2 * index + 1] or 0)
         playtime.append(
             PlaytimePoint(
                 key=key,
@@ -391,54 +380,38 @@ def charts(session: Session, filters: ReviewFilters) -> ChartsResponse:
             )
         )
 
-    game_count = func.count().label("review_count")
-    game_rows = session.execute(
-        apply_filters(
-            select(Review.app_name, game_count)
-            .group_by(Review.app_id, Review.app_name)
-            .order_by(game_count.desc(), Review.app_name.asc())
-            .limit(8),
-            filters,
-        )
-    ).all()
+    where, params = where_clause(filters)
+    game_rows = store.query(
+        f"SELECT g.app_name, count(*) AS n FROM reviews r JOIN games g USING (app_id){where} "
+        "GROUP BY r.app_id, g.app_name ORDER BY n DESC, g.app_name ASC LIMIT 8",
+        params,
+    )
 
-    language_filters = filters.model_copy(update={"language": None})
-    language_count = func.count().label("review_count")
-    language_positive = func.coalesce(
-        func.sum(case((Review.recommended.is_(True), 1), else_=0)),
-        0,
-    ).label("positive")
-    language_rows = session.execute(
-        apply_filters(
-            select(Review.language, language_count, language_positive)
-            .group_by(Review.language)
-            .order_by(language_count.desc(), Review.language.asc())
-            .limit(8),
-            language_filters,
-        )
-    ).all()
+    # Idiomas ignoram o próprio filtro, para comparar o idioma escolhido com os demais.
+    where, params = where_clause(filters.model_copy(update={"language": None}))
+    language_rows = store.query(
+        f"SELECT language, count(*) AS n, count_if(recommended) AS positive FROM reviews{where} "
+        "GROUP BY language ORDER BY n DESC, language ASC LIMIT 8",
+        params,
+    )
     languages = [
         LanguageBar(
-            language=row.language,
-            review_count=int(row.review_count),
-            recommendation_rate=_rate(int(row.positive or 0), int(row.review_count)),
+            language=language,
+            review_count=int(n),
+            recommendation_rate=_rate(int(positive or 0), int(n)),
         )
-        for row in language_rows
+        for language, n, positive in language_rows
     ]
     if filters.language is not None and not any(item.language == filters.language for item in languages):
-        extra_row = session.execute(
-            apply_filters(
-                select(language_count, language_positive).select_from(Review),
-                filters,
-            )
-        ).one_or_none()
-        extra_count = int(extra_row.review_count or 0) if extra_row else 0
-        extra_positive = int(extra_row.positive or 0) if extra_row else 0
+        where, params = where_clause(filters)
+        extra_count, extra_positive = store.query(
+            f"SELECT count(*), count_if(recommended) FROM reviews{where}", params
+        )[0]
         languages.append(
             LanguageBar(
                 language=filters.language,
-                review_count=extra_count,
-                recommendation_rate=_rate(extra_positive, extra_count),
+                review_count=int(extra_count or 0),
+                recommendation_rate=_rate(int(extra_positive or 0), int(extra_count or 0)),
             )
         )
 
@@ -462,45 +435,27 @@ def charts(session: Session, filters: ReviewFilters) -> ChartsResponse:
         if is_single_month
         else filters
     )
-    dialect_name = session.bind.dialect.name if session.bind else "sqlite"
-    if dialect_name == "postgresql":
-        month_key = func.to_char(
-            func.to_timestamp(Review.timestamp_created), "YYYY-MM"
-        ).label("month")
-    else:
-        month_key = func.strftime(
-            "%Y-%m", Review.timestamp_created, "unixepoch"
-        ).label("month")
-    month_count = func.count().label("review_count")
-    month_positive = func.coalesce(
-        func.sum(case((Review.recommended.is_(True), 1), else_=0)),
-        0,
-    ).label("positive")
-    month_rows = session.execute(
-        apply_filters(
-            select(month_key, month_count, month_positive)
-            .where(Review.timestamp_created.is_not(None))
-            .group_by(month_key)
-            .order_by(month_key.asc()),
-            month_filters,
-        )
-    ).all()
+    where, params = where_clause(month_filters)
+    month_where = f"{where} AND timestamp_created IS NOT NULL" if where else " WHERE timestamp_created IS NOT NULL"
+    month_rows = store.query(
+        "SELECT strftime(epoch_ms(timestamp_created * 1000), '%Y-%m') AS month, "
+        f"count(*) AS n, count_if(recommended) AS positive FROM reviews{month_where} "
+        "GROUP BY month ORDER BY month ASC",
+        params,
+    )
 
     result = ChartsResponse(
         playtime=playtime,
-        games=[
-            GameBar(app_name=row.app_name, review_count=int(row.review_count))
-            for row in game_rows
-        ],
+        games=[GameBar(app_name=name, review_count=int(n)) for name, n in game_rows],
         languages=languages,
         months=[
             MonthPoint(
-                month=row.month,
-                review_count=int(row.review_count),
-                recommendation_rate=_rate(int(row.positive or 0), int(row.review_count)),
+                month=month,
+                review_count=int(n),
+                recommendation_rate=_rate(int(positive or 0), int(n)),
             )
-            for row in month_rows
-            if row.month
+            for month, n, positive in month_rows
+            if month
         ],
     )
     _charts_cache.set(cache_key, result)
@@ -514,13 +469,15 @@ def facets(session: Session, filters: ReviewFilters) -> FacetsResponse:
     respeita o idioma e os demais filtros, e vice-versa. Só entram valores com
     contagem > 0; quem não aparece deve ser lido como zero.
     """
+    where_clause(filters)  # valida datas antes de qualquer cache
+    store = _store(session)
     cache_key = _filter_cache_key(filters)
     cached = _facets_cache.get(cache_key)
     if cached is not None:
         return cached
 
     if is_empty_filters(filters):
-        global_games, global_languages = _global_facets(session)
+        global_games, global_languages = _global_facets(store)
         result = FacetsResponse(
             games=[
                 GameFacetCount(app_id=game.app_id, review_count=game.review_count)
@@ -534,37 +491,19 @@ def facets(session: Session, filters: ReviewFilters) -> FacetsResponse:
         _facets_cache.set(cache_key, result)
         return result
 
-    game_filters = filters.model_copy(update={"app_id": None})
-    game_count = func.count().label("review_count")
-    game_rows = session.execute(
-        apply_filters(
-            select(Review.app_id, game_count)
-            .group_by(Review.app_id)
-            .order_by(game_count.desc(), Review.app_id.asc()),
-            game_filters,
-        )
-    ).all()
-
-    language_filters = filters.model_copy(update={"language": None})
-    language_count = func.count().label("review_count")
-    language_rows = session.execute(
-        apply_filters(
-            select(Review.language, language_count)
-            .group_by(Review.language)
-            .order_by(language_count.desc(), Review.language.asc()),
-            language_filters,
-        )
-    ).all()
-
+    where, params = where_clause(filters.model_copy(update={"app_id": None}))
+    game_rows = store.query(
+        f"SELECT app_id, count(*) AS n FROM reviews{where} GROUP BY app_id ORDER BY n DESC, app_id ASC",
+        params,
+    )
+    where, params = where_clause(filters.model_copy(update={"language": None}))
+    language_rows = store.query(
+        f"SELECT language, count(*) AS n FROM reviews{where} GROUP BY language ORDER BY n DESC, language ASC",
+        params,
+    )
     result = FacetsResponse(
-        games=[
-            GameFacetCount(app_id=row.app_id, review_count=int(row.review_count))
-            for row in game_rows
-        ],
-        languages=[
-            LanguageFacetCount(language=row.language, review_count=int(row.review_count))
-            for row in language_rows
-        ],
+        games=[GameFacetCount(app_id=app_id, review_count=int(n)) for app_id, n in game_rows],
+        languages=[LanguageFacetCount(language=language, review_count=int(n)) for language, n in language_rows],
     )
     _facets_cache.set(cache_key, result)
     return result

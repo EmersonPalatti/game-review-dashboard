@@ -8,7 +8,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from backend.app.models import Review
-from backend.app.queries import _global_facets, apply_filters, metrics
+from backend.app.queries import _global_facets, _store, apply_filters, metrics
 from backend.app.schemas import ReviewFilters
 
 _NON_ALNUM = re.compile(r"[^a-z0-9]+")
@@ -45,7 +45,7 @@ def resolve_game_catalog(
     limit: int = 20,
 ) -> dict[str, Any]:
     """Resolve nomes de jogos e idiomas contra o catálogo completo (59 jogos)."""
-    games, languages = _global_facets(session)
+    games, languages = _global_facets(_store(session))
     clamped_limit = max(1, min(60, limit if isinstance(limit, int) else 20))
 
     raw_query = (query or "").strip()

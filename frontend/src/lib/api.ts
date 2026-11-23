@@ -123,7 +123,7 @@ function appendFilters(params: URLSearchParams, current: Readonly<Filters>): voi
 export const API_BASE = import.meta.env.PUBLIC_API_URL?.replace(/\/$/, '') ?? '';
 
 async function requestJson<T>(url: string): Promise<T> {
-  const response = await fetch(url, { cache: 'no-store' });
+  const response = await fetch(url);
   if (!response.ok) {
     throw new Error(`Resposta ${response.status} para ${url}`);
   }
