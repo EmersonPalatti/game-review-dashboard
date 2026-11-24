@@ -7,7 +7,12 @@
     "still": "remotion still",
     "capture": "tsx capture/record.ts",
     "render:showcase": "remotion render src/index.ts Showcase ../assets/showcase.mp4 --gl=angle",
-    "render:overview": "remotion render src/index.ts Overview ../assets/overview.mp4 --gl=angle"
+    "render:overview": "remotion render src/index.ts Overview ../assets/overview.mp4 --gl=angle",
+    "capture:chat": "tsx capture/chat-takes.ts",
+    "render:chat-upgrade": "remotion render src/index.ts ChatUpgrade ../assets/chat-upgrade.mp4 --gl=angle",
+    "still:chat-upgrade-cover": "remotion still src/index.ts ChatUpgrade ../assets/chat-upgrade-capa.png --frame=2500 --gl=angle",
+    "proxies:chat": "tsx capture/make-proxies.ts",
+    "render:chat-upgrade-motion": "remotion render src/index.ts ChatUpgradeMotion ../assets/chat-upgrade-motion.mp4 --gl=angle"
   },
   "dependencies": {
     "@fontsource/ibm-plex-mono": "^5.3.0",

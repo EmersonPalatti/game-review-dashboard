@@ -1,0 +1,966 @@
+{
+ "question": "Compare Arma 3 com NieR: Automata e sugira um filtro no painel para eu explorar o NieR",
+ "contentType": "text/event-stream; charset=utf-8",
+ "chunks": [
+  {
+   "t": 34,
+   "data": "data: {\"type\":\"RUN_STARTED\",\"threadId\":\"steam-dashboard-session\",\"runId\":\"run_1795480538552\"}\n\n"
+  },
+  {
+   "t": 8699,
+   "data": "data: {\"type\":\"TOOL_CALL_START\",\"toolCallId\":\"01a20afa-efb3-740b-83a0-668d8563cc33\",\"toolCallName\":\"resolve_game\"}\n\n"
+  },
+  {
+   "t": 8699,
+   "data": "data: {\"type\":\"TOOL_CALL_ARGS\",\"toolCallId\":\"01a20afa-efb3-740b-83a0-668d8563cc33\",\"delta\":\"{\\\"query\\\": \\\"Arma 3\\\", \\\"limit\\\": 5}\"}\n\ndata: {\"type\":\"TOOL_CALL_END\",\"toolCallId\":\"01a20afa-efb3-740b-83a0-668d8563cc33\"}\n\ndata: {\"type\":\"TOOL_CALL_START\",\"toolCallId\":\"01a20afa-efb3-740b-83a0-668e5eb8bcc1\",\"toolCallName\":\"resolve_game\"}\n\ndata: {\"type\":\"TOOL_CALL_ARGS\",\"toolCallId\":\"01a20afa-efb3-740b-83a0-668e5eb8bcc1\",\"delta\":\"{\\\"query\\\": \\\"NieR: Automata\\\", \\\"limit\\\": 5}\"}\n\ndata: {\"type\":\"TOOL_CALL_END\",\"toolCallId\":\"01a20afa-efb3-740b-83a0-668e5eb8bcc1\"}\n\n"
+  },
+  {
+   "t": 8705,
+   "data": "data: {\"type\":\"TOOL_CALL_RESULT\",\"messageId\":\"tm_01a20afa-efb3-740b-83a0-668d8563cc33\",\"toolCallId\":\"01a20afa-efb3-740b-83a0-668d8563cc33\",\"content\":\"{\\\"query\\\": \\\"Arma 3\\\", \\\"total_games_in_catalog\\\": 59, \\\"total_languages_in_catalog\\\": 28, \\\"matched_games\\\": [{\\\"app_id\\\": 107410, \\\"app_name\\\": \\\"Arma 3\\\", \\\"review_count\\\": 182348}], \\\"matched_languages\\\": []}\",\"role\":\"tool\"}\n\n"
+  },
+  {
+   "t": 8706,
+   "data": "data: {\"type\":\"CUSTOM\",\"name\":\"tool_timing\",\"value\":{\"tool_call_id\":\"01a20afa-efb3-740b-83a0-668d8563cc33\",\"tool_name\":\"resolve_game\",\"duration_ms\":7}}\n\ndata: {\"type\":\"TOOL_CALL_RESULT\",\"messageId\":\"tm_01a20afa-efb3-740b-83a0-668e5eb8bcc1\",\"toolCallId\":\"01a20afa-efb3-740b-83a0-668e5eb8bcc1\",\"content\":\"{\\\"query\\\": \\\"NieR: Automata\\\", \\\"total_games_in_catalog\\\": 59, \\\"total_languages_in_catalog\\\": 28, \\\"matched_games\\\": [{\\\"app_id\\\": 524220, \\\"app_name\\\": \\\"NieR:Automata™\\\", \\\"review_count\\\": 81110}], \\\"matched_languages\\\": []}\",\"role\":\"tool\"}\n\n"
+  },
+  {
+   "t": 8706,
+   "data": "data: {\"type\":\"CUSTOM\",\"name\":\"tool_timing\",\"value\":{\"tool_call_id\":\"01a20afa-efb3-740b-83a0-668e5eb8bcc1\",\"tool_name\":\"resolve_game\",\"duration_ms\":7}}\n\n"
+  },
+  {
+   "t": 12391,
+   "data": "data: {\"type\":\"TOOL_CALL_START\",\"toolCallId\":\"01a20afa-fe1e-7430-80f6-b58d3fe3a7de\",\"toolCallName\":\"compare_slices\"}\n\n"
+  },
+  {
+   "t": 12392,
+   "data": "data: {\"type\":\"TOOL_CALL_ARGS\",\"toolCallId\":\"01a20afa-fe1e-7430-80f6-b58d3fe3a7de\",\"delta\":\"{\\\"label_a\\\": \\\"Arma 3\\\", \\\"label_b\\\": \\\"NieR: Automata\\\", \\\"app_id_a\\\": 107410, \\\"app_id_b\\\": 524220}\"}\n\ndata: {\"type\":\"TOOL_CALL_END\",\"toolCallId\":\"01a20afa-fe1e-7430-80f6-b58d3fe3a7de\"}\n\n"
+  },
+  {
+   "t": 12394,
+   "data": "data: {\"type\":\"TOOL_CALL_START\",\"toolCallId\":\"01a20afa-fe1f-70df-a141-be5c673c0c85\",\"toolCallName\":\"propose_dashboard_actions\"}\n\n"
+  },
+  {
+   "t": 12394,
+   "data": "data: {\"type\":\"TOOL_CALL_ARGS\",\"toolCallId\":\"01a20afa-fe1f-70df-a141-be5c673c0c85\",\"delta\":\"{\\\"label\\\": \\\"Foco em NieR: Automata\\\", \\\"app_id\\\": 524220, \\\"auto_apply\\\": false, \\\"reason\\\": \\\"Usuário quer explorar NieR: Automata após comparação com Arma 3\\\", \\\"follow_up_1\\\": \\\"Qual é a taxa de aprovação do NieR: Automata por faixa de horas jogadas?\\\", \\\"follow_up_2\\\": \\\"Quais são as principais reclamações nas reviews negativas do NieR: Automata?\\\", \\\"follow_up_3\\\": \\\"Como o engajamento (votos úteis) se compara entre reviews positivas e negativas do NieR?\\\"}\"}\n\ndata: {\"type\":\"TOOL_CALL_END\",\"toolCallId\":\"01a20afa-fe1f-70df-a141-be5c673c0c85\"}\n\n"
+  },
+  {
+   "t": 12396,
+   "data": "data: {\"type\":\"TOOL_CALL_RESULT\",\"messageId\":\"tm_01a20afa-fe1f-70df-a141-be5c673c0c85\",\"toolCallId\":\"01a20afa-fe1f-70df-a141-be5c673c0c85\",\"content\":\"{\\\"actions\\\": [{\\\"id\\\": \\\"act_df00c669\\\", \\\"label\\\": \\\"Foco em NieR: Automata\\\", \\\"filters\\\": {\\\"app_id\\\": 524220}, \\\"reset\\\": false, \\\"reason\\\": \\\"Usuário quer explorar NieR: Automata após comparação com Arma 3\\\"}], \\\"follow_ups\\\": [\\\"Qual é a taxa de aprovação do NieR: Automata por faixa de horas jogadas?\\\", \\\"Quais são as principais reclamações nas reviews negativas do NieR: Automata?\\\", \\\"Como o engajamento (votos úteis) se compara entre reviews positivas e negativas do NieR?\\\"], \\\"auto_apply\\\": false}\",\"role\":\"tool\"}\n\n"
+  },
+  {
+   "t": 12397,
+   "data": "data: {\"type\":\"CUSTOM\",\"name\":\"tool_timing\",\"value\":{\"tool_call_id\":\"01a20afa-fe1f-70df-a141-be5c673c0c85\",\"tool_name\":\"propose_dashboard_actions\",\"duration_ms\":2}}\n\ndata: {\"type\":\"CUSTOM\",\"name\":\"dashboard_actions\",\"value\":{\"actions\":[{\"id\":\"act_df00c669\",\"label\":\"Foco em NieR: Automata\",\"filters\":{\"app_id\":524220},\"reset\":false,\"reason\":\"Usuário quer explorar NieR: Automata após comparação com Arma 3\"}],\"follow_ups\":[\"Qual é a taxa de aprovação do NieR: Automata por faixa de horas jogadas?\",\"Quais são as principais reclamações nas reviews negativas do NieR: Automata?\",\"Como o engajamento (votos úteis) se compara entre reviews positivas e negativas do NieR?\"],\"auto_apply\":false}}\n\n"
+  },
+  {
+   "t": 12635,
+   "data": "data: {\"type\":\"TOOL_CALL_RESULT\",\"messageId\":\"tm_01a20afa-fe1e-7430-80f6-b58d3fe3a7de\",\"toolCallId\":\"01a20afa-fe1e-7430-80f6-b58d3fe3a7de\",\"content\":\"{\\\"slice_a\\\": {\\\"label\\\": \\\"Arma 3\\\", \\\"applied_filters\\\": {\\\"app_id\\\": 107410}, \\\"total_reviews\\\": 182348, \\\"recommendation_rate\\\": 0.904, \\\"approval_pct\\\": 90.4, \\\"game_count\\\": 1, \\\"author_count\\\": 182335, \\\"avg_votes_helpful\\\": 2.13, \\\"avg_playtime_hours\\\": 436.08}, \\\"slice_b\\\": {\\\"label\\\": \\\"NieR: Automata\\\", \\\"applied_filters\\\": {\\\"app_id\\\": 524220}, \\\"total_reviews\\\": 81110, \\\"recommendation_rate\\\": 0.8591, \\\"approval_pct\\\": 85.91, \\\"game_count\\\": 1, \\\"author_count\\\": 81110, \\\"avg_votes_helpful\\\": 6.49, \\\"avg_playtime_hours\\\": 36.64}, \\\"deltas\\\": {\\\"approval_delta_pp\\\": 4.49, \\\"review_count_diff\\\": 101238, \\\"review_volume_ratio\\\": 2.25, \\\"helpful_votes_diff\\\": -4.36, \\\"avg_playtime_hours_diff\\\": 399.44}, \\\"chart\\\": {\\\"kind\\\": \\\"comparison_bar\\\", \\\"categories\\\": [\\\"Arma 3\\\", \\\"NieR: Automata\\\"], \\\"approval_pct\\\": [90.4, 85.91], \\\"review_counts\\\": [182348, 81110]}}\",\"role\":\"tool\"}\n\n"
+  },
+  {
+   "t": 12635,
+   "data": "data: {\"type\":\"CUSTOM\",\"name\":\"tool_timing\",\"value\":{\"tool_call_id\":\"01a20afa-fe1e-7430-80f6-b58d3fe3a7de\",\"tool_name\":\"compare_slices\",\"duration_ms\":244}}\n\ndata: {\"type\":\"CUSTOM\",\"name\":\"genui_widget\",\"value\":{\"type\":\"comparison\",\"title\":\"Arma 3 vs. NieR: Automata\",\"data\":{\"slice_a\":{\"label\":\"Arma 3\",\"applied_filters\":{\"app_id\":107410},\"total_reviews\":182348,\"recommendation_rate\":0.904,\"approval_pct\":90.4,\"game_count\":1,\"author_count\":182335,\"avg_votes_helpful\":2.13,\"avg_playtime_hours\":436.08},\"slice_b\":{\"label\":\"NieR: Automata\",\"applied_filters\":{\"app_id\":524220},\"total_reviews\":81110,\"recommendation_rate\":0.8591,\"approval_pct\":85.91,\"game_count\":1,\"author_count\":81110,\"avg_votes_helpful\":6.49,\"avg_playtime_hours\":36.64},\"deltas\":{\"approval_delta_pp\":4.49,\"review_count_diff\":101238,\"review_volume_ratio\":2.25,\"helpful_votes_diff\":-4.36,\"avg_playtime_hours_diff\":399.44},\"chart\":{\"kind\":\"comparison_bar\",\"categories\":[\"Arma 3\",\"NieR: Automata\"],\"approval_pct\":[90.4,85.91],\"review_counts\":[182348,81110]}}}}\n\n"
+  },
+  {
+   "t": 14237,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_START\",\"messageId\":\"msg_fafd6ff03acb\",\"role\":\"assistant\"}\n\n"
+  },
+  {
+   "t": 14238,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\"**\"}\n\n"
+  },
+  {
+   "t": 14238,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\"Compar\"}\n\n"
+  },
+  {
+   "t": 14238,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\"ação:\"}\n\n"
+  },
+  {
+   "t": 14327,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" Arma 3\"}\n\n"
+  },
+  {
+   "t": 14327,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" vs Nie\"}\n\n"
+  },
+  {
+   "t": 14328,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\"R: Automata\"}\n\n"
+  },
+  {
+   "t": 14328,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\"**\\n\\n| Indic\"}\n\n"
+  },
+  {
+   "t": 14392,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\"ador | Arma\"}\n\n"
+  },
+  {
+   "t": 14392,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" 3 | Nie\"}\n\n"
+  },
+  {
+   "t": 14393,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\"R: Automata\"}\n\n"
+  },
+  {
+   "t": 14393,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" |\\n|---\"}\n\n"
+  },
+  {
+   "t": 14463,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\"|---|---\"}\n\n"
+  },
+  {
+   "t": 14464,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\"|\\n| **\"}\n\n"
+  },
+  {
+   "t": 14464,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\"Total\"}\n\n"
+  },
+  {
+   "t": 14465,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" de reviews** |\"}\n\n"
+  },
+  {
+   "t": 14579,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" 182\"}\n\n"
+  },
+  {
+   "t": 14579,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\".348\"}\n\n"
+  },
+  {
+   "t": 14580,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" | 81\"}\n\n"
+  },
+  {
+   "t": 14580,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\".110\"}\n\n"
+  },
+  {
+   "t": 14625,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" |\\n| **Tax\"}\n\n"
+  },
+  {
+   "t": 14625,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\"a de recomend\"}\n\n"
+  },
+  {
+   "t": 14625,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\"ação** | **\"}\n\n"
+  },
+  {
+   "t": 14626,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\"90,4\"}\n\n"
+  },
+  {
+   "t": 14716,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\"%** | **\"}\n\n"
+  },
+  {
+   "t": 14717,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\"85,9\"}\n\n"
+  },
+  {
+   "t": 14717,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\"%**\"}\n\n"
+  },
+  {
+   "t": 14718,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" |\\n| **Aut\"}\n\n"
+  },
+  {
+   "t": 14784,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\"ores únicos** |\"}\n\n"
+  },
+  {
+   "t": 14784,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" 182\"}\n\n"
+  },
+  {
+   "t": 14785,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\".335\"}\n\n"
+  },
+  {
+   "t": 14785,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" | 81\"}\n\n"
+  },
+  {
+   "t": 14880,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\".110\"}\n\n"
+  },
+  {
+   "t": 14880,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" |\\n| **M\"}\n\n"
+  },
+  {
+   "t": 14881,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\"édia de votos ú\"}\n\n"
+  },
+  {
+   "t": 14881,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\"teis por\"}\n\n"
+  },
+  {
+   "t": 14945,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" review** | \"}\n\n"
+  },
+  {
+   "t": 14945,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\"2,13\"}\n\n"
+  },
+  {
+   "t": 14946,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" | 6,\"}\n\n"
+  },
+  {
+   "t": 14946,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\"49 |\\n|\"}\n\n"
+  },
+  {
+   "t": 15018,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" **Média de\"}\n\n"
+  },
+  {
+   "t": 15019,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" horas jogadas**\"}\n\n"
+  },
+  {
+   "t": 15019,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" | 43\"}\n\n"
+  },
+  {
+   "t": 15020,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\"6,08\"}\n\n"
+  },
+  {
+   "t": 15098,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\"h | 3\"}\n\n"
+  },
+  {
+   "t": 15098,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\"6,64\"}\n\n"
+  },
+  {
+   "t": 15099,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\"h |\\n\\n**Delta\"}\n\n"
+  },
+  {
+   "t": 15099,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\":**\"}\n\n"
+  },
+  {
+   "t": 15350,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" Arma 3\"}\n\n"
+  },
+  {
+   "t": 15351,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" lider\"}\n\n"
+  },
+  {
+   "t": 15352,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\"a em\"}\n\n"
+  },
+  {
+   "t": 15392,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" apro\"}\n\n"
+  },
+  {
+   "t": 15392,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\"vação por **+\"}\n\n"
+  },
+  {
+   "t": 15393,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\"4,49\"}\n\n"
+  },
+  {
+   "t": 15393,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" pontos percentuais**\"}\n\n"
+  },
+  {
+   "t": 15393,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" e volume\"}\n\n"
+  },
+  {
+   "t": 15394,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" de\"}\n\n"
+  },
+  {
+   "t": 15560,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" reviews é **2\"}\n\n"
+  },
+  {
+   "t": 15560,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\",25x\"}\n\n"
+  },
+  {
+   "t": 15561,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" maior** que o\"}\n\n"
+  },
+  {
+   "t": 15561,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" de\"}\n\n"
+  },
+  {
+   "t": 15630,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" NieR:\"}\n\n"
+  },
+  {
+   "t": 15630,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" Automata.\\n\\n###\"}\n\n"
+  },
+  {
+   "t": 15631,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" Observações do anal\"}\n\n"
+  },
+  {
+   "t": 15631,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\"ista\\n\\n- **\"}\n\n"
+  },
+  {
+   "t": 15710,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\"Arma 3\"}\n\n"
+  },
+  {
+   "t": 15711,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\"** é um simul\"}\n\n"
+  },
+  {
+   "t": 15711,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\"ador militar\"}\n\n"
+  },
+  {
+   "t": 15711,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" de\"}\n\n"
+  },
+  {
+   "t": 15788,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" longa\"}\n\n"
+  },
+  {
+   "t": 15788,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" duração: a\"}\n\n"
+  },
+  {
+   "t": 15789,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" média de **\"}\n\n"
+  },
+  {
+   "t": 15789,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\"436h\"}\n\n"
+  },
+  {
+   "t": 15890,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\"** por\"}\n\n"
+  },
+  {
+   "t": 15891,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" autor\"}\n\n"
+  },
+  {
+   "t": 15891,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" reflete a\"}\n\n"
+  },
+  {
+   "t": 15892,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" natureza de sandbox\"}\n\n"
+  },
+  {
+   "t": 16150,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\"/m\"}\n\n"
+  },
+  {
+   "t": 16151,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\"ulti\"}\n\n"
+  },
+  {
+   "t": 16152,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\"player do título\"}\n\n"
+  },
+  {
+   "t": 16152,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\". A apro\"}\n\n"
+  },
+  {
+   "t": 16153,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\"vação de **\"}\n\n"
+  },
+  {
+   "t": 16153,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\"90,4\"}\n\n"
+  },
+  {
+   "t": 16154,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\"%** é\"}\n\n"
+  },
+  {
+   "t": 16154,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" sólida,\"}\n\n"
+  },
+  {
+   "t": 16155,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" mas o volume mass\"}\n\n"
+  },
+  {
+   "t": 16155,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\"ivo de reviews (\"}\n\n"
+  },
+  {
+   "t": 16155,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\"182k\"}\n\n"
+  },
+  {
+   "t": 16156,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\") sugere uma\"}\n\n"
+  },
+  {
+   "t": 16195,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" comunidade muito eng\"}\n\n"
+  },
+  {
+   "t": 16196,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\"ajada ao\"}\n\n"
+  },
+  {
+   "t": 16196,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" longo dos anos.\\n\"}\n\n"
+  },
+  {
+   "t": 16197,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\"- **NieR\"}\n\n"
+  },
+  {
+   "t": 16278,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\": Automata**\"}\n\n"
+  },
+  {
+   "t": 16278,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" tem uma base\"}\n\n"
+  },
+  {
+   "t": 16278,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" menor\"}\n\n"
+  },
+  {
+   "t": 16279,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" (\"}\n\n"
+  },
+  {
+   "t": 16371,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\"81k reviews\"}\n\n"
+  },
+  {
+   "t": 16371,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\"), mas cada\"}\n\n"
+  },
+  {
+   "t": 16372,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" review gera em\"}\n\n"
+  },
+  {
+   "t": 16372,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" média **6\"}\n\n"
+  },
+  {
+   "t": 16430,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\",49 votos\"}\n\n"
+  },
+  {
+   "t": 16430,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" úteis**\"}\n\n"
+  },
+  {
+   "t": 16430,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" — quase\"}\n\n"
+  },
+  {
+   "t": 16431,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" **3x mais\"}\n\n"
+  },
+  {
+   "t": 16601,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\"** que Arma\"}\n\n"
+  },
+  {
+   "t": 16601,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" 3. Isso\"}\n\n"
+  },
+  {
+   "t": 16602,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" indica que a comunidade\"}\n\n"
+  },
+  {
+   "t": 16602,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" do\"}\n\n"
+  },
+  {
+   "t": 16701,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" jogo\"}\n\n"
+  },
+  {
+   "t": 16702,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" da\"}\n\n"
+  },
+  {
+   "t": 16703,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" Platinum\"}\n\n"
+  },
+  {
+   "t": 16704,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\"Games é mais vocal\"}\n\n"
+  },
+  {
+   "t": 16822,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" e\"}\n\n"
+  },
+  {
+   "t": 16822,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" prop\"}\n\n"
+  },
+  {
+   "t": 16822,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\"ensa a cur\"}\n\n"
+  },
+  {
+   "t": 16823,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\"ar conteúdo\"}\n\n"
+  },
+  {
+   "t": 16824,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" (el\"}\n\n"
+  },
+  {
+   "t": 16896,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\"ogios det\"}\n\n"
+  },
+  {
+   "t": 16897,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\"alhados, anál\"}\n\n"
+  },
+  {
+   "t": 16898,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\"ises de narrativa\"}\n\n"
+  },
+  {
+   "t": 16898,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\", etc.).\\n\"}\n\n"
+  },
+  {
+   "t": 16940,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\"- A diferença\"}\n\n"
+  },
+  {
+   "t": 16941,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" de **3\"}\n\n"
+  },
+  {
+   "t": 16942,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\"99h**\"}\n\n"
+  },
+  {
+   "t": 16943,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" na média de play\"}\n\n"
+  },
+  {
+   "t": 17020,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\"time é esper\"}\n\n"
+  },
+  {
+   "t": 17020,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\"ada: um\"}\n\n"
+  },
+  {
+   "t": 17021,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" é um t\"}\n\n"
+  },
+  {
+   "t": 17021,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\"ático militar\"}\n\n"
+  },
+  {
+   "t": 17106,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" com campan\"}\n\n"
+  },
+  {
+   "t": 17106,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\"has inter\"}\n\n"
+  },
+  {
+   "t": 17106,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\"mináveis;\"}\n\n"
+  },
+  {
+   "t": 17107,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" o outro é um\"}\n\n"
+  },
+  {
+   "t": 17186,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" action-R\"}\n\n"
+  },
+  {
+   "t": 17187,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\"PG com finais\"}\n\n"
+  },
+  {
+   "t": 17187,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" múltiplos,\"}\n\n"
+  },
+  {
+   "t": 17188,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" mas ciclo\"}\n\n"
+  },
+  {
+   "t": 17254,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" mais\"}\n\n"
+  },
+  {
+   "t": 17254,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" curto.\\n\\n###\"}\n\n"
+  },
+  {
+   "t": 17255,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" F\"}\n\n"
+  },
+  {
+   "t": 17255,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\"iltro sugerido\"}\n\n"
+  },
+  {
+   "t": 17430,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" para\"}\n\n"
+  },
+  {
+   "t": 17430,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" o painel\\n\\n\"}\n\n"
+  },
+  {
+   "t": 17430,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\"**\"}\n\n"
+  },
+  {
+   "t": 17431,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\"Ação:** `\"}\n\n"
+  },
+  {
+   "t": 17510,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\"Foco em Nie\"}\n\n"
+  },
+  {
+   "t": 17511,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\"R: Automata\"}\n\n"
+  },
+  {
+   "t": 17511,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\"`  \\n**\"}\n\n"
+  },
+  {
+   "t": 17511,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\"Filtro:**\"}\n\n"
+  },
+  {
+   "t": 17608,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" `app_id =\"}\n\n"
+  },
+  {
+   "t": 17609,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" 524\"}\n\n"
+  },
+  {
+   "t": 17610,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\"220`\"}\n\n"
+  },
+  {
+   "t": 17610,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" (NieR:\"}\n\n"
+  },
+  {
+   "t": 17690,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\"Aut\"}\n\n"
+  },
+  {
+   "t": 17691,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\"omata™)\"}\n\n"
+  },
+  {
+   "t": 17691,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\"  \\n**Esc\"}\n\n"
+  },
+  {
+   "t": 17692,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\"opo:** apenas\"}\n\n"
+  },
+  {
+   "t": 17780,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" reviews\"}\n\n"
+  },
+  {
+   "t": 17780,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" desse\"}\n\n"
+  },
+  {
+   "t": 17780,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" jogo, sem reset\"}\n\n"
+  },
+  {
+   "t": 17781,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\"ar outros filtros\"}\n\n"
+  },
+  {
+   "t": 17837,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" existentes\"}\n\n"
+  },
+  {
+   "t": 17840,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\".\\n\\nIs\"}\n\n"
+  },
+  {
+   "t": 17840,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\"so vai\"}\n\n"
+  },
+  {
+   "t": 17841,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" isolar todo\"}\n\n"
+  },
+  {
+   "t": 17909,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" o histórico\"}\n\n"
+  },
+  {
+   "t": 17909,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" do\"}\n\n"
+  },
+  {
+   "t": 17910,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" NieR no\"}\n\n"
+  },
+  {
+   "t": 17910,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" dashboard\"}\n\n"
+  },
+  {
+   "t": 18001,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" para\"}\n\n"
+  },
+  {
+   "t": 18001,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" você explorar apro\"}\n\n"
+  },
+  {
+   "t": 18002,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\"vação por\"}\n\n"
+  },
+  {
+   "t": 18002,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" faixa\"}\n\n"
+  },
+  {
+   "t": 18094,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" de horas, eng\"}\n\n"
+  },
+  {
+   "t": 18095,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\"ajamento e\"}\n\n"
+  },
+  {
+   "t": 18095,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" temas\"}\n\n"
+  },
+  {
+   "t": 18096,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" das\"}\n\n"
+  },
+  {
+   "t": 18153,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" reviews sem\"}\n\n"
+  },
+  {
+   "t": 18154,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" a\"}\n\n"
+  },
+  {
+   "t": 18155,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" \\\"\"}\n\n"
+  },
+  {
+   "t": 18155,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\"cont\"}\n\n"
+  },
+  {
+   "t": 18247,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\"aminação\\\" dos\"}\n\n"
+  },
+  {
+   "t": 18248,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" \"}\n\n"
+  },
+  {
+   "t": 18248,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\"182k\"}\n\n"
+  },
+  {
+   "t": 18249,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" reviews do\"}\n\n"
+  },
+  {
+   "t": 18312,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" Arma 3\"}\n\n"
+  },
+  {
+   "t": 18312,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\".\\n\\n### Pr\"}\n\n"
+  },
+  {
+   "t": 18313,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\"óximas pergunt\"}\n\n"
+  },
+  {
+   "t": 18313,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\"as para\"}\n\n"
+  },
+  {
+   "t": 18400,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" explorar o\"}\n\n"
+  },
+  {
+   "t": 18401,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" NieR\\n\\n1\"}\n\n"
+  },
+  {
+   "t": 18402,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\". Qual é a\"}\n\n"
+  },
+  {
+   "t": 18402,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" taxa de aprova\"}\n\n"
+  },
+  {
+   "t": 18487,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\"ção do NieR\"}\n\n"
+  },
+  {
+   "t": 18488,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\": Automata por\"}\n\n"
+  },
+  {
+   "t": 18488,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" faixa de horas jog\"}\n\n"
+  },
+  {
+   "t": 18488,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\"adas (\"}\n\n"
+  },
+  {
+   "t": 18550,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\"ex.: \"}\n\n"
+  },
+  {
+   "t": 18551,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\"<2\"}\n\n"
+  },
+  {
+   "t": 18551,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\"h, 2\"}\n\n"
+  },
+  {
+   "t": 18552,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\"-5h\"}\n\n"
+  },
+  {
+   "t": 18684,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\", 50\"}\n\n"
+  },
+  {
+   "t": 18684,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\"h+)?\\n2\"}\n\n"
+  },
+  {
+   "t": 18685,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\". Quais são\"}\n\n"
+  },
+  {
+   "t": 18685,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" as principais reclama\"}\n\n"
+  },
+  {
+   "t": 18685,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\"ções nas reviews neg\"}\n\n"
+  },
+  {
+   "t": 18734,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\"ativas do NieR\"}\n\n"
+  },
+  {
+   "t": 18734,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\": Automata?\\n\"}\n\n"
+  },
+  {
+   "t": 18735,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\"3. Como o\"}\n\n"
+  },
+  {
+   "t": 18735,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" engajamento (\"}\n\n"
+  },
+  {
+   "t": 18902,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\"votos úte\"}\n\n"
+  },
+  {
+   "t": 18903,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\"is) se compara\"}\n\n"
+  },
+  {
+   "t": 18903,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" entre reviews positivas\"}\n\n"
+  },
+  {
+   "t": 18903,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" e negativas do\"}\n\n"
+  },
+  {
+   "t": 19152,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" NieR?\\n\\nQuer\"}\n\n"
+  },
+  {
+   "t": 19152,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" que eu apl\"}\n\n"
+  },
+  {
+   "t": 19163,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\"ique esse\"}\n\n"
+  },
+  {
+   "t": 19185,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" filtro agora ou\"}\n\n"
+  },
+  {
+   "t": 19185,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" pref\"}\n\n"
+  },
+  {
+   "t": 19186,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\"ere investigar alguma\"}\n\n"
+  },
+  {
+   "t": 19186,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\" dessas pergunt\"}\n\n"
+  },
+  {
+   "t": 19187,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_fafd6ff03acb\",\"delta\":\"as primeiro?\"}\n\n"
+  },
+  {
+   "t": 19191,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_END\",\"messageId\":\"msg_fafd6ff03acb\"}\n\n"
+  },
+  {
+   "t": 19194,
+   "data": "data: {\"type\":\"CUSTOM\",\"name\":\"run_metadata\",\"value\":{\"trace_id\":\"9ed5b36f8c3d41a69df19ad08747abc2\",\"model\":\"nvidia/nemotron-3.5-super-vl:free\",\"tools_used\":[\"resolve_game\",\"compare_slices\",\"propose_dashboard_actions\"],\"latency_ms\":19162,\"langfuse_enabled\":false}}\n\n"
+  },
+  {
+   "t": 19203,
+   "data": "data: {\"type\":\"RUN_FINISHED\",\"threadId\":\"steam-dashboard-session\",\"runId\":\"run_1795480538552\"}\n\n"
+  }
+ ]
+}

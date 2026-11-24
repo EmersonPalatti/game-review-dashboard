@@ -14,6 +14,8 @@ O projeto reúne duas entregas integradas:
 > 🎬 **Vídeos demonstrativos em alta definição (60 FPS):**
 > - 📺 [**Showcase Completo do Dashboard (`assets/showcase.mp4`)**](assets/showcase.mp4) — Tour interativo de 62s com zoom e clique no gráfico mensal, filtro de período, filtragem cruzada em tempo real, rankings, presets analíticos, alternância de tema e experiência mobile.
 > - 📊 [**Visão Geral & Metodologia (`assets/overview.mp4`)**](assets/overview.mp4) — Resumo executivo dos desafios, arquitetura de dados e conclusões de negócio.
+> - 💬 [**Chat v1 → v2, versão híbrida (`assets/chat-upgrade.mp4`)**](assets/chat-upgrade.mp4) — 50s em 4:5 para o LinkedIn: motion graphics explicando o upgrade do SteamBot-9000 e tomadas reais do chat.
+> - 💬 [**Chat v1 → v2, versão 100% motion (`assets/chat-upgrade-motion.mp4`)**](assets/chat-upgrade-motion.mp4) — 61s em 4:5: a interface do chat redesenhada em motion com os dados reais das execuções e, no fim, a tomada real dentro do app.
 
 ---
 
@@ -165,7 +167,10 @@ game-review-dashboard/
 │   ├── overview.gif                      # Animação inline para o README
 │   ├── overview.mp4                      # Vídeo resumo em alta definição
 │   ├── showcase.mp4                      # Vídeo showcase completo do dashboard
-│   └── showcase-poster.png               # Pôster estático de apresentação
+│   ├── showcase-poster.png               # Pôster estático de apresentação
+│   ├── chat-upgrade.mp4                  # Chat v1 → v2 em 4:5, versão híbrida (LinkedIn)
+│   ├── chat-upgrade-motion.mp4           # Chat v1 → v2 em 4:5, versão 100% motion
+│   └── chat-upgrade-capa.png             # Capa dos dois vídeos do chat
 ├── backend/                              # API FastAPI e camada de dados
 │   ├── app/
 │   │   ├── analytics.py                  # Cópia colunar em memória (DuckDB) carregada de reviews.parquet
@@ -233,9 +238,13 @@ game-review-dashboard/
 │   ├── capture/                          # Captura headless via Playwright + CDP a 60 FPS
 │   │   ├── engine.ts                     # Engine de gravação, interpolação de cursor e time-dilation
 │   │   ├── record.ts                     # Roteiro das tomadas desktop e mobile (saída em video/captures/)
+│   │   ├── chat-takes.ts                 # Tomadas do chat v1/v2 reproduzindo streams SSE gravados (fixtures/)
+│   │   ├── make-proxies.ts               # Recortes leves das tomadas do chat para public/chat/
 │   │   └── review.ts                     # Utilitário de inspeção e validação de frames
-│   ├── public/                           # Tomadas desktop/mobile usadas na renderização e trilhas sonoras
-│   ├── src/                              # Composições Remotion (Showcase e Overview a 60 FPS)
+│   ├── public/                           # Tomadas e proxies usados na renderização e trilhas sonoras
+│   ├── src/                              # Composições Remotion (Showcase, Overview, ChatUpgrade e ChatUpgradeMotion)
+│   ├── roteiro-chat-v2.md                # Roteiro do vídeo do chat (versão híbrida)
+│   ├── roteiro-chat-v2-motion.md         # Roteiro do vídeo do chat (versão 100% motion)
 │   └── package.json                      # Scripts de captura/renderização e dependências
 ├── analysis.ipynb                        # Notebook analítico exploratório original
 ├── AGENTS.md                             # Protocolo operacional da equipe de agentes de IA
@@ -553,7 +562,14 @@ npm run render:showcase
 
 # 3. Renderizar a animação de visão geral (overview):
 npm run render:overview
+
+# 4. Vídeos do chat v1 → v2 (4:5, LinkedIn): versão híbrida, versão 100% motion e capa
+npm run render:chat-upgrade
+npm run render:chat-upgrade-motion
+npm run still:chat-upgrade-cover
 ```
+
+As tomadas do chat têm roteiro próprio em `video/roteiro-chat-v2.md` (como gravar com `npm run capture:chat` e gerar os proxies com `npm run proxies:chat`).
 
 ---
 

@@ -51,6 +51,8 @@ export interface CaptureOptions {
   defaultPointer?: 'mouse' | 'touch';
   ffmpegPath?: string;
   useNvenc?: boolean;
+  /** Pausa o relógio virtual: o tempo da página só anda quando um quadro é gravado. */
+  pauseClock?: boolean;
 }
 
 export interface CloseResult {
@@ -68,7 +70,7 @@ export function easeInOutCubic(t: number): number {
 
 const WINGET_FFMPEG =
   'C:\\Users\\enama\\AppData\\Local\\Microsoft\\WinGet\\Packages\\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\\ffmpeg-9.0.2-full_build\\bin\\ffmpeg.exe';
-const DEFAULT_FFMPEG =
+export const DEFAULT_FFMPEG =
   process.env.FFMPEG_PATH || (fs.existsSync(WINGET_FFMPEG) ? WINGET_FFMPEG : 'ffmpeg');
 
 export class CaptureEngine {
@@ -91,6 +93,7 @@ export class CaptureEngine {
   public readonly defaultPointer: 'mouse' | 'touch';
   public readonly ffmpegPath: string;
   public readonly useNvenc: boolean;
+  public readonly pauseClock: boolean;
 
   private currentFrame = 0;
   private currentCursor: {
@@ -119,6 +122,7 @@ export class CaptureEngine {
     this.defaultPointer = options.defaultPointer ?? (this.isMobile ? 'touch' : 'mouse');
     this.ffmpegPath = options.ffmpegPath ?? DEFAULT_FFMPEG;
     this.useNvenc = options.useNvenc ?? true;
+    this.pauseClock = options.pauseClock ?? false;
 
     if (options.viewport) {
       this.cssWidth = options.viewport.width;
@@ -295,6 +299,9 @@ export class CaptureEngine {
 
     // Relógio virtual instalado antes da navegação para controle determinístico
     await this.page.clock.install();
+    if (this.pauseClock) {
+      await this.page.clock.pauseAt(Date.now() + 1000);
+    }
 
     this.cdpSession = await this.context.newCDPSession(this.page);
 
@@ -416,11 +423,11 @@ export class CaptureEngine {
   /**
    * Avança um único quadro físico no tempo virtual e grava no vídeo.
    */
-  public async stepFrame(): Promise<void> {
+  public async stepFrame(advanceMs: number = this.frameMs): Promise<void> {
     if (!this.page || !this.cdpSession) throw new Error('Engine not started');
 
-    await this.page.clock.runFor(this.frameMs);
-    await this.page.evaluate(`window.__step(${this.frameMs})`);
+    await this.page.clock.runFor(advanceMs);
+    await this.page.evaluate(`window.__step(${advanceMs})`);
 
     const snap = await this.cdpSession.send('Page.captureScreenshot', {
       format: 'png',
@@ -449,6 +456,18 @@ export class CaptureEngine {
     const totalFrames = Math.max(1, Math.round(seconds * this.fps));
     for (let i = 0; i < totalFrames; i++) {
       await this.stepFrame();
+    }
+  }
+
+  /**
+   * Avança `pageSeconds` de tempo da página gravando `speed` vezes mais rápido
+   * (cada quadro do vídeo cobre `speed` quadros de tempo real). Usado para
+   * comprimir esperas longas; o vídeo marca o trecho como acelerado.
+   */
+  public async recordFast(pageSeconds: number, speed: number): Promise<void> {
+    const totalFrames = Math.max(1, Math.round((pageSeconds * this.fps) / speed));
+    for (let i = 0; i < totalFrames; i++) {
+      await this.stepFrame(this.frameMs * speed);
     }
   }
 
