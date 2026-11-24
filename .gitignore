@@ -31,7 +31,7 @@ backend/data/*.db.tmp
 !.env.example
 
 # Caches, evals and testing
-.deepeval/
+.deepeval*
 .pytest_cache/
 .ruff_cache/
 .mypy_cache/
@@ -48,7 +48,7 @@ Thumbs.db
 .vscode/
 .idea/
 
-# Node (raiz, frontend e video)
+# Node (frontend e video)
 node_modules/
 
 # Frontend (Astro)
@@ -57,6 +57,10 @@ frontend/dist/
 .vercel/
 
 # Video (Remotion / Captures)
+# As tomadas brutas em 4K (video/captures/) e os renders de teste (video/out/) ficam
+# fora. Entram no git os insumos da renderização: video/public/ (proxies recortados,
+# timelines e áudio), video/capture/fixtures/ (streams SSE gravados) e os vídeos
+# finais em assets/.
 video/.remotion/
 video/out/
 video/captures/

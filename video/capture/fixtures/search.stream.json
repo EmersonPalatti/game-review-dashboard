@@ -1,0 +1,1090 @@
+{
+ "question": "O que os jogadores de Arma 3 falam sobre crashes e otimização?",
+ "contentType": "text/event-stream; charset=utf-8",
+ "chunks": [
+  {
+   "t": 40,
+   "data": "data: {\"type\":\"RUN_STARTED\",\"threadId\":\"steam-dashboard-session\",\"runId\":\"run_1795479913576\"}\n\n"
+  },
+  {
+   "t": 2464,
+   "data": "data: {\"type\":\"TOOL_CALL_START\",\"toolCallId\":\"01a20af1-4e07-7058-a218-6e68aad767e6\",\"toolCallName\":\"resolve_game\"}\n\n"
+  },
+  {
+   "t": 2464,
+   "data": "data: {\"type\":\"TOOL_CALL_ARGS\",\"toolCallId\":\"01a20af1-4e07-7058-a218-6e68aad767e6\",\"delta\":\"{\\\"query\\\": \\\"Arma 3\\\", \\\"limit\\\": 10}\"}\n\ndata: {\"type\":\"TOOL_CALL_END\",\"toolCallId\":\"01a20af1-4e07-7058-a218-6e68aad767e6\"}\n\n"
+  },
+  {
+   "t": 2467,
+   "data": "data: {\"type\":\"TOOL_CALL_RESULT\",\"messageId\":\"tm_01a20af1-4e07-7058-a218-6e68aad767e6\",\"toolCallId\":\"01a20af1-4e07-7058-a218-6e68aad767e6\",\"content\":\"{\\\"query\\\": \\\"Arma 3\\\", \\\"total_games_in_catalog\\\": 59, \\\"total_languages_in_catalog\\\": 28, \\\"matched_games\\\": [{\\\"app_id\\\": 107410, \\\"app_name\\\": \\\"Arma 3\\\", \\\"review_count\\\": 182348}], \\\"matched_languages\\\": []}\",\"role\":\"tool\"}\n\n"
+  },
+  {
+   "t": 2467,
+   "data": "data: {\"type\":\"CUSTOM\",\"name\":\"tool_timing\",\"value\":{\"tool_call_id\":\"01a20af1-4e07-7058-a218-6e68aad767e6\",\"tool_name\":\"resolve_game\",\"duration_ms\":3}}\n\n"
+  },
+  {
+   "t": 3811,
+   "data": "data: {\"type\":\"TOOL_CALL_START\",\"toolCallId\":\"01a20af1-534b-745c-8d8c-9c41a00b6218\",\"toolCallName\":\"search_reviews_hybrid\"}\n\n"
+  },
+  {
+   "t": 3811,
+   "data": "data: {\"type\":\"TOOL_CALL_ARGS\",\"toolCallId\":\"01a20af1-534b-745c-8d8c-9c41a00b6218\",\"delta\":\"{\\\"query\\\": \\\"crash otimização desempenho FPS travamento lag\\\", \\\"app_id\\\": 107410, \\\"limit\\\": 10}\"}\n\ndata: {\"type\":\"TOOL_CALL_END\",\"toolCallId\":\"01a20af1-534b-745c-8d8c-9c41a00b6218\"}\n\n"
+  },
+  {
+   "t": 3956,
+   "data": "data: {\"type\":\"TOOL_CALL_RESULT\",\"messageId\":\"tm_01a20af1-534b-745c-8d8c-9c41a00b6218\",\"toolCallId\":\"01a20af1-534b-745c-8d8c-9c41a00b6218\",\"content\":\"{\\\"query\\\": \\\"crash otimização desempenho FPS travamento lag\\\", \\\"mode\\\": \\\"hybrid\\\", \\\"fts_hits\\\": 40, \\\"vec_hits\\\": 80, \\\"items\\\": [{\\\"review_id\\\": 23674617, \\\"app_id\\\": 107410, \\\"app_name\\\": \\\"Arma 3\\\", \\\"language\\\": \\\"english\\\", \\\"recommended\\\": true, \\\"votes_helpful\\\": 849, \\\"playtime_at_review_hours\\\": 397.47, \\\"created_at\\\": \\\"2016-06-20T20:13:48Z\\\", \\\"excerpt\\\": \\\"low settings: 14 fps ultra settings: 15 fps\\\", \\\"match_source\\\": \\\"vector\\\", \\\"rrf_score\\\": 0.016393}, {\\\"review_id\\\": 30912918, \\\"app_id\\\": 107410, \\\"app_name\\\": \\\"Arma 3\\\", \\\"language\\\": \\\"german\\\", \\\"recommended\\\": false, \\\"votes_helpful\\\": 0, \\\"playtime_at_review_hours\\\": 110.68, \\\"created_at\\\": \\\"2017-04-03T00:25:38Z\\\", \\\"excerpt\\\": \\\"Scheiße fps lags\\\", \\\"match_source\\\": \\\"fts5\\\", \\\"rrf_score\\\": 0.016393}, {\\\"review_id\\\": 60003438, \\\"app_id\\\": 107410, \\\"app_name\\\": \\\"Arma 3\\\", \\\"language\\\": \\\"schinese\\\", \\\"recommended\\\": false, \\\"votes_helpful\\\": 251, \\\"playtime_at_review_hours\\\": 3.68, \\\"created_at\\\": \\\"2019-12-17T05:41:59Z\\\", \\\"excerpt\\\": \\\"这是不推荐，不是差评 谨慎入坑 游戏做的还是很不错，内容丰富，自由度高，各种军事模拟武装载具都很真实。 但服务器差，优化不足是致命缺陷。 另外硬核自然不用说了，你喜欢就是优点，不喜欢极易被劝退。 以上。 谨慎入坑！谨慎入坑！谨慎入坑！\\\", \\\"match_source\\\": \\\"vector\\\", \\\"rrf_score\\\": 0.016129}, {\\\"review_id\\\": 31405142, \\\"app_id\\\": 107410, \\\"app_name\\\": \\\"Arma 3\\\", \\\"language\\\": \\\"brazilian\\\", \\\"recommended\\\": true, \\\"votes_helpful\\\": 2, \\\"playtime_at_review_hours\\\": 100.27, \\\"created_at\\\": \\\"2017-04-28T00:45:15Z\\\", \\\"excerpt\\\": \\\"Ótimo game fps/tps que volta para a temática simulativa. O game permite diversos modos de jogos assim como a criação de um próprio pelo usuário no modo Zeus. Único ponto negativo a se ressaltar é a baixa otimização, acarretando em perda de desempenho, de resto, aprovadíssimo. Com\\\", \\\"match_source\\\": \\\"fts5\\\", \\\"rrf_score\\\": 0.016129}, {\\\"review_id\\\": 14220838, \\\"app_id\\\": 107410, \\\"app_name\\\": \\\"Arma 3\\\", \\\"language\\\": \\\"english\\\", \\\"recommended\\\": false, \\\"votes_helpful\\\": 64, \\\"playtime_at_review_hours\\\": 333.87, \\\"created_at\\\": \\\"2015-01-29T07:13:43Z\\\", \\\"excerpt\\\": \\\"i want to love it so so much, but the fact remains that i get over 120 FPS on single player and only 25-35 FPS for multiplayer. i know it's not my fault because my computer is a sexy devil. i know some of it depends on the server. that is a fact yes... but another fact would be \\\\\\\"\\\", \\\"match_source\\\": \\\"vector\\\", \\\"rrf_score\\\": 0.015873}, {\\\"review_id\\\": 47959796, \\\"app_id\\\": 107410, \\\"app_name\\\": \\\"Arma 3\\\", \\\"language\\\": \\\"german\\\", \\\"recommended\\\": true, \\\"votes_helpful\\\": 0, \\\"playtime_at_review_hours\\\": 13.47, \\\"created_at\\\": \\\"2018-12-30T15:47:07Z\\\", \\\"excerpt\\\": \\\"lag rucker low fps arma 3\\\", \\\"match_source\\\": \\\"fts5\\\", \\\"rrf_score\\\": 0.015873}, {\\\"review_id\\\": 30464717, \\\"app_id\\\": 107410, \\\"app_name\\\": \\\"Arma 3\\\", \\\"language\\\": \\\"russian\\\", \\\"recommended\\\": false, \\\"votes_helpful\\\": 59, \\\"playtime_at_review_hours\\\": 105.82, \\\"created_at\\\": \\\"2017-03-12T07:37:52Z\\\", \\\"excerpt\\\": \\\"Прошло 4 года с момента выхода, а игра всё еще может максимум задействовать одно ядро процессора. Из-за чего даже на топовом intel core i7 в перестрелках на пару десятков человек получаем просадки до 30фпс. Надеюсь к выходу Arma 4 они смогут эффективно загрузить хотя бы двухъядер\\\", \\\"match_source\\\": \\\"vector\\\", \\\"rrf_score\\\": 0.015625}, {\\\"review_id\\\": 33025692, \\\"app_id\\\": 107410, \\\"app_name\\\": \\\"Arma 3\\\", \\\"language\\\": \\\"turkish\\\", \\\"recommended\\\": false, \\\"votes_helpful\\\": 0, \\\"playtime_at_review_hours\\\": 1.25, \\\"created_at\\\": \\\"2017-06-30T06:39:55Z\\\", \\\"excerpt\\\": \\\"Öncelikle Çoğu Şey Gerçekçi Fakat Adamın Onüne geçip arkanızı duyarsanız 1 metre arkanızdakının sesını duyamıyorsanız onun dısında LAG PİNG FPSDROP LAG LAG LAG LAGGGGGG LAG\\\", \\\"match_source\\\": \\\"fts5\\\", \\\"rrf_score\\\": 0.015625}, {\\\"review_id\\\": 15272371, \\\"app_id\\\": 107410, \\\"app_name\\\": \\\"Arma 3\\\", \\\"language\\\": \\\"brazilian\\\", \\\"recommended\\\": false, \\\"votes_helpful\\\": 174, \\\"playtime_at_review_hours\\\": 123.7, \\\"created_at\\\": \\\"2015-04-09T01:45:06Z\\\", \\\"excerpt\\\": \\\"ARMA 3 ESTÁ CADA DIA PIOR, NÃO O JOGO EM SI, MAS A DESENVOLVEDORA. AGORA ESTÃO VENDENDO CORREÇÕES, SIM, CORREÇÕES! (Em toda série arma - ATÉ MESMO NO OPERATION FLASHPOINT se encontra os conteúdos que no ARMA3 estão vindo pagos em forma de DLCs) ELES ARRUMAM PARTE DO JOGO (COMO A \\\", \\\"match_source\\\": \\\"vector\\\", \\\"rrf_score\\\": 0.015385}, {\\\"review_id\\\": 15754389, \\\"app_id\\\": 107410, \\\"app_name\\\": \\\"Arma 3\\\", \\\"language\\\": \\\"english\\\", \\\"recommended\\\": false, \\\"votes_helpful\\\": 0, \\\"playtime_at_review_hours\\\": 8.3, \\\"created_at\\\": \\\"2015-05-09T11:53:38Z\\\", \\\"excerpt\\\": \\\"Diz geym verry laggy and low fps\\\", \\\"match_source\\\": \\\"fts5\\\", \\\"rrf_score\\\": 0.015385}], \\\"applied_filters\\\": {\\\"app_id\\\": 107410}}\",\"role\":\"tool\"}\n\n"
+  },
+  {
+   "t": 3956,
+   "data": "data: {\"type\":\"CUSTOM\",\"name\":\"tool_timing\",\"value\":{\"tool_call_id\":\"01a20af1-534b-745c-8d8c-9c41a00b6218\",\"tool_name\":\"search_reviews_hybrid\",\"duration_ms\":144}}\n\ndata: {\"type\":\"CUSTOM\",\"name\":\"genui_widget\",\"value\":{\"type\":\"review_evidence\",\"title\":\"Evidências: \\\"crash otimização desempenho FPS travamento lag\\\"\",\"data\":{\"query\":\"crash otimização desempenho FPS travamento lag\",\"mode\":\"hybrid\",\"items\":[{\"review_id\":23674617,\"app_id\":107410,\"app_name\":\"Arma 3\",\"language\":\"english\",\"recommended\":true,\"votes_helpful\":849,\"playtime_at_review_hours\":397.47,\"created_at\":\"2016-06-20T20:13:48Z\",\"excerpt\":\"low settings: 14 fps ultra settings: 15 fps\",\"match_source\":\"vector\",\"rrf_score\":0.016393},{\"review_id\":30912918,\"app_id\":107410,\"app_name\":\"Arma 3\",\"language\":\"german\",\"recommended\":false,\"votes_helpful\":0,\"playtime_at_review_hours\":110.68,\"created_at\":\"2017-04-03T00:25:38Z\",\"excerpt\":\"Scheiße fps lags\",\"match_source\":\"fts5\",\"rrf_score\":0.016393},{\"review_id\":60003438,\"app_id\":107410,\"app_name\":\"Arma 3\",\"language\":\"schinese\",\"recommended\":false,\"votes_helpful\":251,\"playtime_at_review_hours\":3.68,\"created_at\":\"2019-12-17T05:41:59Z\",\"excerpt\":\"这是不推荐，不是差评 谨慎入坑 游戏做的还是很不错，内容丰富，自由度高，各种军事模拟武装载具都很真实。 但服务器差，优化不足是致命缺陷。 另外硬核自然不用说了，你喜欢就是优点，不喜欢极易被劝退。 以上。 谨慎入坑！谨慎入坑！谨慎入坑！\",\"match_source\":\"vector\",\"rrf_score\":0.016129},{\"review_id\":31405142,\"app_id\":107410,\"app_name\":\"Arma 3\",\"language\":\"brazilian\",\"recommended\":true,\"votes_helpful\":2,\"playtime_at_review_hours\":100.27,\"created_at\":\"2017-04-28T00:45:15Z\",\"excerpt\":\"Ótimo game fps/tps que volta para a temática simulativa. O game permite diversos modos de jogos assim como a criação de um próprio pelo usuário no modo Zeus. Único ponto negativo a se ressaltar é a baixa otimização, acarretando em perda de desempenho, de resto, aprovadíssimo. Com\",\"match_source\":\"fts5\",\"rrf_score\":0.016129},{\"review_id\":14220838,\"app_id\":107410,\"app_name\":\"Arma 3\",\"language\":\"english\",\"recommended\":false,\"votes_helpful\":64,\"playtime_at_review_hours\":333.87,\"created_at\":\"2015-01-29T07:13:43Z\",\"excerpt\":\"i want to love it so so much, but the fact remains that i get over 120 FPS on single player and only 25-35 FPS for multiplayer. i know it's not my fault because my computer is a sexy devil. i know some of it depends on the server. that is a fact yes... but another fact would be \\\"\",\"match_source\":\"vector\",\"rrf_score\":0.015873}]}}}\n\n"
+  },
+  {
+   "t": 6603,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_START\",\"messageId\":\"msg_c0fa764095f0\",\"role\":\"assistant\"}\n\n"
+  },
+  {
+   "t": 6603,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"**\"}\n\n"
+  },
+  {
+   "t": 6603,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"Arma 3\"}\n\n"
+  },
+  {
+   "t": 6603,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" (app_id:\"}\n\n"
+  },
+  {
+   "t": 6702,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" 107\"}\n\n"
+  },
+  {
+   "t": 6703,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"410)**\"}\n\n"
+  },
+  {
+   "t": 6703,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" — 18\"}\n\n"
+  },
+  {
+   "t": 6704,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"2.34\"}\n\n"
+  },
+  {
+   "t": 7018,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"8 avaliações\"}\n\n"
+  },
+  {
+   "t": 7066,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" no catálogo.\"}\n\n"
+  },
+  {
+   "t": 7080,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" A busca hí\"}\n\n"
+  },
+  {
+   "t": 7098,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"brida por *\"}\n\n"
+  },
+  {
+   "t": 7198,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"crash*,\"}\n\n"
+  },
+  {
+   "t": 7200,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" *otimização\"}\n\n"
+  },
+  {
+   "t": 7303,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"*, *FPS\"}\n\n"
+  },
+  {
+   "t": 7303,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"*, *lag\"}\n\n"
+  },
+  {
+   "t": 7304,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"* e *t\"}\n\n"
+  },
+  {
+   "t": 7304,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"ravamento* retorn\"}\n\n"
+  },
+  {
+   "t": 7412,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"ou 40\"}\n\n"
+  },
+  {
+   "t": 7412,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" hits de\"}\n\n"
+  },
+  {
+   "t": 7412,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" texto ex\"}\n\n"
+  },
+  {
+   "t": 7413,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"ato e 8\"}\n\n"
+  },
+  {
+   "t": 7489,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"0 vet\"}\n\n"
+  },
+  {
+   "t": 7489,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"oriais. O\"}\n\n"
+  },
+  {
+   "t": 7490,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" padrão é consist\"}\n\n"
+  },
+  {
+   "t": 7490,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"ente e atrav\"}\n\n"
+  },
+  {
+   "t": 7582,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"essa idiomas\"}\n\n"
+  },
+  {
+   "t": 7582,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\".\\n\\n\"}\n\n"
+  },
+  {
+   "t": 7583,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"###\"}\n\n"
+  },
+  {
+   "t": 7583,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" O que os\"}\n\n"
+  },
+  {
+   "t": 7688,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" jogadores relat\"}\n\n"
+  },
+  {
+   "t": 7688,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"am\\n\\n| T\"}\n\n"
+  },
+  {
+   "t": 7688,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"ema recorrente\"}\n\n"
+  },
+  {
+   "t": 7689,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" | Ex\"}\n\n"
+  },
+  {
+   "t": 7776,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"emplo real\"}\n\n"
+  },
+  {
+   "t": 7777,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" da base\"}\n\n"
+  },
+  {
+   "t": 7777,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" |\\n|---\"}\n\n"
+  },
+  {
+   "t": 7778,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"|---|\\n|\"}\n\n"
+  },
+  {
+   "t": 7880,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" **FPS ir\"}\n\n"
+  },
+  {
+   "t": 7880,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"risório independente\"}\n\n"
+  },
+  {
+   "t": 7881,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" de configuração**\"}\n\n"
+  },
+  {
+   "t": 7881,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" | >\"}\n\n"
+  },
+  {
+   "t": 7977,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" \\\"low settings:\"}\n\n"
+  },
+  {
+   "t": 7978,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" 14 fps\"}\n\n"
+  },
+  {
+   "t": 7978,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" ultra settings: \"}\n\n"
+  },
+  {
+   "t": 7978,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"15 fps\\\"\"}\n\n"
+  },
+  {
+   "t": 8056,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" — Arma \"}\n\n"
+  },
+  {
+   "t": 8056,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"3, 3\"}\n\n"
+  },
+  {
+   "t": 8057,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"97,4\"}\n\n"
+  },
+  {
+   "t": 8057,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"7 h |\\n|\"}\n\n"
+  },
+  {
+   "t": 8143,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" **Multiplayer muito\"}\n\n"
+  },
+  {
+   "t": 8144,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" pior\"}\n\n"
+  },
+  {
+   "t": 8144,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" que single player**\"}\n\n"
+  },
+  {
+   "t": 8145,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" | > \\\"i\"}\n\n"
+  },
+  {
+   "t": 8231,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" want\"}\n\n"
+  },
+  {
+   "t": 8231,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" to love it so\"}\n\n"
+  },
+  {
+   "t": 8232,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" so much\"}\n\n"
+  },
+  {
+   "t": 8232,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\", but the fact\"}\n\n"
+  },
+  {
+   "t": 8318,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" remains that i get\"}\n\n"
+  },
+  {
+   "t": 8318,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" over 12\"}\n\n"
+  },
+  {
+   "t": 8319,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"0 FPS on\"}\n\n"
+  },
+  {
+   "t": 8319,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" single player and only\"}\n\n"
+  },
+  {
+   "t": 8408,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" 25-\"}\n\n"
+  },
+  {
+   "t": 8409,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"35 FPS\"}\n\n"
+  },
+  {
+   "t": 8409,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" for multiplayer.\\\"\"}\n\n"
+  },
+  {
+   "t": 8410,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" — Arma \"}\n\n"
+  },
+  {
+   "t": 8489,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"3, 3\"}\n\n"
+  },
+  {
+   "t": 8489,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"33,8\"}\n\n"
+  },
+  {
+   "t": 8489,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"7 h |\\n|\"}\n\n"
+  },
+  {
+   "t": 8490,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" **Uso in\"}\n\n"
+  },
+  {
+   "t": 8576,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"eficiente de CPU\"}\n\n"
+  },
+  {
+   "t": 8576,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" (um\"}\n\n"
+  },
+  {
+   "t": 8577,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" único\"}\n\n"
+  },
+  {
+   "t": 8578,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" núcleo)** | >\"}\n\n"
+  },
+  {
+   "t": 8705,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" \\\"Прошло \"}\n\n"
+  },
+  {
+   "t": 8708,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"4 года с момента\"}\n\n"
+  },
+  {
+   "t": 8709,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" выхода, а игра\"}\n\n"
+  },
+  {
+   "t": 8709,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" всё еще\"}\n\n"
+  },
+  {
+   "t": 8762,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" может максимум за\"}\n\n"
+  },
+  {
+   "t": 8763,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"действовать одно я\"}\n\n"
+  },
+  {
+   "t": 8763,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"дро процессора.\"}\n\n"
+  },
+  {
+   "t": 8764,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" Из-за чего даже\"}\n\n"
+  },
+  {
+   "t": 8860,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" на топовом\"}\n\n"
+  },
+  {
+   "t": 8861,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" intel core i7\"}\n\n"
+  },
+  {
+   "t": 8861,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" в перестрелках\"}\n\n"
+  },
+  {
+   "t": 8862,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" на пару десят\"}\n\n"
+  },
+  {
+   "t": 8961,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"ков человек получаем\"}\n\n"
+  },
+  {
+   "t": 8964,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" просадки до\"}\n\n"
+  },
+  {
+   "t": 8965,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" 30ф\"}\n\n"
+  },
+  {
+   "t": 8965,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"пс.\\\" —\"}\n\n"
+  },
+  {
+   "t": 9022,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" Arma 3\"}\n\n"
+  },
+  {
+   "t": 9023,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\", 10\"}\n\n"
+  },
+  {
+   "t": 9023,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"5,82\"}\n\n"
+  },
+  {
+   "t": 9024,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" h |\\n| **\"}\n\n"
+  },
+  {
+   "t": 9088,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"Otimização como\"}\n\n"
+  },
+  {
+   "t": 9088,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" \\\"\"}\n\n"
+  },
+  {
+   "t": 9089,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"defeito fatal\\\"**\"}\n\n"
+  },
+  {
+   "t": 9089,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" | > \\\"但\"}\n\n"
+  },
+  {
+   "t": 9186,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"服务器差\"}\n\n"
+  },
+  {
+   "t": 9186,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"，优化\"}\n\n"
+  },
+  {
+   "t": 9186,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"不足是致\"}\n\n"
+  },
+  {
+   "t": 9187,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"命缺\"}\n\n"
+  },
+  {
+   "t": 9259,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"陷。\\\" —\"}\n\n"
+  },
+  {
+   "t": 9260,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" Arma 3\"}\n\n"
+  },
+  {
+   "t": 9260,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\", 3,\"}\n\n"
+  },
+  {
+   "t": 9261,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"68 h |\\n\"}\n\n"
+  },
+  {
+   "t": 9366,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"| **Ba\"}\n\n"
+  },
+  {
+   "t": 9366,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"ixa otimização\"}\n\n"
+  },
+  {
+   "t": 9367,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" mesmo\"}\n\n"
+  },
+  {
+   "t": 9367,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" em quem\"}\n\n"
+  },
+  {
+   "t": 9455,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" recom\"}\n\n"
+  },
+  {
+   "t": 9456,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"enda** | >\"}\n\n"
+  },
+  {
+   "t": 9457,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" \\\"Único ponto\"}\n\n"
+  },
+  {
+   "t": 9458,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" negativo a se ress\"}\n\n"
+  },
+  {
+   "t": 9516,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"altar é a baixa\"}\n\n"
+  },
+  {
+   "t": 9519,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" otimização,\"}\n\n"
+  },
+  {
+   "t": 9520,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" acarretando em\"}\n\n"
+  },
+  {
+   "t": 9520,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" perda de desempenho,\"}\n\n"
+  },
+  {
+   "t": 9606,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" de resto, apro\"}\n\n"
+  },
+  {
+   "t": 9607,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"vadíssimo.\\\"\"}\n\n"
+  },
+  {
+   "t": 9608,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" — Arma \"}\n\n"
+  },
+  {
+   "t": 9608,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"3, 1\"}\n\n"
+  },
+  {
+   "t": 9690,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"00,2\"}\n\n"
+  },
+  {
+   "t": 9702,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"7 h |\\n|\"}\n\n"
+  },
+  {
+   "t": 9702,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" **Lag\"}\n\n"
+  },
+  {
+   "t": 9703,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" e ping explíc\"}\n\n"
+  },
+  {
+   "t": 9774,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"itos** | >\"}\n\n"
+  },
+  {
+   "t": 9774,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" \\\"LAG Pİ\"}\n\n"
+  },
+  {
+   "t": 9775,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"NG FPSD\"}\n\n"
+  },
+  {
+   "t": 9775,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"ROP LAG L\"}\n\n"
+  },
+  {
+   "t": 9880,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"AG LAG L\"}\n\n"
+  },
+  {
+   "t": 9880,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"AGGGGGG\"}\n\n"
+  },
+  {
+   "t": 9881,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" LAG\\\" —\"}\n\n"
+  },
+  {
+   "t": 9882,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" Arma 3\"}\n\n"
+  },
+  {
+   "t": 10127,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\", 1,\"}\n\n"
+  },
+  {
+   "t": 10324,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"25 h |\\n\\n\"}\n\n"
+  },
+  {
+   "t": 10370,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"### Leitura dos\"}\n\n"
+  },
+  {
+   "t": 10450,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" números\\n\\n-\"}\n\n"
+  },
+  {
+   "t": 10451,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" A\"}\n\n"
+  },
+  {
+   "t": 10451,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" reclamação não\"}\n\n"
+  },
+  {
+   "t": 10452,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" é apenas \\\"\"}\n\n"
+  },
+  {
+   "t": 10573,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"o jogo é\"}\n\n"
+  },
+  {
+   "t": 10574,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" pesado\\\". É\"}\n\n"
+  },
+  {
+   "t": 10574,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" **ot\"}\n\n"
+  },
+  {
+   "t": 10576,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"imização estrut\"}\n\n"
+  },
+  {
+   "t": 10578,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"ural**: reviews\"}\n\n"
+  },
+  {
+   "t": 10644,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" em\"}\n\n"
+  },
+  {
+   "t": 10645,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" alemão\"}\n\n"
+  },
+  {
+   "t": 10645,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\", russo, tur\"}\n\n"
+  },
+  {
+   "t": 10646,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"co, chinês\"}\n\n"
+  },
+  {
+   "t": 10745,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" simpl\"}\n\n"
+  },
+  {
+   "t": 10745,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"ificado e português do\"}\n\n"
+  },
+  {
+   "t": 10746,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" Brasil apontam para\"}\n\n"
+  },
+  {
+   "t": 10747,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" o mesmo problema —\"}\n\n"
+  },
+  {
+   "t": 10824,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" engine\"}\n\n"
+  },
+  {
+   "t": 10825,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" que\"}\n\n"
+  },
+  {
+   "t": 10825,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" não escala\"}\n\n"
+  },
+  {
+   "t": 10826,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" bem em\"}\n\n"
+  },
+  {
+   "t": 10902,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" hardware moderno, especialmente\"}\n\n"
+  },
+  {
+   "t": 10902,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" em cen\"}\n\n"
+  },
+  {
+   "t": 10903,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"ários mult\"}\n\n"
+  },
+  {
+   "t": 10903,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"ijogador com\"}\n\n"
+  },
+  {
+   "t": 11113,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" muitos jogadores/\"}\n\n"
+  },
+  {
+   "t": 11119,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"IA.\\n- Há\"}\n\n"
+  },
+  {
+   "t": 11119,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" quem jog\"}\n\n"
+  },
+  {
+   "t": 11120,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"ue cent\"}\n\n"
+  },
+  {
+   "t": 11261,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"enas de horas e\"}\n\n"
+  },
+  {
+   "t": 11262,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" ainda assim deix\"}\n\n"
+  },
+  {
+   "t": 11262,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"e a\"}\n\n"
+  },
+  {
+   "t": 11262,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" crítica\"}\n\n"
+  },
+  {
+   "t": 11297,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" de\"}\n\n"
+  },
+  {
+   "t": 11297,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" desempenho\"}\n\n"
+  },
+  {
+   "t": 11298,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" como\"}\n\n"
+  },
+  {
+   "t": 11299,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" ress\"}\n\n"
+  },
+  {
+   "t": 11372,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"alva (ex\"}\n\n"
+  },
+  {
+   "t": 11373,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\".:\"}\n\n"
+  },
+  {
+   "t": 11373,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" 397\"}\n\n"
+  },
+  {
+   "t": 11373,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" h e\"}\n\n"
+  },
+  {
+   "t": 11733,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" 333\"}\n\n"
+  },
+  {
+   "t": 11774,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" h nas\"}\n\n"
+  },
+  {
+   "t": 11986,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" reviews acima), o\"}\n\n"
+  },
+  {
+   "t": 11987,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" que indica que o\"}\n\n"
+  },
+  {
+   "t": 11988,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" problema\"}\n\n"
+  },
+  {
+   "t": 11992,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" pers\"}\n\n"
+  },
+  {
+   "t": 11996,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"iste ao\"}\n\n"
+  },
+  {
+   "t": 12003,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" longo do tempo de\"}\n\n"
+  },
+  {
+   "t": 12003,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" vida do\"}\n\n"
+  },
+  {
+   "t": 12004,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" jogo, não é\"}\n\n"
+  },
+  {
+   "t": 12034,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" algo\"}\n\n"
+  },
+  {
+   "t": 12035,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" de \\\"primeira\"}\n\n"
+  },
+  {
+   "t": 12035,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" impress\"}\n\n"
+  },
+  {
+   "t": 12036,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"ão\\\".\\n- A\"}\n\n"
+  },
+  {
+   "t": 12120,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" revisão em\"}\n\n"
+  },
+  {
+   "t": 12121,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" português brasileiro\"}\n\n"
+  },
+  {
+   "t": 12121,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" com 17\"}\n\n"
+  },
+  {
+   "t": 12121,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"4 votos úte\"}\n\n"
+  },
+  {
+   "t": 12225,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"is (1\"}\n\n"
+  },
+  {
+   "t": 12226,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"23,7\"}\n\n"
+  },
+  {
+   "t": 12227,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" h)\"}\n\n"
+  },
+  {
+   "t": 12227,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" vai\"}\n\n"
+  },
+  {
+   "t": 12287,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" além e\"}\n\n"
+  },
+  {
+   "t": 12293,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" ac\"}\n\n"
+  },
+  {
+   "t": 12294,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"usa a desenvolved\"}\n\n"
+  },
+  {
+   "t": 12294,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"ora de vender corre\"}\n\n"
+  },
+  {
+   "t": 12378,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"ções via\"}\n\n"
+  },
+  {
+   "t": 12379,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" DLC, lig\"}\n\n"
+  },
+  {
+   "t": 12379,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"ando ot\"}\n\n"
+  },
+  {
+   "t": 12380,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"imização à estratég\"}\n\n"
+  },
+  {
+   "t": 12460,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"ia comercial\"}\n\n"
+  },
+  {
+   "t": 12460,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" da\"}\n\n"
+  },
+  {
+   "t": 12461,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" série.\\n\\n\"}\n\n"
+  },
+  {
+   "t": 12461,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"### Ver\"}\n\n"
+  },
+  {
+   "t": 12720,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"edito do\"}\n\n"
+  },
+  {
+   "t": 12720,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" analista\\n\\nOs\"}\n\n"
+  },
+  {
+   "t": 12721,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" jogadores de Arma\"}\n\n"
+  },
+  {
+   "t": 12721,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" 3 não fal\"}\n\n"
+  },
+  {
+   "t": 12799,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"am de crashes\"}\n\n"
+  },
+  {
+   "t": 12799,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" isolados; fal\"}\n\n"
+  },
+  {
+   "t": 12800,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"am de **ot\"}\n\n"
+  },
+  {
+   "t": 12800,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"imização crônica\"}\n\n"
+  },
+  {
+   "t": 12892,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"** — F\"}\n\n"
+  },
+  {
+   "t": 12892,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"PS baixo mesmo\"}\n\n"
+  },
+  {
+   "t": 12893,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" em \\\"\"}\n\n"
+  },
+  {
+   "t": 12893,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"low\"}\n\n"
+  },
+  {
+   "t": 12975,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"\\\", uso\"}\n\n"
+  },
+  {
+   "t": 12975,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" ineficiente de\"}\n\n"
+  },
+  {
+   "t": 12976,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" CPU,\"}\n\n"
+  },
+  {
+   "t": 12977,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" col\"}\n\n"
+  },
+  {
+   "t": 13065,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"apso de\"}\n\n"
+  },
+  {
+   "t": 13065,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" desempenho em multiplayer\"}\n\n"
+  },
+  {
+   "t": 13066,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" e servidores inst\"}\n\n"
+  },
+  {
+   "t": 13066,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"áveis. É\"}\n\n"
+  },
+  {
+   "t": 13143,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" um ponto de\"}\n\n"
+  },
+  {
+   "t": 13152,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" f\"}\n\n"
+  },
+  {
+   "t": 13153,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"ricção que\"}\n\n"
+  },
+  {
+   "t": 13155,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" aparece tanto\"}\n\n"
+  },
+  {
+   "t": 13229,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" em reviews\"}\n\n"
+  },
+  {
+   "t": 13229,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" negativas quanto em\"}\n\n"
+  },
+  {
+   "t": 13230,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" positivas com\"}\n\n"
+  },
+  {
+   "t": 13230,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" cent\"}\n\n"
+  },
+  {
+   "t": 13333,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"enas de horas jog\"}\n\n"
+  },
+  {
+   "t": 13333,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"adas.\\n\\nQuer\"}\n\n"
+  },
+  {
+   "t": 13334,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" que eu fil\"}\n\n"
+  },
+  {
+   "t": 13334,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"tre o\"}\n\n"
+  },
+  {
+   "t": 13406,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" painel apenas\"}\n\n"
+  },
+  {
+   "t": 13407,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" para Arma \"}\n\n"
+  },
+  {
+   "t": 13407,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"3 e compare a\"}\n\n"
+  },
+  {
+   "t": 13408,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" taxa\"}\n\n"
+  },
+  {
+   "t": 13494,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" de aprovação\"}\n\n"
+  },
+  {
+   "t": 13494,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" entre quem menciona\"}\n\n"
+  },
+  {
+   "t": 13495,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" otimização e\"}\n\n"
+  },
+  {
+   "t": 13495,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" quem não menciona\"}\n\n"
+  },
+  {
+   "t": 13569,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"? Ou\"}\n\n"
+  },
+  {
+   "t": 13570,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" pref\"}\n\n"
+  },
+  {
+   "t": 13570,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\"ere ver a\"}\n\n"
+  },
+  {
+   "t": 13571,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" evolução mensal\"}\n\n"
+  },
+  {
+   "t": 13660,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" dessas reclamações\"}\n\n"
+  },
+  {
+   "t": 13660,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" ao longo dos\"}\n\n"
+  },
+  {
+   "t": 13661,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_CONTENT\",\"messageId\":\"msg_c0fa764095f0\",\"delta\":\" anos?\"}\n\n"
+  },
+  {
+   "t": 13682,
+   "data": "data: {\"type\":\"TEXT_MESSAGE_END\",\"messageId\":\"msg_c0fa764095f0\"}\n\n"
+  },
+  {
+   "t": 13684,
+   "data": "data: {\"type\":\"CUSTOM\",\"name\":\"run_metadata\",\"value\":{\"trace_id\":\"e27f5dc8c44d47d68972b7da59f1f833\",\"model\":\"nvidia/nemotron-3.5-super-vl:free\",\"tools_used\":[\"resolve_game\",\"search_reviews_hybrid\"],\"latency_ms\":13646,\"langfuse_enabled\":false}}\n\n"
+  },
+  {
+   "t": 13692,
+   "data": "data: {\"type\":\"RUN_FINISHED\",\"threadId\":\"steam-dashboard-session\",\"runId\":\"run_1795479913576\"}\n\n"
+  }
+ ]
+}
